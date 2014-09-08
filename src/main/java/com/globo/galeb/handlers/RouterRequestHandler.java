@@ -21,6 +21,7 @@ import java.util.Map;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.criteria.HostHeaderCriteria;
 import com.globo.galeb.exceptions.BadRequestException;
 import com.globo.galeb.metrics.ICounter;
 
