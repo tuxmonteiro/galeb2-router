@@ -1,5 +1,4 @@
 {
-
-  "main":"lbaas.Starter",
+  "main":"com.globo.galeb.verticles.Starter",
   "auto-redeploy": true
 }

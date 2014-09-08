@@ -3,13 +3,18 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>lbaas</groupId>
-  <artifactId>vxrouter</artifactId>
+  <groupId>com.globo.galeb</groupId>
+  <artifactId>galeb-router</artifactId>
   <packaging>jar</packaging>
-  <version>1.6.0</version>
+  <version>1.0-SNAPSHOT</version>
 
-  <name>vxrouter - virtual router as a service</name>
+  <name>galeb - virtual router as a service</name>
   <url>https://github.com/tuxmonteiro/vxrouter</url>
+
+  <scm>
+    <connection>scm:git:git@github.com:tuxmonteiro/galeb-router.git</connection>
+    <url>https://github.com/tuxmonteiro/galeb-router.git</url>
+  </scm>
 
   <licenses>
     <license>
@@ -19,14 +24,10 @@
     </license>
   </licenses>
 
-  <scm>
-    <url>https://github.com/tuxmonteiro/vxrouter.git</url>
-  </scm>
-
   <parent>
-     <groupId>org.sonatype.oss</groupId>
-     <artifactId>oss-parent</artifactId>
-     <version>7</version>
+    <groupId>com.globo</groupId>
+    <artifactId>galeb</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
   </parent>
 
   <properties>
@@ -51,7 +52,7 @@
     <mockito.version>1.9.5</mockito.version>
     <assertj.version>1.6.1</assertj.version>
     <guava.version>17.0</guava.version>
-    <lbaas.vxrouter.vertx.log4j2.version>1.0.0</lbaas.vxrouter.vertx.log4j2.version>
+    <com.globo.galeb.vertx.vertx2-log4j2.version>1.0.0</com.globo.galeb.vertx.vertx2-log4j2.version>
     <skipTests>false</skipTests>
     <skipITs>${skipTests}</skipITs>
     <skipUTs>${skipTests}</skipUTs>
@@ -90,9 +91,9 @@
     </dependency>
 
     <dependency>
-      <groupId>lbaas.vxrouter.vertx.log4j2</groupId>
-      <artifactId>vxrouter_log4j2</artifactId>
-      <version>${lbaas.vxrouter.vertx.log4j2.version}</version>
+      <groupId>com.globo.galeb.vertx</groupId>
+      <artifactId>vertx2-log4j2</artifactId>
+      <version>${com.globo.galeb.vertx.vertx2-log4j2.version}</version>
     </dependency>
 
     <!--Test dependencies-->
