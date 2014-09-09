@@ -89,6 +89,20 @@ public class Backend implements Serializable {
         this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx);
     }
 
+    public Backend(JsonObject json, final Vertx vertx) {
+        this(String.format("%s:%d",
+            json.getString("host", "127.0.0.1"),
+            json.getNumber("port", 0)
+            ), vertx);
+        if (json.containsField("properties")) {
+            JsonObject properties = json.getObject("properties");
+            this.connectionTimeout = properties.getInteger("connectionTimeout", 60000);
+            this.keepalive = properties.getBoolean("keepalive", true);
+            this.keepAliveMaxRequest = properties.getLong("keepAliveMaxRequest", Long.MAX_VALUE-1);
+            this.keepAliveTimeOut = properties.getLong("keepAliveTimeOut", 86400000L); // One day
+        }
+    }
+
     public String getHost() {
         return host;
     }

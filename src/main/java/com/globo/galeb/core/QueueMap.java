@@ -46,12 +46,18 @@ public class QueueMap {
                                       String properties)
     {
         JsonObject messageJson = new JsonObject();
-        messageJson.putString("virtualhost", virtualhostStr);
+        JsonObject virtualhostObj = new JsonObject().putString("name", virtualhostStr);
+
+        try {
+            virtualhostObj.putObject("properties", new JsonObject(properties));
+        } catch (DecodeException ignoreBadJson) {
+            virtualhostObj.putObject("properties", new JsonObject());
+        }
+        messageJson.putString("virtualhost", virtualhostObj.encode());
         messageJson.putString("host", hostStr);
         messageJson.putString("port", portStr);
         messageJson.putString("status", statusStr);
         messageJson.putString("uri", uriStr);
-        messageJson.putString("properties", properties);
 
         return messageJson.toString();
     }
@@ -71,7 +77,8 @@ public class QueueMap {
 
         boolean isOk = true;
         JsonObject messageJson = new JsonObject(message);
-        String virtualhost = messageJson.getString("virtualhost", "");
+        JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
+        String virtualhost = virtualhostJson.getString("name", "");
         String uri = messageJson.getString("uri", "");
         String uriBase = uri.split("/")[1];
 
@@ -79,20 +86,8 @@ public class QueueMap {
             case "route":
             case "virtualhost":
                 if (!virtualhosts.containsKey(virtualhost)) {
-                    String properties = messageJson.getString("properties", "{}");
-
-                    Virtualhost virtualhostObj = new Virtualhost(virtualhost, vertx);
-                    try {
-                        if (!"".equals(properties)) {
-                            JsonObject propertiesJson = new JsonObject(properties);
-                            virtualhostObj.mergeIn(propertiesJson);
-                        }
-                    } catch (DecodeException e1) {
-                        log.error(String.format("[%s] Properties decode failed (%s): %s", verticle.toString(), virtualhost, properties));
-                    } catch (Exception e2) {
-                        log.error(String.format("[%s] %s", verticle.toString(), e2.getMessage()));
-                    }
-                    virtualhosts.put(virtualhost, virtualhostObj);
+                    Virtualhost newVirtualhostObj = new Virtualhost(virtualhostJson, vertx);
+                    virtualhosts.put(virtualhost, newVirtualhostObj);
                     log.info(String.format("[%s] Virtualhost %s added", verticle.toString(), virtualhost));
                     isOk = true;
                 } else {
@@ -135,7 +130,8 @@ public class QueueMap {
 
         boolean isOk = true;
         JsonObject messageJson = new JsonObject(message);
-        String virtualhost = messageJson.getString("virtualhost", "");
+        JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
+        String virtualhost = virtualhostJson.getString("name", "");
         String host = messageJson.getString("host", "");
         String port = messageJson.getString("port");
         boolean status = !"0".equals(messageJson.getString("status", ""));

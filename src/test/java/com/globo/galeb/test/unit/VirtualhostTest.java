@@ -15,16 +15,20 @@
 package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.mock;
 import static com.globo.galeb.core.Constants.*;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
+
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.RandomPolicy;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.impl.DefaultVertx;
+import org.vertx.java.core.json.JsonObject;
 
 public class VirtualhostTest {
 
@@ -35,9 +39,18 @@ public class VirtualhostTest {
 
     @Before
     public void setUp(){
+        Vertx vertx = mock(DefaultVertx.class);
+
         virtualhostName = "virtualhost1";
         requestData = new RequestData();
-        virtualhost = new Virtualhost(virtualhostName, null);
+
+        JsonObject virtualhostProperties = new JsonObject()
+            .putString(loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+        JsonObject virtualhostJson = new JsonObject()
+            .putString("virtualhost", virtualhostName)
+            .putObject("properties", virtualhostProperties);
+        virtualhost = new Virtualhost(virtualhostJson, vertx);
+
         backend = "0.0.0.0:0";
     }
 

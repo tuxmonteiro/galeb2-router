@@ -16,11 +16,13 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.vertx.testtools.VertxAssert.testComplete;
+
 import com.globo.galeb.core.Backend;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
 public class BackendTest extends TestVerticle {
@@ -99,7 +101,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void connectReturnNotNull() {
-        Backend backendTested = new Backend(null, vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx);
 
         HttpClient httpClient = backendTested.connect("127.0.0.1", "0");
         assertThat(httpClient).isNotNull();
@@ -109,7 +111,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void connectSuccessful() {
-        Backend backendTested = new Backend(null, vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx);
 
         backendTested.connect("127.0.0.1", "0");
 
@@ -120,7 +122,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void closeSuccessful() {
-        Backend backendTested = new Backend(null, vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx);
 
         backendTested.connect("127.0.0.1", "0");
         backendTested.close();
@@ -132,7 +134,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void zeroActiveConnections() {
-        Backend backendTested = new Backend(null, vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx);
 
         assertThat(backendTested.getSessionController().getActiveConnections()).isEqualTo(0);
 
@@ -141,7 +143,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesActiveConnections() {
-        Backend backendTested = new Backend(null, vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx);
 
         for (int counter=0;counter < 1000; counter++) {
             backendTested.connect(String.format("%s", counter), "0");
@@ -154,7 +156,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesRequestsButOneActiveConnection() {
-        Backend backendTested = new Backend(null, vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx);
 
         for (int counter=0;counter < 1000; counter++) {
             backendTested.connect("127.0.0.1", "0");

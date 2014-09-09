@@ -315,12 +315,15 @@ public class QueueMapTest {
         JsonObject messageJsonOrig = new JsonObject(message);
 
         JsonObject messageJson = new JsonObject();
-        messageJson.putString("virtualhost", virtualhostStr);
+
+        JsonObject virtualhostObj = new JsonObject().putString("name", virtualhostStr);
+        virtualhostObj.putObject("properties", properties);
+        messageJson.putString("virtualhost", virtualhostObj.encode());
+
         messageJson.putString("host", backendStr);
         messageJson.putString("port", portStr);
         messageJson.putString("status", statusStr);
         messageJson.putString("uri", uriStr);
-        messageJson.putString("properties", properties.toString());
 
         assertThat(messageJsonOrig).isEqualTo(messageJson);
     }

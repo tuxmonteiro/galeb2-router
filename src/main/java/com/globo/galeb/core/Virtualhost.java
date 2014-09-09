@@ -18,6 +18,7 @@ import static com.globo.galeb.core.Constants.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
@@ -46,17 +47,36 @@ public class Virtualhost extends JsonObject implements Serializable {
         this.vertx = vertx;
     }
 
+    public Virtualhost(JsonObject json, final Vertx vertx) {
+        this(json.getString("name", "UNDEF"), vertx);
+        JsonObject properties = json.getObject("properties");
+        mergeIn(properties);
+    }
+
     @Override
     public String toString() {
         return getVirtualhostName();
     }
 
     public boolean addBackend(String backend, boolean backendOk) {
+        String[] backendWithPort = backend.split(":");
+        String host = backendWithPort[0];
+        int port = 0;
+        if (backendWithPort.length>1) {
+            port = Integer.parseInt(backendWithPort[1]);
+        }
+        return addBackend(new JsonObject()
+                    .putString("host", host)
+                    .putNumber("port", port),
+                backendOk);
+    }
+
+    public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         if (backendOk) {
             putBoolean(transientStateFieldName, true);
-            return backends.add(new Backend(backend, vertx));
+            return backends.add(new Backend(backendJson, vertx));
         } else {
-            return badBackends.add(new Backend(backend, vertx));
+            return badBackends.add(new Backend(backendJson, vertx));
         }
     }
 
