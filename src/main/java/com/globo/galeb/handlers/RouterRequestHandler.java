@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.exceptions.BadRequestException;
 import com.globo.galeb.metrics.ICounter;
@@ -58,6 +59,10 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     @Override
     public void handle(final HttpServerRequest sRequest) {
 
+        if (sRequest.headers().contains(httpHeaderHost)) {
+            this.headerHost = sRequest.headers().get(httpHeaderHost).split(":")[0];
+        }
+
         log.debug(String.format("Received request for host %s '%s %s'",
                 sRequest.headers().get(httpHeaderHost), sRequest.method(), sRequest.absoluteURI().toString()));
 
@@ -76,22 +81,23 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         final Long requestTimeoutTimer = vertx.setTimer(backendRequestTimeOut, new Handler<Long>() {
             @Override
             public void handle(Long event) {
-                sResponse.showErrorAndClose(new java.util.concurrent.TimeoutException(), getCounterKey(headerHost, backendId));
+                sResponse.setHeaderHost(headerHost)
+                    .setId(getCounterKey(headerHost, backendId))
+                    .showErrorAndClose(new java.util.concurrent.TimeoutException());
             }
         });
 
-        if (sRequest.headers().contains(httpHeaderHost)) {
-            this.headerHost = sRequest.headers().get(httpHeaderHost).split(":")[0];
+        if (!"".equals(headerHost)) {
             if (!virtualhosts.containsKey(headerHost)) {
                 vertx.cancelTimer(requestTimeoutTimer);
                 log.warn(String.format("Host: %s UNDEF", headerHost));
-                sResponse.showErrorAndClose(new BadRequestException(), null);
+                sResponse.showErrorAndClose(new BadRequestException());
                 return;
             }
         } else {
             vertx.cancelTimer(requestTimeoutTimer);
             log.warn("Host UNDEF");
-            sResponse.showErrorAndClose(new BadRequestException(), null);
+            sResponse.showErrorAndClose(new BadRequestException());
             return;
         }
 
@@ -100,7 +106,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         if (!virtualhost.hasBackends()) {
             vertx.cancelTimer(requestTimeoutTimer);
             log.warn(String.format("Host %s without backends", headerHost));
-            sResponse.showErrorAndClose(new BadRequestException(), null);
+            sResponse.showErrorAndClose(new BadRequestException());
             return;
         }
 
@@ -142,7 +148,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                 httpClient.request(sRequest.method(), sRequest.uri(), handlerHttpClientResponse) : null;
 
         if (cRequest==null) {
-            sResponse.showErrorAndClose(new BadRequestException(), null);
+            sResponse.showErrorAndClose(new BadRequestException());
             return;
         }
 
@@ -173,7 +179,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             public void handle(Throwable event) {
                 vertx.cancelTimer(requestTimeoutTimer);
                 vertx.eventBus().publish(QUEUE_HEALTHCHECK_FAIL, backend.toString() );
-                sResponse.showErrorAndClose(event, getCounterKey(headerHost, backendId));
+                sResponse.setId(getCounterKey(headerHost, backendId))
+                    .showErrorAndClose(event);
                 try {
                     backend.close();
                 } catch (RuntimeException e) {
@@ -189,6 +196,13 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                 cRequest.end();
             }
          });
+    }
+
+    public RouterRequestHandler(
+            final Vertx vertx,
+            final Container container,
+            final Map<String, Virtualhost> virtualhosts) {
+        this(vertx, container, virtualhosts, null);
     }
 
     public RouterRequestHandler(

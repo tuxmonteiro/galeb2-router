@@ -15,7 +15,9 @@
 package com.globo.galeb.handlers;
 
 import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
+
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.metrics.ICounter;
 
 import org.vertx.java.core.Handler;
@@ -49,7 +51,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
         // Define statusCode and Headers
         final int statusCode = cResponse.statusCode();
-        sResponse.setStatusCode(statusCode, cResponse.statusMessage());
+        sResponse.setStatusCode(statusCode);
         sResponse.setHeaders(cResponse.headers());
         if (!connectionKeepalive) {
             sRequest.response().headers().set("Connection", "close");
@@ -68,8 +70,9 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     }
                 }
 
-                sResponse.setStatusCode(statusCode, "");
-                sResponse.end(getKey());
+                sResponse.setStatusCode(statusCode)
+                    .setId(getKey())
+                    .end();
 
                 if (connectionKeepalive) {
                     if (backend.isKeepAliveLimit()) {
@@ -90,7 +93,9 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             public void handle(Throwable event) {
                 log.error(String.format("host+backend: %s, message: %s", getKey(), event.getMessage()));
                 vertx.eventBus().publish(QUEUE_HEALTHCHECK_FAIL, backend.toString() );
-                sResponse.showErrorAndClose(event, getKey());
+                sResponse.setHeaderHost(getHeaderHost())
+                    .setId(getKey())
+                    .showErrorAndClose(event);
                 backend.close();
             }
         });
