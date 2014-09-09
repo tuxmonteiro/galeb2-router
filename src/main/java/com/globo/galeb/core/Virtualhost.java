@@ -18,15 +18,15 @@ import static com.globo.galeb.core.Constants.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-public class Virtualhost extends JsonObject {
+public class Virtualhost extends JsonObject implements Serializable {
 
     private static final long serialVersionUID = -3715150640575829972L;
 
@@ -161,6 +161,31 @@ public class Virtualhost extends JsonObject {
 
     public boolean hasBadBackends() {
         return !badBackends.isEmpty();
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject virtualhostJson = new JsonObject();
+        JsonObject propertiesJson = new JsonObject(this.encode());
+        JsonArray backendsJson = new JsonArray();
+        JsonArray badBackendsJson = new JsonArray();
+
+        virtualhostJson.putString("name", getVirtualhostName());
+        virtualhostJson.putObject("properties", propertiesJson);
+        for (Backend backend: backends) {
+            if (backend!=null) {
+                backendsJson.addObject(backend.toJson());
+            }
+        }
+        for (Backend badBackend: badBackends) {
+            if (badBackend!=null) {
+                badBackendsJson.addObject(badBackend.toJson());
+            }
+        }
+        virtualhostJson.putArray("backends", backendsJson);
+        virtualhostJson.putArray("badBackends", badBackendsJson);
+
+        return virtualhostJson;
     }
 
 }

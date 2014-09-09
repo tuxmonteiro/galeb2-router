@@ -18,10 +18,11 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.json.JsonObject;
 
 import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
 
-public class Backend {
+public class Backend implements Serializable {
 
     private final Vertx vertx;
     private final EventBus eb;
@@ -214,6 +215,23 @@ public class Backend {
             httpClientClosed = true;
         }
         return httpClientClosed;
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject backendJson = new JsonObject();
+        backendJson.putString("host", host);
+        backendJson.putNumber("port", port);
+        JsonObject propertiesJson = new JsonObject();
+        propertiesJson.putBoolean("keepalive", isKeepalive());
+        propertiesJson.putNumber("connectionTimeout", getConnectionTimeout());
+        propertiesJson.putNumber("keepaliveMaxRequest", getKeepAliveMaxRequest());
+        propertiesJson.putNumber("keepAliveTimeOut", getKeepAliveTimeOut());
+        propertiesJson.putNumber("maxPoolSize", getMaxPoolSize());
+        propertiesJson.putNumber("activeConnections", getSessionController().getActiveConnections());
+        backendJson.putObject("properties", propertiesJson);
+
+        return backendJson;
     }
 
 }

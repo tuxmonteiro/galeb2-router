@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.Server;
@@ -456,38 +455,11 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         JsonArray vhosts = new JsonArray();
 
         for (String vhost : virtualhosts.keySet()) {
-            JsonObject vhostObj = new JsonObject();
-            vhostObj.putString("name", vhost);
-            JsonArray backends = new JsonArray();
             Virtualhost virtualhost = virtualhosts.get(vhost);
             if (virtualhost==null) {
                 continue;
             }
-            vhostObj.putObject("properties", virtualhost.copy());
-            for (Backend value : virtualhost.getBackends(true)) {
-                if (value!=null) {
-                    JsonObject backendObj = new JsonObject();
-                    backendObj.putString("host", value.toString().split(":")[0]);
-                    backendObj.putNumber("port", Integer.parseInt(value.toString().split(":")[1]));
-                    backends.add(backendObj);
-                }
-            }
-            vhostObj.putArray("backends", backends);
-            JsonArray badBackends = new JsonArray();
-            if (!virtualhost.getBackends(false).isEmpty()) {
-                for (Backend value : virtualhost.getBackends(false)) {
-                    if (value!=null) {
-                        JsonObject backendObj = new JsonObject();
-                        String[] hostWithPort = value.toString().split(":");
-                        backendObj.putString("host", hostWithPort[0]);
-                        backendObj.putNumber("port", Integer.parseInt(hostWithPort[1]));
-                        badBackends.add(backendObj);
-                    }
-                }
-            }
-            vhostObj.putArray("badBackends", badBackends);
-
-            vhosts.add(vhostObj);
+            vhosts.add(virtualhost.toJson());
         }
         routes.putArray("routes", vhosts);
         return routes;
