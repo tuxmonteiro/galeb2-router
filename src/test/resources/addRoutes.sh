@@ -48,7 +48,7 @@ fi
 
 curl -XPOST "http://$ROUTE/virtualhost" -d '
 {
-  "name": "'$VHOST'",
+  "id": "'$VHOST'",
   "properties": {
     "loadBalancePolicy": "'$LOADBALANCE'"
   },
@@ -60,11 +60,10 @@ curl -XPOST "http://$ROUTE/virtualhost" -d '
 
 curl -XPOST "http://$ROUTE/backend" -d '
 {
-  "name": "'$VHOST'",
+  "id": "'$VHOST'",
   "backends": [
     {
-        "host":"'$BACKEND1_HOST'",
-        "port": '$BACKEND1_PORT'
+        "id":"'$BACKEND1_HOST:$BACKEND1_PORT'"
     }
     ]}' \
     && curl -XPOST "http://$ROUTE/version" -d '
@@ -75,11 +74,10 @@ curl -XPOST "http://$ROUTE/backend" -d '
 
 curl -XPOST "http://$ROUTE/backend" -d '
 {
-  "name": "'$VHOST'",
+  "id": "'$VHOST'",
   "backends": [
     {
-        "host":"'$BACKEND2_HOST'",
-        "port": '$BACKEND2_PORT'
+        "id":"'$BACKEND2_HOST:$BACKEND2_PORT'"
     }
     ]}' \
     && curl -XPOST "http://$ROUTE/version" -d '

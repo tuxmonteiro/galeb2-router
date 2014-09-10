@@ -39,6 +39,13 @@ public class Virtualhost extends JsonObject implements Serializable {
     private ILoadBalancePolicy connectPolicy     = null;
     private ILoadBalancePolicy persistencePolicy = null;
 
+    private final Long createdAt = System.currentTimeMillis();
+    private Long modifiedAt = System.currentTimeMillis();
+
+    private void updateModifiedTimestamp() {
+        modifiedAt = System.currentTimeMillis();
+    }
+
     public Virtualhost(String virtualhostName, final Vertx vertx) {
         super();
         this.virtualhostName = virtualhostName;
@@ -48,7 +55,7 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
-        this(json.getString("name", "UNDEF"), vertx);
+        this(json.getString("id", "UNDEF"), vertx);
         JsonObject properties = json.getObject("properties");
         mergeIn(properties);
     }
@@ -59,19 +66,11 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public boolean addBackend(String backend, boolean backendOk) {
-        String[] backendWithPort = backend.split(":");
-        String host = backendWithPort[0];
-        int port = 0;
-        if (backendWithPort.length>1) {
-            port = Integer.parseInt(backendWithPort[1]);
-        }
-        return addBackend(new JsonObject()
-                    .putString("host", host)
-                    .putNumber("port", port),
-                backendOk);
+        return addBackend(new JsonObject().putString("id", backend), backendOk);
     }
 
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
+        updateModifiedTimestamp();
         if (backendOk) {
             putBoolean(transientStateFieldName, true);
             return backends.add(new Backend(backendJson, vertx));
@@ -89,6 +88,7 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public Boolean removeBackend(String backend, boolean backendOk) {
+        updateModifiedTimestamp();
         if (backendOk) {
             putBoolean(transientStateFieldName, true);
             return backends.remove(new Backend(backend, vertx));
@@ -98,6 +98,7 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public void clear(boolean backendOk) {
+        updateModifiedTimestamp();
         if (backendOk) {
             backends.clear();
             putBoolean(transientStateFieldName, true);
@@ -107,6 +108,7 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public void clearAll() {
+        updateModifiedTimestamp();
         backends.clear();
         badBackends.clear();
         putBoolean(transientStateFieldName, true);
@@ -190,8 +192,11 @@ public class Virtualhost extends JsonObject implements Serializable {
         JsonArray backendsJson = new JsonArray();
         JsonArray badBackendsJson = new JsonArray();
 
-        virtualhostJson.putString("name", getVirtualhostName());
+        virtualhostJson.putString("id", getVirtualhostName());
+        virtualhostJson.putNumber("created_at", createdAt);
+        virtualhostJson.putNumber("modified_at", modifiedAt);
         virtualhostJson.putObject("properties", propertiesJson);
+
         for (Backend backend: backends) {
             if (backend!=null) {
                 backendsJson.addObject(backend.toJson());

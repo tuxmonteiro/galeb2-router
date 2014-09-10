@@ -169,15 +169,10 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
             while (it.hasNext()) {
                 String message;
                 String virtualhost = it.next();
-                String[] backendArray = backend.split(":");
-                String host = backendArray[0];
-                String port = backendArray[1];
-                String statusStr = status ? "0" : "1";
+                JsonObject backendJson = new JsonObject().putString("id", backend).putBoolean("status", status);
 
                 message = QueueMap.buildMessage(virtualhost,
-                                                host,
-                                                port,
-                                                statusStr,
+                                                backendJson.encode(),
                                                 String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")),
                                                 "{}");
                 if (eb!=null) {
@@ -185,9 +180,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 }
 
                 message = QueueMap.buildMessage(virtualhost,
-                                                host,
-                                                port,
-                                                statusStr,
+                                                backendJson.encode(),
                                                 "/backend",
                                                 "{}");
                 if (eb!=null) {
