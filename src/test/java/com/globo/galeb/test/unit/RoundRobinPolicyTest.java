@@ -17,6 +17,7 @@ package com.globo.galeb.test.unit;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static com.globo.galeb.core.Constants.*;
+
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.RoundRobinPolicy;
@@ -28,6 +29,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.CaseInsensitiveMultiMap;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.impl.DefaultVertx;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.shareddata.SharedData;
 
 public class RoundRobinPolicyTest {
@@ -44,8 +46,12 @@ public class RoundRobinPolicyTest {
         SharedData sharedData = new SharedData();
         when(vertx.sharedData()).thenReturn(sharedData);
 
-        virtualhost = new Virtualhost("test.localdomain", vertx);
-        virtualhost.putString(loadBalancePolicyFieldName, RoundRobinPolicy.class.getSimpleName());
+        JsonObject virtualhostProperties = new JsonObject()
+            .putString(loadBalancePolicyFieldName, RoundRobinPolicy.class.getSimpleName());
+        JsonObject virtualhostJson = new JsonObject()
+            .putString("virtualhost", "test.localdomain")
+            .putObject("properties", virtualhostProperties);
+        virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
             virtualhost.addBackend(String.format("0:%s", x), true);

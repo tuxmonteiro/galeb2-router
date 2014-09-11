@@ -57,7 +57,7 @@ public class RequestForTest {
 
     public RequestForTest setHost(String host) {
         this.host = host;
-        return this;        
+        return this;
     }
 
     public RequestForTest setUri(String uri) {

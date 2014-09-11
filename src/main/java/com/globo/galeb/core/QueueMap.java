@@ -18,7 +18,6 @@ import static com.globo.galeb.core.Constants.QUEUE_ROUTE_ADD;
 import static com.globo.galeb.core.Constants.QUEUE_ROUTE_DEL;
 import static com.globo.galeb.core.Constants.QUEUE_ROUTE_VERSION;
 
-import java.util.Iterator;
 import java.util.Map;
 
 import org.vertx.java.core.Handler;
@@ -39,19 +38,22 @@ public class QueueMap {
     private final Map<String, Virtualhost> virtualhosts;
 
     public static String buildMessage(String virtualhostStr,
-                                      String hostStr,
-                                      String portStr,
-                                      String statusStr,
+                                      String backendStr,
                                       String uriStr,
                                       String properties)
     {
         JsonObject messageJson = new JsonObject();
-        messageJson.putString("virtualhost", virtualhostStr);
-        messageJson.putString("host", hostStr);
-        messageJson.putString("port", portStr);
-        messageJson.putString("status", statusStr);
+        JsonObject virtualhostObj = new JsonObject().putString("id", virtualhostStr);
+//        JsonObject backendObj = new JsonObject().putString("id", backendStr);
+
+        try {
+            virtualhostObj.putObject("properties", new JsonObject(properties));
+        } catch (DecodeException ignoreBadJson) {
+            virtualhostObj.putObject("properties", new JsonObject());
+        }
+        messageJson.putString("virtualhost", virtualhostObj.encode());
+        messageJson.putString("backend", backendStr);
         messageJson.putString("uri", uriStr);
-        messageJson.putString("properties", properties);
 
         return messageJson.toString();
     }
@@ -71,28 +73,18 @@ public class QueueMap {
 
         boolean isOk = true;
         JsonObject messageJson = new JsonObject(message);
-        String virtualhost = messageJson.getString("virtualhost", "");
+        JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
+        String virtualhost = virtualhostJson.getString("id", "");
+        String backendStr = messageJson.getString("backend", "{}");
+        JsonObject backend = new JsonObject(backendStr);
         String uri = messageJson.getString("uri", "");
         String uriBase = uri.split("/")[1];
 
         switch (uriBase) {
-            case "route":
             case "virtualhost":
                 if (!virtualhosts.containsKey(virtualhost)) {
-                    String properties = messageJson.getString("properties", "{}");
-
-                    Virtualhost virtualhostObj = new Virtualhost(virtualhost, vertx);
-                    try {
-                        if (!"".equals(properties)) {
-                            JsonObject propertiesJson = new JsonObject(properties);
-                            virtualhostObj.mergeIn(propertiesJson);
-                        }
-                    } catch (DecodeException e1) {
-                        log.error(String.format("[%s] Properties decode failed (%s): %s", verticle.toString(), virtualhost, properties));
-                    } catch (Exception e2) {
-                        log.error(String.format("[%s] %s", verticle.toString(), e2.getMessage()));
-                    }
-                    virtualhosts.put(virtualhost, virtualhostObj);
+                    Virtualhost newVirtualhostObj = new Virtualhost(virtualhostJson, vertx);
+                    virtualhosts.put(virtualhost, newVirtualhostObj);
                     log.info(String.format("[%s] Virtualhost %s added", verticle.toString(), virtualhost));
                     isOk = true;
                 } else {
@@ -101,21 +93,18 @@ public class QueueMap {
                 break;
             case "backend":
                 if (!virtualhosts.containsKey(virtualhost)) {
-                    log.warn(String.format("[%s] Backend didnt create, because Virtualhost %s not exist", verticle.toString(), virtualhost));
+                    log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticle.toString(), virtualhost));
                     isOk = false;
                 } else {
 
-                    String host = messageJson.getString("host", "");
-                    String port = messageJson.getString("port", "");
-                    boolean status = !"0".equals(messageJson.getString("status", ""));
-                    String backend = (!"".equals(host) && !"".equals(port)) ?
-                            String.format("%s:%s", host, port) : "";
+                    String hostWithPort = backend.getString("id", "");
+                    boolean status = backend.getBoolean("status", true);
 
                     final Virtualhost vhost = virtualhosts.get(virtualhost);
                     if (vhost.addBackend(backend, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), backend, virtualhost));
+                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), hostWithPort, virtualhost));
                     } else {
-                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), backend, virtualhost));
+                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), hostWithPort, virtualhost));
                         isOk = false;
                     }
                 }
@@ -135,30 +124,17 @@ public class QueueMap {
 
         boolean isOk = true;
         JsonObject messageJson = new JsonObject(message);
-        String virtualhost = messageJson.getString("virtualhost", "");
-        String host = messageJson.getString("host", "");
-        String port = messageJson.getString("port");
+        JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
+        String virtualhost = virtualhostJson.getString("id", "");
+        String backendStr = messageJson.getString("backend", "{}");
+        JsonObject backend = new JsonObject(backendStr);
+//        String hostWithPort = messageJson.getString("backend", "");
         boolean status = !"0".equals(messageJson.getString("status", ""));
         String uri = messageJson.getString("uri", "");
-//        String properties = messageJson.getString("properties", "{}");
 
-        String backend = (!"".equals(host) && !"".equals(port)) ?
-                String.format("%s:%s", host, port) : "";
         String uriBase = uri.split("/")[1];
 
         switch (uriBase) {
-            case "route":
-                Iterator<Virtualhost> iterVirtualhost = virtualhosts.values().iterator();
-                while (iterVirtualhost.hasNext()) {
-                    Virtualhost aVirtualhost = iterVirtualhost.next();
-                    if (aVirtualhost!=null) {
-                        aVirtualhost.clear(true);
-                        aVirtualhost.clear(false);
-                    }
-                }
-                virtualhosts.clear();
-                log.info(String.format("[%s] All routes were cleaned", verticle.toString()));
-                break;
             case "virtualhost":
                 if (virtualhosts.containsKey(virtualhost)) {
                     virtualhosts.get(virtualhost).clearAll();
@@ -170,7 +146,8 @@ public class QueueMap {
                 }
                 break;
             case "backend":
-                if ("".equals(backend)) {
+                String backendId = backend.getString("id");
+                if ("".equals(backendId)) {
                     log.warn(String.format("[%s] Backend UNDEF", verticle.toString()));
                     isOk = false;
                 } else if (!virtualhosts.containsKey(virtualhost)) {
@@ -178,10 +155,10 @@ public class QueueMap {
                     isOk = false;
                 } else {
                     final Virtualhost virtualhostObj = virtualhosts.get(virtualhost);
-                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backend, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), backend, virtualhost));
+                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backend.getString("id"), status)) {
+                        log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), backendId, virtualhost));
                     } else {
-                        log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), backend, virtualhost));
+                        log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), backendId, virtualhost));
                         isOk = false;
                     }
                 }

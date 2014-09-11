@@ -17,6 +17,7 @@ package com.globo.galeb.test.unit;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import com.globo.galeb.core.Virtualhost;
@@ -43,7 +44,7 @@ public class RouterRequestHandlerTest {
     private Container container;
     private LogDelegate logDelegate;
     private FakeLogger logger;
-    private Map<String, Virtualhost> virtualhosts;
+    private Map<String, Virtualhost> virtualhosts = new HashMap<>();
 
     @Before
     public void setUp() {
@@ -59,7 +60,7 @@ public class RouterRequestHandlerTest {
         when(verticle.getContainer()).thenReturn(container);
         when(verticle.getContainer().logger()).thenReturn(logger);
 
-        routerRequestHandler = new RouterRequestHandler(vertx, container, virtualhosts, null);
+        routerRequestHandler = new RouterRequestHandler(vertx, container, virtualhosts);
     }
 
     @Test

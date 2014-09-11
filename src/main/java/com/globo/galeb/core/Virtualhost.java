@@ -24,9 +24,10 @@ import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-public class Virtualhost extends JsonObject {
+public class Virtualhost extends JsonObject implements Serializable {
 
     private static final long serialVersionUID = -3715150640575829972L;
 
@@ -38,6 +39,13 @@ public class Virtualhost extends JsonObject {
     private ILoadBalancePolicy connectPolicy     = null;
     private ILoadBalancePolicy persistencePolicy = null;
 
+    private final Long createdAt = System.currentTimeMillis();
+    private Long modifiedAt = System.currentTimeMillis();
+
+    private void updateModifiedTimestamp() {
+        modifiedAt = System.currentTimeMillis();
+    }
+
     public Virtualhost(String virtualhostName, final Vertx vertx) {
         super();
         this.virtualhostName = virtualhostName;
@@ -46,17 +54,28 @@ public class Virtualhost extends JsonObject {
         this.vertx = vertx;
     }
 
+    public Virtualhost(JsonObject json, final Vertx vertx) {
+        this(json.getString("id", "UNDEF"), vertx);
+        JsonObject properties = json.getObject("properties");
+        mergeIn(properties);
+    }
+
     @Override
     public String toString() {
         return getVirtualhostName();
     }
 
     public boolean addBackend(String backend, boolean backendOk) {
+        return addBackend(new JsonObject().putString("id", backend), backendOk);
+    }
+
+    public boolean addBackend(JsonObject backendJson, boolean backendOk) {
+        updateModifiedTimestamp();
         if (backendOk) {
             putBoolean(transientStateFieldName, true);
-            return backends.add(new Backend(backend, vertx));
+            return backends.add(new Backend(backendJson, vertx));
         } else {
-            return badBackends.add(new Backend(backend, vertx));
+            return badBackends.add(new Backend(backendJson, vertx));
         }
     }
 
@@ -69,6 +88,7 @@ public class Virtualhost extends JsonObject {
     }
 
     public Boolean removeBackend(String backend, boolean backendOk) {
+        updateModifiedTimestamp();
         if (backendOk) {
             putBoolean(transientStateFieldName, true);
             return backends.remove(new Backend(backend, vertx));
@@ -78,6 +98,7 @@ public class Virtualhost extends JsonObject {
     }
 
     public void clear(boolean backendOk) {
+        updateModifiedTimestamp();
         if (backendOk) {
             backends.clear();
             putBoolean(transientStateFieldName, true);
@@ -87,6 +108,7 @@ public class Virtualhost extends JsonObject {
     }
 
     public void clearAll() {
+        updateModifiedTimestamp();
         backends.clear();
         badBackends.clear();
         putBoolean(transientStateFieldName, true);
@@ -161,6 +183,34 @@ public class Virtualhost extends JsonObject {
 
     public boolean hasBadBackends() {
         return !badBackends.isEmpty();
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject virtualhostJson = new JsonObject();
+        JsonObject propertiesJson = new JsonObject(this.encode());
+        JsonArray backendsJson = new JsonArray();
+        JsonArray badBackendsJson = new JsonArray();
+
+        virtualhostJson.putString("id", getVirtualhostName());
+        virtualhostJson.putNumber("created_at", createdAt);
+        virtualhostJson.putNumber("modified_at", modifiedAt);
+        virtualhostJson.putObject("properties", propertiesJson);
+
+        for (Backend backend: backends) {
+            if (backend!=null) {
+                backendsJson.addObject(backend.toJson());
+            }
+        }
+        for (Backend badBackend: badBackends) {
+            if (badBackend!=null) {
+                badBackendsJson.addObject(badBackend.toJson());
+            }
+        }
+        virtualhostJson.putArray("backends", backendsJson);
+        virtualhostJson.putArray("badBackends", badBackendsJson);
+
+        return virtualhostJson;
     }
 
 }

@@ -1,4 +1,6 @@
 package com.globo.galeb.test.integration;
+import io.netty.handler.codec.http.HttpResponseStatus;
+
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -50,16 +52,18 @@ public class RouteManagerTest extends UtilTestVerticle {
     // Test POST /virtualhost
     @Test
     public void testWhenEmptyPostVHost() {
-        JsonObject vhostJson = new JsonObject().putString("name", "test.localdomain");
-        JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
+        int expectedStatusCode = 200;
+        String expectedStatusMessage = HttpResponseStatus.valueOf(expectedStatusCode).reasonPhrase();
+        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain");
+        JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
 
         Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
         JsonObject getExpectedJson = new JsonObject()
-        .putString("name", "test.localdomain")
-        .putObject("properties", new JsonObject())
-        .putArray("backends", new JsonArray())
-        .putArray("badBackends", new JsonArray());
+            .putString("id", "test.localdomain")
+            .putObject("properties", new JsonObject())
+            .putArray("backends", new JsonArray())
+            .putArray("badBackends", new JsonArray());
 
         newGet().onPort(9090).atUri("/virtualhost/test.localdomain").expectBodyJson(getExpectedJson).after(action1);
 

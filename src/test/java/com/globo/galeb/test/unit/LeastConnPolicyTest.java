@@ -15,27 +15,44 @@
 package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.vertx.testtools.VertxAssert.testComplete;
 import static com.globo.galeb.core.Constants.*;
+
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.list.UniqueArrayList;
+import com.globo.galeb.loadbalance.impl.HashPolicy;
 import com.globo.galeb.loadbalance.impl.LeastConnPolicy;
 
+import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.impl.DefaultVertx;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
 public class LeastConnPolicyTest extends TestVerticle {
 
     private Virtualhost virtualhost;
     private int numBackends = 10;
+    private Vertx vertx;
+
+    @Before
+    public void setUp() {
+        vertx = mock(DefaultVertx.class);
+    }
 
     @Test
     public void leastConnection() {
 
-        virtualhost = new Virtualhost("test.localdomain", vertx);
-        virtualhost.putString(loadBalancePolicyFieldName, LeastConnPolicy.class.getSimpleName());
+        JsonObject virtualhostProperties = new JsonObject()
+            .putString(loadBalancePolicyFieldName, LeastConnPolicy.class.getSimpleName());
+        JsonObject virtualhostJson = new JsonObject()
+            .putString("virtualhost", "test.localdomain")
+            .putObject("properties", virtualhostProperties);
+        virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
             virtualhost.addBackend(String.format("0:%s", x), true);

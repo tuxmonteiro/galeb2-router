@@ -18,19 +18,22 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.json.JsonObject;
 
 import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
 
-public class Backend {
+public class Backend implements Serializable {
 
     private final Vertx vertx;
     private final EventBus eb;
     private final ConnectionsCounter connectionsCounter;
-
-    private HttpClient client;
-
+    private final String id;
     private final String host;
     private final Integer port;
+    private final Long createdAt = System.currentTimeMillis();
+    private Long modifiedAt = System.currentTimeMillis();
+
+    private HttpClient client;
     private Integer connectionTimeout;
     private boolean keepalive;
     private Long keepAliveMaxRequest;
@@ -51,14 +54,11 @@ public class Backend {
         if (obj == null) return false;
         if (getClass() != obj.getClass()) return false;
         Backend other = (Backend) obj;
-        if (host == null) {
-            if (other.host != null) return false;
-        } else
-            if (!host.equalsIgnoreCase(other.host)) return false;
-        if (port == null) {
-            if (other.port != null) return false;
-        } else
-            if (!port.equals(other.port)) return false;
+        if (id == null) {
+            if (other.id != null) return false;
+        } else {
+            if (!id.equalsIgnoreCase(other.id)) return false;
+        }
         return true;
     }
 
@@ -74,11 +74,18 @@ public class Backend {
         this.client = null;
         if (hostWithPortArray != null && hostWithPortArray.length>1) {
             this.host = hostWithPortArray[0];
-            this.port = Integer.parseInt(hostWithPortArray[1]);
+            int myPort;
+            try {
+                myPort = Integer.parseInt(hostWithPortArray[1]);
+            } catch (NumberFormatException e) {
+                myPort = -1;
+            }
+            this.port = myPort;
         } else {
-            this.host = null;
-            this.port = null;
+            this.host = hostWithPort;
+            this.port = -1;
         }
+        this.id = hostWithPort;
         this.connectionTimeout = 60000;
         this.keepalive = true;
         this.keepAliveMaxRequest = Long.MAX_VALUE-1;
@@ -86,6 +93,21 @@ public class Backend {
         this.keepAliveTimeOut = 86400000L; // One day
         this.requestCount = 0L;
         this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx);
+    }
+
+    public Backend(JsonObject json, final Vertx vertx) {
+        this(json.getString("id", "127.0.0.1:0"), vertx);
+        if (json.containsField("properties")) {
+            JsonObject properties = json.getObject("properties");
+            this.connectionTimeout = properties.getInteger("connectionTimeout", connectionTimeout);
+            this.keepalive = properties.getBoolean("keepalive", keepalive);
+            this.keepAliveMaxRequest = properties.getLong("keepAliveMaxRequest", keepAliveMaxRequest);
+            this.keepAliveTimeOut = properties.getLong("keepAliveTimeOut", keepAliveTimeOut); // One day
+        }
+    }
+
+    private void updateModifiedTimestamp() {
+        modifiedAt = System.currentTimeMillis();
     }
 
     public String getHost() {
@@ -102,6 +124,7 @@ public class Backend {
 
     public Backend setConnectionTimeout(Integer timeout) {
         this.connectionTimeout = timeout;
+        updateModifiedTimestamp();
         return this;
     }
 
@@ -111,6 +134,7 @@ public class Backend {
 
     public Backend setKeepAlive(boolean keepalive) {
         this.keepalive = keepalive;
+        updateModifiedTimestamp();
         return this;
     }
 
@@ -120,6 +144,7 @@ public class Backend {
 
     public Backend setKeepAliveMaxRequest(Long maxRequestCount) {
       this.keepAliveMaxRequest = maxRequestCount;
+      updateModifiedTimestamp();
       return this;
     }
 
@@ -130,6 +155,7 @@ public class Backend {
     public Backend setKeepAliveTimeOut(Long keepAliveTimeOut) {
         this.keepAliveTimeOut = keepAliveTimeOut;
         this.connectionsCounter.setConnectionMapTimeout(getKeepAliveTimeOut());
+        updateModifiedTimestamp();
         return this;
     }
 
@@ -153,33 +179,31 @@ public class Backend {
 
     public Backend setMaxPoolSize(Integer maxPoolSize) {
         this.backendMaxPoolSize = maxPoolSize;
+        updateModifiedTimestamp();
         return this;
     }
 
     // Lazy initialization
     public HttpClient connect(String remoteIP, String remotePort) {
         final String backend = this.toString();
-        if (client==null) {
-            if (vertx!=null) {
-                client = vertx.createHttpClient()
-                    .setKeepAlive(keepalive)
-                    .setTCPKeepAlive(keepalive)
-                    .setConnectTimeout(connectionTimeout)
-                    .setMaxPoolSize(backendMaxPoolSize);
-                if (host!=null || port!=null) {
-                    client.setHost(host)
-                          .setPort(port);
-                }
-                client.exceptionHandler(new Handler<Throwable>() {
-                    @Override
-                    public void handle(Throwable e) {
-                        eb.publish(QUEUE_HEALTHCHECK_FAIL, backend);
-                        connectionsCounter.initEventBus();
-                    }
-                });
-                connectionsCounter.registerEventBus();
-
+        if (client==null && vertx!=null) {
+            client = vertx.createHttpClient()
+                .setKeepAlive(keepalive)
+                .setTCPKeepAlive(keepalive)
+                .setConnectTimeout(connectionTimeout)
+                .setMaxPoolSize(backendMaxPoolSize);
+            if (!"".equals(host) || port!=-1) {
+                client.setHost(host)
+                      .setPort(port);
             }
+            client.exceptionHandler(new Handler<Throwable>() {
+                @Override
+                public void handle(Throwable e) {
+                    eb.publish(QUEUE_HEALTHCHECK_FAIL, backend);
+                    connectionsCounter.initEventBus();
+                }
+            });
+            connectionsCounter.registerEventBus();
         }
         connectionsCounter.addConnection(remoteIP, remotePort);
         return client;
@@ -204,6 +228,7 @@ public class Backend {
     }
 
     public boolean isClosed() {
+        updateModifiedTimestamp();
         if (client==null) {
             return true;
         }
@@ -214,6 +239,26 @@ public class Backend {
             httpClientClosed = true;
         }
         return httpClientClosed;
+    }
+
+    @Override
+    public JsonObject toJson() {
+        JsonObject backendJson = new JsonObject();
+        backendJson.putString("id", id);
+        backendJson.putNumber("created_at", createdAt);
+        backendJson.putNumber("modified_at", modifiedAt);
+
+        JsonObject propertiesJson = new JsonObject();
+        propertiesJson.putBoolean("keepalive", keepalive);
+        propertiesJson.putNumber("connectionTimeout", connectionTimeout);
+        propertiesJson.putNumber("keepaliveMaxRequest", keepAliveMaxRequest);
+        propertiesJson.putNumber("keepAliveTimeOut", keepAliveTimeOut);
+        propertiesJson.putNumber("maxPoolSize", backendMaxPoolSize);
+        propertiesJson.putNumber("activeConnections", getSessionController().getActiveConnections());
+
+        backendJson.putObject("properties", propertiesJson);
+
+        return backendJson;
     }
 
 }
