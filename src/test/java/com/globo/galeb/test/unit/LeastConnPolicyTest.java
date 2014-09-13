@@ -23,7 +23,6 @@ import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.list.UniqueArrayList;
-import com.globo.galeb.loadbalance.impl.HashPolicy;
 import com.globo.galeb.loadbalance.impl.LeastConnPolicy;
 
 import org.junit.Before;
