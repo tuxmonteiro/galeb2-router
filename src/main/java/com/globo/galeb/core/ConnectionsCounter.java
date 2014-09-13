@@ -1,9 +1,6 @@
 package com.globo.galeb.core;
 
 import static com.globo.galeb.core.Constants.QUEUE_BACKEND_CONNECTIONS_PREFIX;
-import static com.globo.galeb.core.Constants.numConnectionFieldName;
-import static com.globo.galeb.core.Constants.uuidFieldName;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -17,6 +14,9 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 
 public class ConnectionsCounter {
+
+    public static final String numConnectionFieldName  = "numConnections";
+    public static final String uuidFieldName           = "uuid";
 
     private final Vertx vertx;
     private final EventBus eb;

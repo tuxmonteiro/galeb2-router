@@ -14,16 +14,11 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.consistenthash.HashAlgorithm.HashType.*;
-
 public class Constants {
 
     private Constants() {
     }
 
-    public static final String QUEUE_ROUTE_ADD                   = "route.add";
-    public static final String QUEUE_ROUTE_DEL                   = "route.del";
-    public static final String QUEUE_ROUTE_VERSION               = "route.version";
     public static final String QUEUE_HEALTHCHECK_OK              = "healthcheck.ok";
     public static final String QUEUE_HEALTHCHECK_FAIL            = "healthcheck.fail";
     public static final String QUEUE_BACKEND_CONNECTIONS_PREFIX  = "conn_";
@@ -42,19 +37,5 @@ public class Constants {
     public static final String CONF_STATSD_HOST                  = "statsdHost";
     public static final String CONF_STATSD_PORT                  = "statsdPort";
     public static final String CONF_STATSD_PREFIX                = "statsdPrefix";
-
-    public static final String loadBalancePolicyFieldName        = "loadBalancePolicy";
-    public static final String persistencePolicyFieldName        = "persistencePolicy";
-    public static final String cacheTimeOutFieldName             = "cacheTimeout";
-    public static final String hashAlgorithmFieldName            = "hashAlgorithm";
-    public static final String transientStateFieldName           = "transientState";
-    public static final String uuidFieldName                     = "uuid";
-    public static final String numConnectionFieldName            = "numConnections";
-
-    public static final String defaultHashAlgorithm              = SIP24.toString();
-
-
-    public static final String defaultLoadBalancePolicy          = "DefaultLoadBalancePolicy";
-    public static final String packageOfLoadBalancePolicyClasses = "com.globo.galeb.loadbalance.impl";
 
 }

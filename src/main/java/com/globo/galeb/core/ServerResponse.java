@@ -14,8 +14,6 @@
  */
 package com.globo.galeb.core;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
-
 import com.globo.galeb.exceptions.BadRequestException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
@@ -23,7 +21,6 @@ import com.globo.galeb.metrics.ICounter;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpServerResponse;
-import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 public class ServerResponse {
@@ -36,21 +33,13 @@ public class ServerResponse {
     private String id = "";
     private String headerHost = "";
 
-    public static String makeStatusMessage(int statusCode, boolean asJson){
-        String statusMessage = HttpResponseStatus.valueOf(statusCode).reasonPhrase();
-        if (asJson) {
-            statusMessage = new JsonObject().putString("status_message", statusMessage).encodePrettily();
-        }
-        return statusMessage;
-    }
-
     private int exceptionToHttpCode(final Throwable e) {
         if (e instanceof java.util.concurrent.TimeoutException) {
-            return 504;
+            return HttpCode.GatewayTimeout;
         } else if (e instanceof BadRequestException) {
-            return 400;
+            return HttpCode.BadRequest;
         } else {
-            return 502;
+            return HttpCode.BadGateway;
         }
     }
 
@@ -82,7 +71,7 @@ public class ServerResponse {
     public ServerResponse setStatusCode(Integer code) {
 
         resp.setStatusCode(code);
-        String message = HttpResponseStatus.valueOf(code).reasonPhrase();
+        String message = HttpCode.getMessage(code);
         resp.setStatusMessage(message);
         return this;
     }
@@ -102,9 +91,9 @@ public class ServerResponse {
         String message = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
                 !"".equals(headerHost) ? " (virtualhost: "+headerHost+")" : "",
-                makeStatusMessage(statusCode, false));
+                HttpCode.getMessage(statusCode, false));
 
-        if (statusCode>499) {
+        if (statusCode>=HttpCode.InternalServerError) {
             log.error(message);
         } else {
             log.warn(message);

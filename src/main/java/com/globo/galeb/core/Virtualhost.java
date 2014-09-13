@@ -14,8 +14,6 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.Constants.*;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
@@ -31,13 +29,15 @@ public class Virtualhost extends JsonObject implements Serializable {
 
     private static final long serialVersionUID = -3715150640575829972L;
 
-    private final String                  virtualhostName;
+    public static final String transientStateFieldName           = "transientState";
+    public static final String loadBalancePolicyFieldName        = "loadBalancePolicy";
+
+    private final String                   virtualhostName;
     private final UniqueArrayList<Backend> backends;
     private final UniqueArrayList<Backend> badBackends;
-    private final Vertx                   vertx;
+    private final Vertx                    vertx;
 
     private ILoadBalancePolicy connectPolicy     = null;
-    private ILoadBalancePolicy persistencePolicy = null;
 
     private final Long createdAt = System.currentTimeMillis();
     private Long modifiedAt = System.currentTimeMillis();
@@ -115,30 +115,19 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public Backend getChoice(RequestData requestData) {
-        // Default: isNewConnection = true
-        return getChoice(requestData, true);
-    }
-
-    public Backend getChoice(RequestData requestData, boolean isNewConnection) {
         requestData.setProperties(this);
         Backend chosen;
-        if (isNewConnection) {
-            if (connectPolicy==null) {
-                getLoadBalancePolicy();
-            }
-            chosen = connectPolicy.getChoice(backends, requestData);
-        } else {
-            if (persistencePolicy==null) {
-                getPersistencePolicy();
-            }
-            chosen = persistencePolicy.getChoice(backends, requestData);
+        if (connectPolicy==null) {
+            getLoadBalancePolicy();
         }
+        chosen = connectPolicy.getChoice(backends, requestData);
         putBoolean(transientStateFieldName, false);
         return chosen;
     }
 
     public ILoadBalancePolicy getLoadBalancePolicy() {
-        String loadBalancePolicyStr = getString(loadBalancePolicyFieldName, defaultLoadBalancePolicy);
+        String loadBalancePolicyStr = getString(loadBalancePolicyFieldName,
+                DefaultLoadBalancePolicy.class.getSimpleName());
         connectPolicy = loadBalancePolicyClassLoader(loadBalancePolicyStr);
         if (connectPolicy.isDefault()) {
             putString(loadBalancePolicyFieldName, connectPolicy.toString());
@@ -146,21 +135,13 @@ public class Virtualhost extends JsonObject implements Serializable {
         return connectPolicy;
     }
 
-    public ILoadBalancePolicy getPersistencePolicy() {
-        String persistencePolicyStr = getString(persistencePolicyFieldName, defaultLoadBalancePolicy);
-        persistencePolicy = loadBalancePolicyClassLoader(persistencePolicyStr);
-        if (persistencePolicy.isDefault()) {
-            putString(persistencePolicyFieldName, persistencePolicy.toString());
-        }
-        return persistencePolicy;
-    }
-
     public ILoadBalancePolicy loadBalancePolicyClassLoader(String loadBalancePolicyName) {
         try {
+            String classFullName=String.format("%s.%s",
+                    DefaultLoadBalancePolicy.class.getPackage().getName(), loadBalancePolicyName);
 
             @SuppressWarnings("unchecked")
-            Class<ILoadBalancePolicy> classLoader = (Class<ILoadBalancePolicy>) Class.forName(
-                            String.format("%s.%s", packageOfLoadBalancePolicyClasses, loadBalancePolicyName));
+            Class<ILoadBalancePolicy> classLoader = (Class<ILoadBalancePolicy>) Class.forName(classFullName);
             Constructor<ILoadBalancePolicy> classPolicy = classLoader.getConstructor();
 
             return classPolicy.newInstance();

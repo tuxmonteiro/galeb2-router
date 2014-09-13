@@ -14,10 +14,6 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_ADD;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_DEL;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_VERSION;
-
 import java.util.Map;
 
 import org.vertx.java.core.Handler;
@@ -31,11 +27,30 @@ import org.vertx.java.platform.Verticle;
 
 public class QueueMap {
 
+    public enum ACTION {
+
+        ADD("route.add"),
+        DEL("route.del"),
+        SET_VERSION("route.version");
+
+        private String queue;
+        private ACTION(final String queue) {
+            this.queue = queue;
+        }
+
+        @Override
+        public String toString() {
+            return queue;
+        }
+
+    }
+
     private final Verticle verticle;
     private final Vertx vertx;
     private final EventBus eb;
     private final Logger log;
     private final Map<String, Virtualhost> virtualhosts;
+
 
     public static String buildMessage(String virtualhostStr,
                                       String backendStr,
@@ -44,7 +59,6 @@ public class QueueMap {
     {
         JsonObject messageJson = new JsonObject();
         JsonObject virtualhostObj = new JsonObject().putString("id", virtualhostStr);
-//        JsonObject backendObj = new JsonObject().putString("id", backendStr);
 
         try {
             virtualhostObj.putObject("properties", new JsonObject(properties));
@@ -128,7 +142,6 @@ public class QueueMap {
         String virtualhost = virtualhostJson.getString("id", "");
         String backendStr = messageJson.getString("backend", "{}");
         JsonObject backend = new JsonObject(backendStr);
-//        String hostWithPort = messageJson.getString("backend", "");
         boolean status = !"0".equals(messageJson.getString("status", ""));
         String uri = messageJson.getString("uri", "");
 
@@ -177,7 +190,13 @@ public class QueueMap {
         } catch (java.lang.NumberFormatException e) {}
     }
 
-    public void registerQueueAdd() {
+    public void register() {
+        registerQueueAdd();
+        registerQueueDel();
+        registerQueueVersion();
+    }
+
+    private void registerQueueAdd() {
         Handler<Message<String>> queueAddHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -186,11 +205,11 @@ public class QueueMap {
             }
         };
         if (eb != null) {
-            eb.registerHandler(QUEUE_ROUTE_ADD, queueAddHandler);
+            eb.registerHandler(ACTION.ADD.toString(), queueAddHandler);
         }
     }
 
-    public void registerQueueDel() {
+    private void registerQueueDel() {
         Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -199,11 +218,11 @@ public class QueueMap {
             }
         };
         if (eb!=null) {
-            eb.registerHandler(QUEUE_ROUTE_DEL,queueDelHandler);
+            eb.registerHandler(ACTION.DEL.toString(),queueDelHandler);
         }
     }
 
-    public void registerQueueVersion() {
+    private void registerQueueVersion() {
         Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -211,7 +230,7 @@ public class QueueMap {
             }
         };
         if (eb!=null) {
-            eb.registerHandler(QUEUE_ROUTE_VERSION, queueVersionHandler);
+            eb.registerHandler(ACTION.SET_VERSION.toString(), queueVersionHandler);
         }
     }
 
