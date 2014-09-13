@@ -29,8 +29,10 @@ public class Virtualhost extends JsonObject implements Serializable {
 
     private static final long serialVersionUID = -3715150640575829972L;
 
-    public static final String transientStateFieldName           = "transientState";
-    public static final String loadBalancePolicyFieldName        = "loadBalancePolicy";
+    public static final String backendsFieldName          = "backends";
+    public static final String badBackendsFieldName       = "badBackends";
+    public static final String transientStateFieldName    = "transientState";
+    public static final String loadBalancePolicyFieldName = "loadBalancePolicy";
 
     private final String                   virtualhostName;
     private final UniqueArrayList<Backend> backends;
@@ -55,8 +57,8 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
-        this(json.getString("id", "UNDEF"), vertx);
-        JsonObject properties = json.getObject("properties");
+        this(json.getString(jsonIdFieldName, "UNDEF"), vertx);
+        JsonObject properties = json.getObject(jsonPropertiesFieldName);
         mergeIn(properties);
     }
 
@@ -66,7 +68,7 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public boolean addBackend(String backend, boolean backendOk) {
-        return addBackend(new JsonObject().putString("id", backend), backendOk);
+        return addBackend(new JsonObject().putString(jsonIdFieldName, backend), backendOk);
     }
 
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
@@ -173,10 +175,10 @@ public class Virtualhost extends JsonObject implements Serializable {
         JsonArray backendsJson = new JsonArray();
         JsonArray badBackendsJson = new JsonArray();
 
-        virtualhostJson.putString("id", getVirtualhostName());
-        virtualhostJson.putNumber("created_at", createdAt);
-        virtualhostJson.putNumber("modified_at", modifiedAt);
-        virtualhostJson.putObject("properties", propertiesJson);
+        virtualhostJson.putString(jsonIdFieldName, getVirtualhostName());
+        virtualhostJson.putNumber(jsonCreatedAtFieldName, createdAt);
+        virtualhostJson.putNumber(jsonModifiedAtFieldName, modifiedAt);
+        virtualhostJson.putObject(jsonPropertiesFieldName, propertiesJson);
 
         for (Backend backend: backends) {
             if (backend!=null) {
@@ -188,8 +190,8 @@ public class Virtualhost extends JsonObject implements Serializable {
                 badBackendsJson.addObject(badBackend.toJson());
             }
         }
-        virtualhostJson.putArray("backends", backendsJson);
-        virtualhostJson.putArray("badBackends", badBackendsJson);
+        virtualhostJson.putArray(backendsFieldName, backendsJson);
+        virtualhostJson.putArray(badBackendsFieldName, badBackendsJson);
 
         return virtualhostJson;
     }

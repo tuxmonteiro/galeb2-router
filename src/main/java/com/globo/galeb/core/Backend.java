@@ -24,6 +24,13 @@ import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
 
 public class Backend implements Serializable {
 
+    public static String propertyKeepAliveFieldName           = "keepalive";
+    public static String propertyConnectionTimeoutFieldName   = "connectionTimeout";
+    public static String propertyKeepaliveMaxRequestFieldName = "keepaliveMaxRequest";
+    public static String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
+    public static String propertyMaxPoolSizeFieldName         = "maxPoolSize";
+    public static String propertyActiveConnectionsFieldName   = "activeConnections";
+
     private final Vertx vertx;
     private final EventBus eb;
     private final ConnectionsCounter connectionsCounter;
@@ -45,7 +52,7 @@ public class Backend implements Serializable {
 
     @Override
     public String toString() {
-        return String.format("%s:%d", this.host, this.port);
+        return id;
     }
 
     @Override
@@ -96,13 +103,13 @@ public class Backend implements Serializable {
     }
 
     public Backend(JsonObject json, final Vertx vertx) {
-        this(json.getString("id", "127.0.0.1:0"), vertx);
-        if (json.containsField("properties")) {
-            JsonObject properties = json.getObject("properties");
-            this.connectionTimeout = properties.getInteger("connectionTimeout", connectionTimeout);
-            this.keepalive = properties.getBoolean("keepalive", keepalive);
-            this.keepAliveMaxRequest = properties.getLong("keepAliveMaxRequest", keepAliveMaxRequest);
-            this.keepAliveTimeOut = properties.getLong("keepAliveTimeOut", keepAliveTimeOut); // One day
+        this(json.getString(jsonIdFieldName, "127.0.0.1:0"), vertx);
+        if (json.containsField(jsonPropertiesFieldName)) {
+            JsonObject properties = json.getObject(jsonPropertiesFieldName);
+            this.connectionTimeout = properties.getInteger(propertyConnectionTimeoutFieldName, connectionTimeout);
+            this.keepalive = properties.getBoolean(propertyKeepAliveFieldName, keepalive);
+            this.keepAliveMaxRequest = properties.getLong(propertyKeepaliveMaxRequestFieldName, keepAliveMaxRequest);
+            this.keepAliveTimeOut = properties.getLong(propertyKeepAliveTimeOutFieldName, keepAliveTimeOut); // One day
         }
     }
 
@@ -244,19 +251,19 @@ public class Backend implements Serializable {
     @Override
     public JsonObject toJson() {
         JsonObject backendJson = new JsonObject();
-        backendJson.putString("id", id);
-        backendJson.putNumber("created_at", createdAt);
-        backendJson.putNumber("modified_at", modifiedAt);
+        backendJson.putString(jsonIdFieldName, id);
+        backendJson.putNumber(jsonCreatedAtFieldName, createdAt);
+        backendJson.putNumber(jsonModifiedAtFieldName, modifiedAt);
 
         JsonObject propertiesJson = new JsonObject();
-        propertiesJson.putBoolean("keepalive", keepalive);
-        propertiesJson.putNumber("connectionTimeout", connectionTimeout);
-        propertiesJson.putNumber("keepaliveMaxRequest", keepAliveMaxRequest);
-        propertiesJson.putNumber("keepAliveTimeOut", keepAliveTimeOut);
-        propertiesJson.putNumber("maxPoolSize", backendMaxPoolSize);
-        propertiesJson.putNumber("activeConnections", getSessionController().getActiveConnections());
+        propertiesJson.putBoolean(propertyKeepAliveFieldName, keepalive);
+        propertiesJson.putNumber(propertyConnectionTimeoutFieldName, connectionTimeout);
+        propertiesJson.putNumber(propertyKeepaliveMaxRequestFieldName, keepAliveMaxRequest);
+        propertiesJson.putNumber(propertyKeepAliveTimeOutFieldName, keepAliveTimeOut);
+        propertiesJson.putNumber(propertyMaxPoolSizeFieldName, backendMaxPoolSize);
+        propertiesJson.putNumber(propertyActiveConnectionsFieldName, getSessionController().getActiveConnections());
 
-        backendJson.putObject("properties", propertiesJson);
+        backendJson.putObject(jsonPropertiesFieldName, propertiesJson);
 
         return backendJson;
     }
