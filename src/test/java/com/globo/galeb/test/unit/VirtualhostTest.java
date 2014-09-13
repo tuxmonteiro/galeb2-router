@@ -16,7 +16,6 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
-import static com.globo.galeb.core.Constants.*;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
 
 import com.globo.galeb.core.RequestData;
@@ -45,7 +44,7 @@ public class VirtualhostTest {
         requestData = new RequestData();
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+            .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", virtualhostName)
             .putObject("properties", virtualhostProperties);
@@ -136,7 +135,7 @@ public class VirtualhostTest {
 
     @Test
     public void loadBalancePolicyClassFound() {
-        virtualhost.putString(loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+        virtualhost.putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
 
         ILoadBalancePolicy loadBalance = virtualhost.getLoadBalancePolicy();
 
@@ -146,7 +145,7 @@ public class VirtualhostTest {
     @Test
     public void loadBalancePolicyClassNotFound() {
         String loadBalancePolicyStr = "ClassNotExist";
-        virtualhost.putString(loadBalancePolicyFieldName, loadBalancePolicyStr);
+        virtualhost.putString(Virtualhost.loadBalancePolicyFieldName, loadBalancePolicyStr);
 
         ILoadBalancePolicy loadBalance = virtualhost.getLoadBalancePolicy();
 
@@ -155,20 +154,11 @@ public class VirtualhostTest {
 
     @Test
     public void getBackendWithLoadBalancePolicy() {
-        virtualhost.putString(loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
+        virtualhost.putString(Virtualhost.loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
 
         virtualhost.addBackend(backend, true);
 
         assertThat(virtualhost.getChoice(requestData).toString()).isEqualTo(backend);
-    }
-
-    @Test
-    public void getBackendWithPersistencePolicy() {
-        virtualhost.putString(persistencePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
-
-        virtualhost.addBackend(backend, true);
-
-        assertThat(virtualhost.getChoice(requestData, false).toString()).isEqualTo(backend);
     }
 
 }

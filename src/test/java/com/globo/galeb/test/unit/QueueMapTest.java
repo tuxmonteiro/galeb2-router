@@ -26,6 +26,7 @@ import java.util.Map;
 
 import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 import org.junit.Before;
@@ -57,7 +58,7 @@ public class QueueMapTest {
         vertx = mock(Vertx.class);
         container = mock(Container.class);
         properties = new JsonObject();
-        properties.putString(loadBalancePolicyFieldName, defaultLoadBalancePolicy);
+        properties.putString(Virtualhost.loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
         logDelegate = mock(LogDelegate.class);
         logger = new FakeLogger(logDelegate);
         ((FakeLogger)logger).setQuiet(false);
@@ -82,7 +83,7 @@ public class QueueMapTest {
         boolean isOk = queueMap.processAddMessage(message);
 
         assertThat(virtualhosts).containsKey(virtualhostStr);
-        assertThat(virtualhosts.get(virtualhostStr)).hasProperty(loadBalancePolicyFieldName);
+        assertThat(virtualhosts.get(virtualhostStr)).hasProperty(Virtualhost.loadBalancePolicyFieldName);
         assertThat(isOk).isTrue();
     }
 

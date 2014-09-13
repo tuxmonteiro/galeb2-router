@@ -39,7 +39,7 @@ public class RandomPolicyTest {
         Vertx vertx = mock(DefaultVertx.class);
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+            .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", "test.localdomain")
             .putObject("properties", virtualhostProperties);

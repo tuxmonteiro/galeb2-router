@@ -47,7 +47,7 @@ public class RoundRobinPolicyTest {
         when(vertx.sharedData()).thenReturn(sharedData);
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(loadBalancePolicyFieldName, RoundRobinPolicy.class.getSimpleName());
+            .putString(Virtualhost.loadBalancePolicyFieldName, RoundRobinPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", "test.localdomain")
             .putObject("properties", virtualhostProperties);

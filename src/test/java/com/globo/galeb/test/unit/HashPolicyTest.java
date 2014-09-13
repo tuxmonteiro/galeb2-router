@@ -44,7 +44,7 @@ public class HashPolicyTest {
         Vertx vertx = mock(DefaultVertx.class);
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
+            .putString(Virtualhost.loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", "test.localdomain")
             .putObject("properties", virtualhostProperties);
@@ -89,7 +89,7 @@ public class HashPolicyTest {
                 long initialTime = System.currentTimeMillis();
                 for (int counter=0; counter<samples; counter++) {
                     RequestData requestData = new RequestData(Long.toString(counter), null);
-                    virtualhost.putString(hashAlgorithmFieldName, hash.toString());
+                    virtualhost.putString(HashPolicy.hashAlgorithmFieldName, hash.toString());
                     sum += virtualhost.getChoice(requestData).getPort();
                 }
                 long finishTime = System.currentTimeMillis();

@@ -47,7 +47,7 @@ public class LeastConnPolicyTest extends TestVerticle {
     public void leastConnection() {
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(loadBalancePolicyFieldName, LeastConnPolicy.class.getSimpleName());
+            .putString(Virtualhost.loadBalancePolicyFieldName, LeastConnPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", "test.localdomain")
             .putObject("properties", virtualhostProperties);

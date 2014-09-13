@@ -1,6 +1,7 @@
 package com.globo.galeb.test.integration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -16,7 +17,7 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyGetUnknownURI() {
         // Test GET unknown URI
         // Expected: { "status_message" : "Bad Request" }
-        newGet().onPort(9090).atUri("/unknownuri").expectCode(400).expectBodyJson("{\"status_message\": \"Bad Request\"}").run();
+        newGet().onPort(9090).atUri("/unknownuri").expectCode(HttpCode.BadRequest).expectBodyJson("{\"status_message\": \"Bad Request\"}").run();
     }
 
     @Test
@@ -52,7 +53,7 @@ public class RouteManagerTest extends UtilTestVerticle {
     // Test POST /virtualhost
     @Test
     public void testWhenEmptyPostVHost() {
-        int expectedStatusCode = 200;
+        int expectedStatusCode = HttpCode.Ok;
         String expectedStatusMessage = HttpResponseStatus.valueOf(expectedStatusCode).reasonPhrase();
         JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain");
         JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
