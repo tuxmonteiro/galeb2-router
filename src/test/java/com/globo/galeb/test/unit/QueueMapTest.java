@@ -16,7 +16,6 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static com.globo.galeb.core.Constants.*;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
 
 import java.io.UnsupportedEncodingException;

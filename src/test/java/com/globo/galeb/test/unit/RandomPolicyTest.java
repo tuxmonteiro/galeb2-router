@@ -14,7 +14,6 @@
  */
 package com.globo.galeb.test.unit;
 
-import static com.globo.galeb.core.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 

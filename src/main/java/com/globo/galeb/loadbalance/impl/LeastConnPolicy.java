@@ -14,8 +14,6 @@
  */
 package com.globo.galeb.loadbalance.impl;
 
-import static com.globo.galeb.core.Constants.*;
-
 import java.util.List;
 
 import org.vertx.java.core.json.JsonObject;

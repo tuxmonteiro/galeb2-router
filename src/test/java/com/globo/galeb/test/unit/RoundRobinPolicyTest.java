@@ -16,8 +16,6 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
-import static com.globo.galeb.core.Constants.*;
-
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.RoundRobinPolicy;
