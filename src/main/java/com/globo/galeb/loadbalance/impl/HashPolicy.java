@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.loadbalance.impl;
 
-import static com.globo.galeb.core.Constants.*;
+import static com.globo.galeb.consistenthash.HashAlgorithm.HashType.*;
 
 import java.util.List;
 
@@ -24,12 +24,16 @@ import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 public class HashPolicy implements ILoadBalancePolicy {
 
+    public static final String defaultHashAlgorithm     = SIP24.toString();
+    public static final String hashAlgorithmFieldName   = "hashAlgorithm";
+
     private ConsistentHash<Backend> consistentHash = null;
-    private String                 lastHashType   = null;
+    private String                  lastHashType   = null;
 
     @Override
     public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
@@ -37,7 +41,7 @@ public class HashPolicy implements ILoadBalancePolicy {
         String sourceIp = requestData.getRemoteAddress();
         JsonObject properties = requestData.getProperties();
         String hashType = properties.getString(hashAlgorithmFieldName, defaultHashAlgorithm);
-        boolean transientState = properties.getBoolean(transientStateFieldName, false);
+        boolean transientState = properties.getBoolean(Virtualhost.transientStateFieldName, false);
 
         int numberOfReplicas = 1;
 

@@ -14,6 +14,9 @@
  */
 package com.globo.galeb.verticles;
 
+import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
+import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_OK;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -22,8 +25,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.QueueMap.ACTION;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
@@ -35,11 +40,6 @@ import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
-
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_OK;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_ADD;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_DEL;
 
 public class HealthManagerVerticle extends Verticle implements IEventObserver {
 
@@ -55,9 +55,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
-        final QueueMap queueMap = new QueueMap(this, null);
-        queueMap.registerQueueAdd();
-        queueMap.registerQueueDel();
+        new QueueMap(this, null).register();
 
         final EventBus eb = vertx.eventBus();
         eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
@@ -69,7 +67,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 } catch (UnsupportedEncodingException e) {
                     log.error(e.getMessage());
                 }
-                log.debug(String.format("Backend %s OK", message.body()));
+                log.debug(String.format("Backend %s OK", backend));
             };
         });
         eb.registerHandler(QUEUE_HEALTHCHECK_FAIL, new Handler<Message<String>>() {
@@ -107,7 +105,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                             HttpClientRequest cReq = client.get(uriHealthCheck, new Handler<HttpClientResponse>() {
                                     @Override
                                     public void handle(HttpClientResponse cResp) {
-                                        if (cResp!=null && cResp.statusCode()==200) {
+                                        if (cResp!=null && cResp.statusCode()==HttpCode.Ok) {
                                             eb.publish(QUEUE_HEALTHCHECK_OK, backend);
                                             log.info(String.format("Backend %s OK. Enabling it", backend));
                                         }
@@ -176,7 +174,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                                 String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")),
                                                 "{}");
                 if (eb!=null) {
-                    eb.publish(QUEUE_ROUTE_DEL, message);
+                    eb.publish(ACTION.DEL.toString(), message);
                 }
 
                 message = QueueMap.buildMessage(virtualhost,
@@ -184,7 +182,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                                 "/backend",
                                                 "{}");
                 if (eb!=null) {
-                    eb.publish(QUEUE_ROUTE_ADD, message);
+                    eb.publish(ACTION.ADD.toString(), message);
                 }
             }
         }

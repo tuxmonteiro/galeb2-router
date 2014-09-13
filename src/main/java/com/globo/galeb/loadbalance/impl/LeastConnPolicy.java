@@ -22,6 +22,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 public class LeastConnPolicy implements ILoadBalancePolicy {
@@ -33,8 +34,8 @@ public class LeastConnPolicy implements ILoadBalancePolicy {
     public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
 
         JsonObject properties = requestData.getProperties();
-        long timeout = properties.getLong(cacheTimeOutFieldName, 2000L);
-        boolean transientState = properties.getBoolean(transientStateFieldName, false);
+        long timeout = properties.getLong(DefaultLoadBalancePolicy.cacheTimeOutFieldName, 2000L);
+        boolean transientState = properties.getBoolean(Virtualhost.transientStateFieldName, false);
 
         long now = System.currentTimeMillis();
 

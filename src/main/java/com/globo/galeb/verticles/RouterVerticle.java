@@ -42,10 +42,7 @@ public class RouterVerticle extends Verticle {
       final ICounter counter = new CounterWithStatsd(conf, vertx, log);
 
       final Map<String, Virtualhost> virtualhosts = new HashMap<>();
-      final QueueMap queueMap = new QueueMap(this, virtualhosts);
-
-      queueMap.registerQueueAdd();
-      queueMap.registerQueueDel();
+      new QueueMap(this, virtualhosts).register();
 
       final Server server = new Server(vertx, container, counter);
 
