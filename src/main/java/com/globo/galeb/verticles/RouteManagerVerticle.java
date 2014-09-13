@@ -17,6 +17,7 @@ package com.globo.galeb.verticles;
 import static com.globo.galeb.core.Constants.QUEUE_ROUTE_ADD;
 import static com.globo.galeb.core.Constants.QUEUE_ROUTE_DEL;
 import static com.globo.galeb.core.Constants.QUEUE_ROUTE_VERSION;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import java.io.UnsupportedEncodingException;
 import java.util.EnumSet;
@@ -108,34 +109,6 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         RouteMatcher routeMatcher = new RouteMatcher();
 
-        // Version @Deprecated
-        routeMatcher.post("/version", new Handler<HttpServerRequest>() {
-            @Override
-            public void handle(final HttpServerRequest req) {
-                req.bodyHandler(new Handler<Buffer>() {
-                    @Override
-                    public void handle(Buffer body) {
-                        final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
-                        int statusCode = 200;
-                        try {
-                            JsonObject json = new JsonObject(body.toString());
-                            if (json.containsField("version")) {
-                                sendAction(String.format("%d", json.getLong("version")), Action.VERSION);
-                            }
-                        } catch (Exception e) {
-                            log.error(String.format("Version FAIL: %s\nBody: %s",
-                                    e.getMessage(), body.toString()));
-                            statusCode = 400;
-                        } finally {
-                            serverResponse.setStatusCode(statusCode)
-                                .setMessage(ServerResponse.makeStatusMessage(statusCode, true))
-                                .setId(routeManagerId)
-                                .end();
-                        }
-                    }
-                });
-            }
-        });
         //        @Deprecated
         routeMatcher.get("/route", new Handler<HttpServerRequest>() {
             @Override
@@ -342,40 +315,67 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                 req.bodyHandler(new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer body) {
-                        int statusCode = 200;
-                        JsonObject json = new JsonObject();
-                        String key = "";
+                        String bodyStr = body.toString();
+                        int statusCode = postMessageStatus(bodyStr);
 
-                        try {
-                            json = new JsonObject(body.toString());
-                        } catch (DecodeException ex) {
-                            log.error(String.format("Json decode error: %s", body.toString()));
-                            statusCode = 400;
-                        }
-                        if (!json.containsField("id")) {
-                            log.error(String.format("ID not found: %s", body.toString()));
-                            statusCode = 400;
-                        } else {
-                            key = json.getString("id");
-                            if ("".equals(key)) {
-                                log.error(String.format("ID is invalid: %s", body.toString()));
-                                statusCode=400;
-                            }
-                        }
-
-                        if (statusCode==200) {
-                            setRoute(json, Action.ADD, req.uri());
+                        if (statusCode==HttpResponseStatus.OK.code()) {
+                            setRoute(new JsonObject(bodyStr), Action.ADD, req.uri());
                         }
 
                         serverResponse.setStatusCode(statusCode)
                             .setMessage(ServerResponse.makeStatusMessage(statusCode, true))
                             .setId(routeManagerId)
                             .end();
-
                     }
                 });
+
             }
         };
+    }
+
+    public int postMessageStatus(String message) {
+        return postMessageStatus(message, true);
+    }
+
+    public int postMessageStatus(String message, boolean registerLog) {
+        int statusOk = HttpResponseStatus.OK.code();
+        int statusFail = HttpResponseStatus.BAD_REQUEST.code();
+        JsonObject json = new JsonObject();
+        JsonArray jsonRoutes = new JsonArray();
+        String key = "";
+
+        try {
+            json = new JsonObject(message);
+        } catch (DecodeException ex) {
+            if (registerLog) log.error(String.format("Json decode error: %s", message));
+            return statusFail;
+        }
+        if (json.containsField("routes")) {
+            try {
+                jsonRoutes = json.getArray("routes");
+            } catch (DecodeException e) {
+                if (registerLog) log.error(String.format("Routes has to be ARRAY: %s", message));
+                return statusFail;
+            }
+        } else {
+            if (registerLog) log.error(String.format("Routes not found: %s", message));
+            return statusFail;
+        }
+
+        for (Object routeObj: jsonRoutes) {
+            JsonObject routeJson = (JsonObject) routeObj;
+            if (!routeJson.containsField("id")) {
+                if (registerLog) log.error(String.format("ID not found: %s", routeJson.toString()));
+                return statusFail;
+            } else {
+                key = routeJson.getString("id");
+                if ("".equals(key)) {
+                    if (registerLog) log.error(String.format("ID is invalid: %s", routeJson.toString()));
+                    return statusFail;
+                }
+            }
+        }
+        return statusOk;
     }
 
     private String getRequestId(HttpServerRequest req) {
@@ -434,25 +434,22 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
     public void setRoute(final JsonObject json, final Action action, final String uri) throws RuntimeException {
         JsonArray jsonRoutes = null;
-        if (json.containsField("routes")) {
-            jsonRoutes = json.getArray("routes");
-        } else {
-            jsonRoutes = new JsonArray();
-            jsonRoutes.addObject(json);
-        }
+        Long timestamp = 0L;
+        jsonRoutes = json.getArray("routes");
+        timestamp = json.getLong("version");
 
         Iterator<Object> it = jsonRoutes.iterator();
         while (it.hasNext()) {
-            String vhost;
+            String vhost_id;
             JsonObject properties;
             String hostWithPort;
             JsonArray backends = null;
             JsonObject jsonTemp = (JsonObject) it.next();
 
             if (jsonTemp.containsField("id")) {
-                vhost = jsonTemp.getString("id");
+                vhost_id = jsonTemp.getString("id");
             } else {
-                throw new RouterException("virtualhost undef");
+                throw new RouterException("virtualhost id undef");
             }
             if (jsonTemp.containsField("properties")) {
                 try {
@@ -463,7 +460,6 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             } else {
                 properties = new JsonObject();
             }
-
             if (jsonTemp.containsField("backends") && jsonTemp.getArray("backends").size()>0) {
                 backends = jsonTemp.getArray("backends");
                 Iterator<Object> backendsIterator = backends.iterator();
@@ -473,18 +469,19 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                     if ("".equals(hostWithPort)) {
                         throw new RouterException("Backend undef");
                     }
-                    String message = QueueMap.buildMessage(vhost,
+                    String message = QueueMap.buildMessage(vhost_id,
                                                            backendJson.encode(),
                                                            uri,
                                                            properties.toString());
                     sendAction(message, action);
                 }
             } else {
-                String message = QueueMap.buildMessage(vhost, "{}", uri, properties.toString());
+                String message = QueueMap.buildMessage(vhost_id, "{}", uri, properties.toString());
                 sendAction(message, action);
             }
 
         }
+        sendAction(String.format("%d", timestamp), Action.VERSION);
     }
 
     private boolean endResponse(final ServerResponse serverResponse, int statusCode, String message) {
