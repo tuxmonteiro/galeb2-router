@@ -41,7 +41,7 @@ public class RandomPolicyTest {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString("virtualhost", "test.localdomain")
+            .putString(Serializable.jsonIdFieldName, "test.localdomain")
             .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 

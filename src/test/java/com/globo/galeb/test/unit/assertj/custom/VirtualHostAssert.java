@@ -15,9 +15,11 @@
 package com.globo.galeb.test.unit.assertj.custom;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 
 import org.assertj.core.api.AbstractAssert;
+import org.vertx.java.core.json.JsonObject;
 
 public class VirtualHostAssert extends AbstractAssert<VirtualHostAssert, Virtualhost> {
 
@@ -53,18 +55,18 @@ public class VirtualHostAssert extends AbstractAssert<VirtualHostAssert, Virtual
         return this;
     }
 
-    public VirtualHostAssert containsBackend(String backendWithPort, boolean backendOk) {
+    public VirtualHostAssert containsBackend(JsonObject backend, boolean backendOk) {
         isNotNull();
-        if (!actual.getBackends(backendOk).contains(new Backend(backendWithPort, null))) {
-            failWithMessage("%s not found at %s", backendWithPort, actual.getVirtualhostName());
+        if (!actual.getBackends(backendOk).contains(new Backend(backend, null))) {
+            failWithMessage("%s not found at %s", backend.getString(Serializable.jsonIdFieldName), actual.getVirtualhostName());
         }
         return this;
     }
 
-    public VirtualHostAssert doesNotContainsBackend(String backendWithPort, boolean backendOk) {
+    public VirtualHostAssert doesNotContainsBackend(JsonObject backend, boolean backendOk) {
         isNotNull();
-        if (actual.getBackends(backendOk).contains(new Backend(backendWithPort, null))) {
-            failWithMessage("%s found at %s", backendWithPort, actual.getVirtualhostName());
+        if (actual.getBackends(backendOk).contains(new Backend(backend, null))) {
+            failWithMessage("%s found at %s", backend.getString(Serializable.jsonIdFieldName), actual.getVirtualhostName());
         }
         return this;
     }

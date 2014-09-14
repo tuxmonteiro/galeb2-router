@@ -3,6 +3,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.Serializable;
+import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -65,7 +67,8 @@ public class RouteManagerTest extends UtilTestVerticle {
 
         JsonObject getExpectedJson = new JsonObject()
             .putString(Serializable.jsonIdFieldName, "test.localdomain")
-            .putObject(Serializable.jsonPropertiesFieldName, new JsonObject())
+            .putObject(Serializable.jsonPropertiesFieldName,
+                    new JsonObject().putString(Virtualhost.loadBalancePolicyFieldName, new DefaultLoadBalancePolicy().toString()))
             .putArray("backends", new JsonArray())
             .putArray("badBackends", new JsonArray());
 

@@ -46,7 +46,7 @@ public class HashPolicyTest {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString("virtualhost", "test.localdomain")
+            .putString(Serializable.jsonIdFieldName, "test.localdomain")
             .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 

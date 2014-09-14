@@ -48,7 +48,7 @@ public class VirtualhostTest {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString("virtualhost", virtualhostName)
+            .putString(Serializable.jsonIdFieldName, virtualhostName)
             .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 

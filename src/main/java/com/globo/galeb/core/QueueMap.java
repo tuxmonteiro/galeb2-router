@@ -20,7 +20,6 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
@@ -52,26 +51,6 @@ public class QueueMap {
     private final Map<String, Virtualhost> virtualhosts;
 
 
-    public static String buildMessage(String virtualhostStr,
-                                      String backendStr,
-                                      String uriStr,
-                                      String properties)
-    {
-        JsonObject messageJson = new JsonObject();
-        JsonObject virtualhostObj = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhostStr);
-
-        try {
-            virtualhostObj.putObject(Serializable.jsonPropertiesFieldName, new JsonObject(properties));
-        } catch (DecodeException ignoreBadJson) {
-            virtualhostObj.putObject(Serializable.jsonPropertiesFieldName, new JsonObject());
-        }
-        messageJson.putString("virtualhost", virtualhostObj.encode());
-        messageJson.putString("backend", backendStr);
-        messageJson.putString("uri", uriStr);
-
-        return messageJson.toString();
-    }
-
     public QueueMap(final Verticle verticle, final Map<String, Virtualhost> virtualhosts) {
         this.verticle = verticle;
         this.vertx = (verticle != null) ? verticle.getVertx() : null;
@@ -86,13 +65,10 @@ public class QueueMap {
         }
 
         boolean isOk = true;
-        JsonObject messageJson = new JsonObject(message);
-        JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
-        String virtualhost = virtualhostJson.getString(Serializable.jsonIdFieldName, "");
-        String backendStr = messageJson.getString("backend", "{}");
-        JsonObject backend = new JsonObject(backendStr);
-        String uri = messageJson.getString("uri", "");
-        String uriBase = uri.split("/")[1];
+        MessageBus messageBus = new MessageBus(message);
+        JsonObject virtualhostJson = messageBus.getVirtualhost();
+        String virtualhost = messageBus.getVirtualhostId();
+        String uriBase = messageBus.getUriBase();
 
         switch (uriBase) {
             case "virtualhost":
@@ -111,14 +87,15 @@ public class QueueMap {
                     isOk = false;
                 } else {
 
-                    String hostWithPort = backend.getString(Serializable.jsonIdFieldName, "");
-                    boolean status = backend.getBoolean("status", true);
+                    JsonObject backend = messageBus.getBackend();
+                    String backendId = messageBus.getBackendId();
+                    boolean status = backend.getBoolean(Backend.propertyStatusFieldName, true);
 
                     final Virtualhost vhost = virtualhosts.get(virtualhost);
                     if (vhost.addBackend(backend, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), hostWithPort, virtualhost));
+                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), backendId, virtualhost));
                     } else {
-                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), hostWithPort, virtualhost));
+                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), backendId, virtualhost));
                         isOk = false;
                     }
                 }
@@ -137,15 +114,9 @@ public class QueueMap {
         }
 
         boolean isOk = true;
-        JsonObject messageJson = new JsonObject(message);
-        JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
-        String virtualhost = virtualhostJson.getString(Serializable.jsonIdFieldName, "");
-        String backendStr = messageJson.getString("backend", "{}");
-        JsonObject backend = new JsonObject(backendStr);
-        boolean status = !"0".equals(messageJson.getString("status", ""));
-        String uri = messageJson.getString("uri", "");
-
-        String uriBase = uri.split("/")[1];
+        MessageBus messageBus = new MessageBus(message);
+        String virtualhost = messageBus.getVirtualhostId();
+        String uriBase = messageBus.getUriBase();
 
         switch (uriBase) {
             case "virtualhost":
@@ -159,7 +130,10 @@ public class QueueMap {
                 }
                 break;
             case "backend":
-                String backendId = backend.getString(Serializable.jsonIdFieldName);
+                JsonObject backend = messageBus.getBackend();
+                String backendId = messageBus.getBackendId();
+                boolean status = backend.getBoolean(Backend.propertyStatusFieldName, true);
+
                 if ("".equals(backendId)) {
                     log.warn(String.format("[%s] Backend UNDEF", verticle.toString()));
                     isOk = false;
@@ -168,7 +142,7 @@ public class QueueMap {
                     isOk = false;
                 } else {
                     final Virtualhost virtualhostObj = virtualhosts.get(virtualhost);
-                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backend.getString(Serializable.jsonIdFieldName), status)) {
+                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backendId, status)) {
                         log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), backendId, virtualhost));
                     } else {
                         log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), backendId, virtualhost));

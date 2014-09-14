@@ -22,6 +22,7 @@ import java.util.Map;
 
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
+import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.QueueMap.ACTION;
@@ -429,7 +430,6 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         Iterator<Object> it = jsonRoutes.iterator();
         while (it.hasNext()) {
             String vhost_id;
-            JsonObject properties;
             String hostWithPort;
             JsonArray backends = null;
             JsonObject jsonTemp = (JsonObject) it.next();
@@ -439,15 +439,10 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             } else {
                 throw new RouterException("virtualhost id undef");
             }
-            if (jsonTemp.containsField(Serializable.jsonPropertiesFieldName)) {
-                try {
-                    properties = jsonTemp.getObject(Serializable.jsonPropertiesFieldName);
-                } catch (DecodeException e) {
-                    properties = new JsonObject();
-                }
-            } else {
-                properties = new JsonObject();
-            }
+            JsonObject vhost_properties = jsonTemp.getObject(Serializable.jsonPropertiesFieldName, new JsonObject());
+            JsonObject vhostJson = new JsonObject()
+                                            .putString(Serializable.jsonIdFieldName, vhost_id)
+                                            .putString(Serializable.jsonPropertiesFieldName, vhost_properties.encode());
             if (jsonTemp.containsField(Virtualhost.backendsFieldName) && jsonTemp.getArray(Virtualhost.backendsFieldName).size()>0) {
                 backends = jsonTemp.getArray(Virtualhost.backendsFieldName);
                 Iterator<Object> backendsIterator = backends.iterator();
@@ -457,14 +452,20 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                     if ("".equals(hostWithPort)) {
                         throw new RouterException("Backend undef");
                     }
-                    String message = QueueMap.buildMessage(vhost_id,
-                                                           backendJson.encode(),
-                                                           uri,
-                                                           properties.toString());
+                    String message = new MessageBus()
+                                            .setVirtualhost(vhostJson)
+                                            .setBackend(backendJson)
+                                            .setUri(uri)
+                                            .make()
+                                            .toString();
                     sendAction(message, action);
                 }
             } else {
-                String message = QueueMap.buildMessage(vhost_id, "{}", uri, properties.toString());
+                String message = new MessageBus()
+                                        .setVirtualhost(vhostJson)
+                                        .setUri(uri)
+                                        .make()
+                                        .toString();
                 sendAction(message, action);
             }
 

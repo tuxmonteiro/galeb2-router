@@ -30,6 +30,7 @@ public class Backend implements Serializable {
     public static String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
     public static String propertyMaxPoolSizeFieldName         = "maxPoolSize";
     public static String propertyActiveConnectionsFieldName   = "activeConnections";
+    public static String propertyStatusFieldName              = "status";
 
     private final Vertx vertx;
     private final EventBus eb;
@@ -192,7 +193,6 @@ public class Backend implements Serializable {
 
     // Lazy initialization
     public HttpClient connect(String remoteIP, String remotePort) {
-        final String backend = this.toString();
         if (client==null && vertx!=null) {
             client = vertx.createHttpClient()
                 .setKeepAlive(keepalive)
@@ -206,7 +206,7 @@ public class Backend implements Serializable {
             client.exceptionHandler(new Handler<Throwable>() {
                 @Override
                 public void handle(Throwable e) {
-                    eb.publish(QUEUE_HEALTHCHECK_FAIL, backend);
+                    eb.publish(QUEUE_HEALTHCHECK_FAIL, id);
                     connectionsCounter.initEventBus();
                 }
             });

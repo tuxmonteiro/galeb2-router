@@ -39,7 +39,7 @@ public class Virtualhost extends JsonObject implements Serializable {
     private final UniqueArrayList<Backend> badBackends;
     private final Vertx                    vertx;
 
-    private ILoadBalancePolicy connectPolicy     = null;
+    private ILoadBalancePolicy loadbalancePolicy     = null;
 
     private final Long createdAt = System.currentTimeMillis();
     private Long modifiedAt = System.currentTimeMillis();
@@ -48,18 +48,16 @@ public class Virtualhost extends JsonObject implements Serializable {
         modifiedAt = System.currentTimeMillis();
     }
 
-    public Virtualhost(String virtualhostName, final Vertx vertx) {
+    public Virtualhost(JsonObject json, final Vertx vertx) {
         super();
-        this.virtualhostName = virtualhostName;
+        this.virtualhostName = json.getString(jsonIdFieldName, "UNDEF");
         this.backends = new UniqueArrayList<Backend>();
         this.badBackends = new UniqueArrayList<Backend>();
         this.vertx = vertx;
-    }
-
-    public Virtualhost(JsonObject json, final Vertx vertx) {
-        this(json.getString(jsonIdFieldName, "UNDEF"), vertx);
-        JsonObject properties = json.getObject(jsonPropertiesFieldName);
-        mergeIn(properties);
+        mergeIn(json.getObject(jsonPropertiesFieldName));
+        if (!this.containsField(loadBalancePolicyFieldName)) {
+            getLoadBalancePolicy();
+        }
     }
 
     @Override
@@ -119,10 +117,10 @@ public class Virtualhost extends JsonObject implements Serializable {
     public Backend getChoice(RequestData requestData) {
         requestData.setProperties(this);
         Backend chosen;
-        if (connectPolicy==null) {
+        if (loadbalancePolicy==null) {
             getLoadBalancePolicy();
         }
-        chosen = connectPolicy.getChoice(backends, requestData);
+        chosen = loadbalancePolicy.getChoice(backends, requestData);
         putBoolean(transientStateFieldName, false);
         return chosen;
     }
@@ -130,11 +128,11 @@ public class Virtualhost extends JsonObject implements Serializable {
     public ILoadBalancePolicy getLoadBalancePolicy() {
         String loadBalancePolicyStr = getString(loadBalancePolicyFieldName,
                 DefaultLoadBalancePolicy.class.getSimpleName());
-        connectPolicy = loadBalancePolicyClassLoader(loadBalancePolicyStr);
-        if (connectPolicy.isDefault()) {
-            putString(loadBalancePolicyFieldName, connectPolicy.toString());
+        loadbalancePolicy = loadBalancePolicyClassLoader(loadBalancePolicyStr);
+        if (loadbalancePolicy.isDefault()) {
+            putString(loadBalancePolicyFieldName, loadbalancePolicy.toString());
         }
-        return connectPolicy;
+        return loadbalancePolicy;
     }
 
     public ILoadBalancePolicy loadBalancePolicyClassLoader(String loadBalancePolicyName) {
@@ -170,6 +168,7 @@ public class Virtualhost extends JsonObject implements Serializable {
 
     @Override
     public JsonObject toJson() {
+
         JsonObject virtualhostJson = new JsonObject();
         JsonObject propertiesJson = new JsonObject(this.encode());
         JsonArray backendsJson = new JsonArray();

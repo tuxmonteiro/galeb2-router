@@ -25,8 +25,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
+import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.QueueMap.ACTION;
 import com.globo.galeb.core.Serializable;
@@ -133,28 +135,33 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
 
     @Override
     public void postAddEvent(String message) {
-        Map<String, String> map = new HashMap<>();
-        messageToMap(message, map);
-        final Map <String, Set<String>> tempMap = "true".equals(map.get("status")) ? backendsMap : badBackendsMap;
 
-        if (!tempMap.containsKey(map.get("backend"))) {
-            tempMap.put(map.get("backend"), new HashSet<String>());
+        MessageBus messageBus = new MessageBus(message);
+        boolean backendStatus = messageBus.getBackend().getBoolean(Backend.propertyStatusFieldName, true);
+        String backendId = messageBus.getBackendId();
+        String virtualhostId = messageBus.getVirtualhostId();
+        final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+
+        if (!tempMap.containsKey(backendId)) {
+            tempMap.put(backendId, new HashSet<String>());
         }
-        Set<String> virtualhosts = tempMap.get(map.get("backend"));
-        virtualhosts.add(map.get("virtualhost"));
+        Set<String> virtualhosts = tempMap.get(backendId);
+        virtualhosts.add(virtualhostId);
     };
 
     @Override
     public void postDelEvent(String message) {
-        Map<String, String> map = new HashMap<>();
-        messageToMap(message, map);
-        final Map <String, Set<String>> tempMap = "true".equals(map.get("status")) ? backendsMap : badBackendsMap;
+        MessageBus messageBus = new MessageBus(message);
+        boolean backendStatus = messageBus.getBackend().getBoolean(Backend.propertyStatusFieldName, true);
+        String backendId = messageBus.getBackendId();
+        String virtualhostId = messageBus.getVirtualhostId();
+        final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
 
-        if (tempMap.containsKey(map.get("backend"))) {
-            Set<String> virtualhosts = tempMap.get(map.get("backend"));
-            virtualhosts.remove(map.get("virtualhost"));
+        if (tempMap.containsKey(backendId)) {
+            Set<String> virtualhosts = tempMap.get(backendId);
+            virtualhosts.remove(virtualhostId);
             if (virtualhosts.isEmpty()) {
-                tempMap.remove(map.get("backend"));
+                tempMap.remove(backendId);
             }
         }
     };
@@ -166,44 +173,32 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         if (virtualhosts!=null) {
             Iterator<String> it = virtualhosts.iterator();
             while (it.hasNext()) {
-                String message;
                 String virtualhost = it.next();
-                JsonObject backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, backend).putBoolean("status", status);
+                JsonObject backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, backend);
+                JsonObject virtualhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhost);
 
-                message = QueueMap.buildMessage(virtualhost,
-                                                backendJson.encode(),
-                                                String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")),
-                                                "{}");
+                String messageDel = new MessageBus()
+                                            .setVirtualhost(virtualhostJson)
+                                            .setBackend(backendJson
+                                                    .putBoolean(Backend.propertyStatusFieldName, !status).encode())
+                                            .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
+                                            .make()
+                                            .toString();
                 if (eb!=null) {
-                    eb.publish(ACTION.DEL.toString(), message);
+                    eb.publish(ACTION.DEL.toString(), messageDel);
                 }
 
-                message = QueueMap.buildMessage(virtualhost,
-                                                backendJson.encode(),
-                                                "/backend",
-                                                "{}");
+                String messageAdd = new MessageBus()
+                                            .setVirtualhost(virtualhostJson)
+                                            .setBackend(backendJson
+                                                    .putBoolean(Backend.propertyStatusFieldName, status).encode())
+                                            .setUri("/backend")
+                                            .make()
+                                            .toString();
                 if (eb!=null) {
-                    eb.publish(ACTION.ADD.toString(), message);
+                    eb.publish(ACTION.ADD.toString(), messageAdd);
                 }
             }
-        }
-    }
-
-    private void messageToMap(final String message, final Map<String, String> map) {
-        if (map!=null) {
-            JsonObject messageJson = new JsonObject(message);
-            map.put("virtualhost", messageJson.getString("virtualhost", ""));
-            String host = messageJson.getString("host", "");
-            map.put("host", host);
-            String port = messageJson.getString("port", "");
-            map.put("port", port);
-            map.put("status", !"0".equals(messageJson.getString("status", "")) ? "true":"false");
-            String uri = messageJson.getString("uri", "");
-            map.put("uri", uri);
-            map.put(Serializable.jsonPropertiesFieldName,
-                    messageJson.getString(Serializable.jsonPropertiesFieldName, "{}"));
-            map.put("backend",(!"".equals(host) && !"".equals(port)) ? String.format("%s:%s", host, port) : "");
-            map.put("uriBase", uri.contains("/")? uri.split("/")[1]:"");
         }
     }
 
