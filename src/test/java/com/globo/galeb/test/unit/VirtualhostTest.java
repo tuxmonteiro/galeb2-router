@@ -19,10 +19,12 @@ import static org.mockito.Mockito.mock;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
 
 import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.RandomPolicy;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
@@ -47,7 +49,7 @@ public class VirtualhostTest {
             .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", virtualhostName)
-            .putObject("properties", virtualhostProperties);
+            .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         backend = "0.0.0.0:0";

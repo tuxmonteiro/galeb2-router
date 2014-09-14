@@ -23,6 +23,7 @@ import java.util.Map;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.QueueMap.ACTION;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
@@ -195,7 +196,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                         int statusCode = HttpCode.Ok;
                         try {
                             final JsonObject json = new JsonObject(body.toString());
-                            String jsonVirtualHost = json.containsField("id") ? json.getString("id") : "";
+                            String jsonVirtualHost = json.containsField(Serializable.jsonIdFieldName) ?
+                                    json.getString(Serializable.jsonIdFieldName) : "";
                             if (action.equals(ACTION.DEL)) {
                                 JsonArray backends = json.containsField("backends") ? json.getArray("backends"): null;
                                 if (backends!=null && !backends.toList().isEmpty() && !backends.get(0).equals(new JsonObject(String.format("{\"host\":\"%s\",\"port\":%s}", backend, port)))) {
@@ -228,7 +230,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             Iterator<Object> it = routes.iterator();
             while (it.hasNext()) {
                 JsonObject route = (JsonObject) it.next();
-                if (route.getString("id").equalsIgnoreCase(virtualhost)) {
+                if (route.getString(Serializable.jsonIdFieldName).equalsIgnoreCase(virtualhost)) {
                     return route.encodePrettily();
                 }
             }
@@ -259,7 +261,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                         int statusCode = HttpCode.Ok;
                         try {
                             final JsonObject json = new JsonObject(body.toString());
-                            String jsonVirtualHost = json.containsField("id") ? json.getString("id") : "";
+                            String jsonVirtualHost = json.containsField(Serializable.jsonIdFieldName) ?
+                                    json.getString(Serializable.jsonIdFieldName) : "";
                             if ("".equals(jsonVirtualHost)) {
                                 throw new RouterException("Virtualhost name null");
                             }
@@ -348,11 +351,11 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         for (Object routeObj: jsonRoutes) {
             JsonObject routeJson = (JsonObject) routeObj;
-            if (!routeJson.containsField("id")) {
+            if (!routeJson.containsField(Serializable.jsonIdFieldName)) {
                 if (registerLog) log.error(String.format("ID not found: %s", routeJson.toString()));
                 return HttpCode.BadRequest;
             } else {
-                key = routeJson.getString("id");
+                key = routeJson.getString(Serializable.jsonIdFieldName);
                 if ("".equals(key)) {
                     if (registerLog) log.error(String.format("ID is invalid: %s", routeJson.toString()));
                     return HttpCode.BadRequest;
@@ -365,8 +368,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private String getRequestId(HttpServerRequest req) {
         String id = "";
         try {
-            id = req.params() != null && req.params().contains("id") ?
-                    java.net.URLDecoder.decode(req.params().get("id"), "UTF-8") : "";
+            id = req.params() != null && req.params().contains(Serializable.jsonIdFieldName) ?
+                    java.net.URLDecoder.decode(req.params().get(Serializable.jsonIdFieldName), "UTF-8") : "";
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage());
         }
@@ -431,26 +434,26 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             JsonArray backends = null;
             JsonObject jsonTemp = (JsonObject) it.next();
 
-            if (jsonTemp.containsField("id")) {
-                vhost_id = jsonTemp.getString("id");
+            if (jsonTemp.containsField(Serializable.jsonIdFieldName)) {
+                vhost_id = jsonTemp.getString(Serializable.jsonIdFieldName);
             } else {
                 throw new RouterException("virtualhost id undef");
             }
-            if (jsonTemp.containsField("properties")) {
+            if (jsonTemp.containsField(Serializable.jsonPropertiesFieldName)) {
                 try {
-                    properties = jsonTemp.getObject("properties");
+                    properties = jsonTemp.getObject(Serializable.jsonPropertiesFieldName);
                 } catch (DecodeException e) {
                     properties = new JsonObject();
                 }
             } else {
                 properties = new JsonObject();
             }
-            if (jsonTemp.containsField("backends") && jsonTemp.getArray("backends").size()>0) {
-                backends = jsonTemp.getArray("backends");
+            if (jsonTemp.containsField(Virtualhost.backendsFieldName) && jsonTemp.getArray(Virtualhost.backendsFieldName).size()>0) {
+                backends = jsonTemp.getArray(Virtualhost.backendsFieldName);
                 Iterator<Object> backendsIterator = backends.iterator();
                 while (backendsIterator.hasNext()) {
                     JsonObject backendJson = (JsonObject) backendsIterator.next();
-                    hostWithPort = backendJson.containsField("id") ? backendJson.getString("id"):"";
+                    hostWithPort = backendJson.containsField(Serializable.jsonIdFieldName) ? backendJson.getString(Serializable.jsonIdFieldName):"";
                     if ("".equals(hostWithPort)) {
                         throw new RouterException("Backend undef");
                     }

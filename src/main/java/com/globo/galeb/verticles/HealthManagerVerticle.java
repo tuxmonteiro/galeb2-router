@@ -29,6 +29,7 @@ import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.QueueMap.ACTION;
+import com.globo.galeb.core.Serializable;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
@@ -167,7 +168,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
             while (it.hasNext()) {
                 String message;
                 String virtualhost = it.next();
-                JsonObject backendJson = new JsonObject().putString("id", backend).putBoolean("status", status);
+                JsonObject backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, backend).putBoolean("status", status);
 
                 message = QueueMap.buildMessage(virtualhost,
                                                 backendJson.encode(),
@@ -199,7 +200,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
             map.put("status", !"0".equals(messageJson.getString("status", "")) ? "true":"false");
             String uri = messageJson.getString("uri", "");
             map.put("uri", uri);
-            map.put("properties", messageJson.getString("properties", "{}"));
+            map.put(Serializable.jsonPropertiesFieldName,
+                    messageJson.getString(Serializable.jsonPropertiesFieldName, "{}"));
             map.put("backend",(!"".equals(host) && !"".equals(port)) ? String.format("%s:%s", host, port) : "");
             map.put("uriBase", uri.contains("/")? uri.split("/")[1]:"");
         }

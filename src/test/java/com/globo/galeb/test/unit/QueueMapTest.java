@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.unit.util.FakeLogger;
@@ -46,7 +47,7 @@ public class QueueMapTest {
     private Logger logger;
     private LogDelegate logDelegate;
     private String virtualhostStr = "test.virtualhost.com";
-    private String backendJson = new JsonObject().putString("id", "0.0.0.0:00").encode();
+    private String backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, "0.0.0.0:00").encode();
     private JsonObject properties;
 
     private Map<String, Virtualhost> virtualhosts = new HashMap<String, Virtualhost>();
@@ -152,7 +153,7 @@ public class QueueMapTest {
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackend).as("isOkBackend").isTrue();
         assertThat(virtualhosts).containsKey(virtualhostStr);
-        assertThat(virtualhost).containsBackend(backend.getString("id"), true);
+        assertThat(virtualhost).containsBackend(backend.getString(Serializable.jsonIdFieldName), true);
 
     }
 
@@ -184,7 +185,7 @@ public class QueueMapTest {
        JsonObject backend = new JsonObject(backendJson);
 
         assertThat(virtualhosts).containsKey(virtualhostStr);
-        assertThat(virtualhost).containsBackend(backend.getString("id"), true);
+        assertThat(virtualhost).containsBackend(backend.getString(Serializable.jsonIdFieldName), true);
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
         assertThat(isOkBackendAddAgain).as("isOkBackendRemove").isFalse();
@@ -208,7 +209,7 @@ public class QueueMapTest {
         JsonObject backend = new JsonObject(backendJson);
 
         assertThat(virtualhosts).containsKey(virtualhostStr);
-        assertThat(virtualhost).doesNotContainsBackend(backend.getString("id"), true);
+        assertThat(virtualhost).doesNotContainsBackend(backend.getString(Serializable.jsonIdFieldName), true);
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isTrue();
@@ -270,8 +271,8 @@ public class QueueMapTest {
 
             for (int idBackend=0; idBackend<10; idBackend++) {
                 JsonObject backend = new JsonObject(backendJson);
-                String newBackendStr = String.format("%s:%d", backend.getString("id").split(":")[0], idBackend);
-                JsonObject newBackendJson = new JsonObject().putString("id", newBackendStr);
+                String newBackendStr = String.format("%s:%d", backend.getString(Serializable.jsonIdFieldName).split(":")[0], idBackend);
+                JsonObject newBackendJson = new JsonObject().putString(Serializable.jsonIdFieldName, newBackendStr);
                 String messageBackend = QueueMap.buildMessage(
                         aVirtualhostStr, newBackendJson.encode(), "/backend","{}");
                 queueMap.processAddMessage(messageBackend);
@@ -296,9 +297,9 @@ public class QueueMapTest {
 
         JsonObject messageJsonOrig = new JsonObject(message);
         JsonObject messageJson = new JsonObject();
-        JsonObject virtualhostObj = new JsonObject().putString("id", virtualhostStr);
+        JsonObject virtualhostObj = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhostStr);
 
-        virtualhostObj.putObject("properties", properties);
+        virtualhostObj.putObject(Serializable.jsonPropertiesFieldName, properties);
         messageJson.putString("virtualhost", virtualhostObj.encode());
         messageJson.putString("backend", backendJson);
         messageJson.putString("uri", uriStr);

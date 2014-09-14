@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -44,7 +45,7 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterWith1VHostAndNoBackend() {
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);
         JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
@@ -58,8 +59,8 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterNoVHostAddBackend() {
-        JsonObject backend = new JsonObject().putString("id", "1.2.3.4:80");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "1.2.3.4:80");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);
@@ -74,8 +75,8 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterWith1VHostAnd1ClosedBackend() {
-        JsonObject backend = new JsonObject().putString("id", "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);
@@ -94,8 +95,8 @@ public class RouterTest extends UtilTestVerticle {
     @Test
     public void testRouterWith1VHostAnd1TimeoutBackend() {
         // The timeout is set to 1s at test initialization
-        JsonObject backend = new JsonObject().putString("id", "1.2.3.4:8888");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "1.2.3.4:8888");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonArray routesJson = new JsonArray().add(vhostJson);
         JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
@@ -124,8 +125,8 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString("id", "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);
@@ -169,8 +170,8 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString("id", "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);
@@ -221,8 +222,8 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString("id", "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);
@@ -266,8 +267,8 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString("id", "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain")
+        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
         JsonArray routesJson = new JsonArray().add(vhostJson);

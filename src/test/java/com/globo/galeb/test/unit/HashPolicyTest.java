@@ -24,6 +24,7 @@ import java.util.Set;
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.HashPolicy;
 
@@ -46,7 +47,7 @@ public class HashPolicyTest {
             .putString(Virtualhost.loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
             .putString("virtualhost", "test.localdomain")
-            .putObject("properties", virtualhostProperties);
+            .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {

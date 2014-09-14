@@ -58,12 +58,12 @@ public class QueueMap {
                                       String properties)
     {
         JsonObject messageJson = new JsonObject();
-        JsonObject virtualhostObj = new JsonObject().putString("id", virtualhostStr);
+        JsonObject virtualhostObj = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhostStr);
 
         try {
-            virtualhostObj.putObject("properties", new JsonObject(properties));
+            virtualhostObj.putObject(Serializable.jsonPropertiesFieldName, new JsonObject(properties));
         } catch (DecodeException ignoreBadJson) {
-            virtualhostObj.putObject("properties", new JsonObject());
+            virtualhostObj.putObject(Serializable.jsonPropertiesFieldName, new JsonObject());
         }
         messageJson.putString("virtualhost", virtualhostObj.encode());
         messageJson.putString("backend", backendStr);
@@ -88,7 +88,7 @@ public class QueueMap {
         boolean isOk = true;
         JsonObject messageJson = new JsonObject(message);
         JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
-        String virtualhost = virtualhostJson.getString("id", "");
+        String virtualhost = virtualhostJson.getString(Serializable.jsonIdFieldName, "");
         String backendStr = messageJson.getString("backend", "{}");
         JsonObject backend = new JsonObject(backendStr);
         String uri = messageJson.getString("uri", "");
@@ -111,7 +111,7 @@ public class QueueMap {
                     isOk = false;
                 } else {
 
-                    String hostWithPort = backend.getString("id", "");
+                    String hostWithPort = backend.getString(Serializable.jsonIdFieldName, "");
                     boolean status = backend.getBoolean("status", true);
 
                     final Virtualhost vhost = virtualhosts.get(virtualhost);
@@ -139,7 +139,7 @@ public class QueueMap {
         boolean isOk = true;
         JsonObject messageJson = new JsonObject(message);
         JsonObject virtualhostJson = new JsonObject(messageJson.getString("virtualhost", "{}"));
-        String virtualhost = virtualhostJson.getString("id", "");
+        String virtualhost = virtualhostJson.getString(Serializable.jsonIdFieldName, "");
         String backendStr = messageJson.getString("backend", "{}");
         JsonObject backend = new JsonObject(backendStr);
         boolean status = !"0".equals(messageJson.getString("status", ""));
@@ -159,7 +159,7 @@ public class QueueMap {
                 }
                 break;
             case "backend":
-                String backendId = backend.getString("id");
+                String backendId = backend.getString(Serializable.jsonIdFieldName);
                 if ("".equals(backendId)) {
                     log.warn(String.format("[%s] Backend UNDEF", verticle.toString()));
                     isOk = false;
@@ -168,7 +168,7 @@ public class QueueMap {
                     isOk = false;
                 } else {
                     final Virtualhost virtualhostObj = virtualhosts.get(virtualhost);
-                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backend.getString("id"), status)) {
+                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backend.getString(Serializable.jsonIdFieldName), status)) {
                         log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), backendId, virtualhost));
                     } else {
                         log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), backendId, virtualhost));

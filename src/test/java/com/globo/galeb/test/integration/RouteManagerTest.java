@@ -2,6 +2,7 @@ package com.globo.galeb.test.integration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.Serializable;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -55,7 +56,7 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyPostVHost() {
         int expectedStatusCode = HttpCode.Ok;
         String expectedStatusMessage = HttpResponseStatus.valueOf(expectedStatusCode).reasonPhrase();
-        JsonObject vhostJson = new JsonObject().putString("id", "test.localdomain");
+        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain");
         JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
         JsonArray routesJson = new JsonArray().add(vhostJson);
         JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
@@ -63,8 +64,8 @@ public class RouteManagerTest extends UtilTestVerticle {
         Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
         JsonObject getExpectedJson = new JsonObject()
-            .putString("id", "test.localdomain")
-            .putObject("properties", new JsonObject())
+            .putString(Serializable.jsonIdFieldName, "test.localdomain")
+            .putObject(Serializable.jsonPropertiesFieldName, new JsonObject())
             .putArray("backends", new JsonArray())
             .putArray("badBackends", new JsonArray());
 
