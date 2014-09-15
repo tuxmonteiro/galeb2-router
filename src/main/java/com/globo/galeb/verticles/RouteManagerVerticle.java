@@ -126,7 +126,6 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         // VirtualHost       @Deprecated
         routeMatcher.delete("/virtualhost", virtualhostHandlerAction(ACTION.DEL)); // ALL
-        routeMatcher.delete("/virtualhost/:id", virtualhostHandlerAction(ACTION.DEL)); // Only ID
 
         routeMatcher.get("/virtualhost", new Handler<HttpServerRequest>() {
             @Override
@@ -155,10 +154,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             }
         });
 
-        //      @Deprecated
-        routeMatcher.delete("/backend/:id", backendHandlerAction(eb, log, ACTION.DEL)); // Only with ID
-
         routeMatcher.post("/:uriBase", postMethodHandler());
+        routeMatcher.delete("/:uriBase/:id", deleteMethodWithIdHandler());
 
         // Others methods/uris/etc
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
@@ -305,7 +302,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                     @Override
                     public void handle(Buffer body) {
                         String bodyStr = body.toString();
-                        int statusCode = postMessageStatus(bodyStr, req.uri());
+                        int statusCode = statusFromMessageSchema(bodyStr, req.uri());
 
                         if (statusCode==HttpCode.Ok) {
                             sendMessageToBus(new JsonObject(bodyStr), ACTION.ADD, req.uri());
@@ -322,11 +319,53 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         };
     }
 
-    public int postMessageStatus(String message, String uri) {
-        return postMessageStatus(message, uri, true);
+    private Handler<HttpServerRequest> deleteMethodWithIdHandler() {
+
+        return new Handler<HttpServerRequest>() {
+
+            @Override
+            public void handle(final HttpServerRequest req) {
+                final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
+                final String id = getRequestId(req);
+                if (!checkMethodOk(req, serverResponse, "DELETE") ||
+                        !checkUriOk(req, serverResponse) ||
+                        !checkIdPresent(serverResponse, id)) {
+                    return;
+                }
+
+                req.bodyHandler(new Handler<Buffer>() {
+                    @Override
+                    public void handle(Buffer body) {
+                        String bodyStr = body.toString();
+                        JsonObject bodyJson = jsonIsOk(bodyStr) ?
+                                new JsonObject(body.toString()) : new JsonObject();
+
+                        if (!checkIdConsistency(serverResponse, bodyJson, id)) {
+                            return;
+                        }
+                        int statusCode = statusFromMessageSchema(bodyStr, req.uri());
+
+                        if (statusCode==HttpCode.Ok) {
+                            sendMessageToBus(bodyJson, ACTION.DEL, req.uri());
+                            statusCode = HttpCode.Accepted;
+                        }
+
+                        serverResponse.setStatusCode(statusCode)
+                            .setMessage(HttpCode.getMessage(statusCode, true))
+                            .setId(routeManagerId)
+                            .end();
+                    }
+                });
+
+            }
+        };
     }
 
-    public int postMessageStatus(String message, String uri, boolean registerLog) {
+    public int statusFromMessageSchema(String message, String uri) {
+        return statusFromMessageSchema(message, uri, true);
+    }
+
+    public int statusFromMessageSchema(String message, String uri, boolean registerLog) {
 
         String key = "";
 
@@ -396,6 +435,15 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private boolean checkIdAbsent(final ServerResponse serverResponse, String id) {
         if (!"".equals(id)) {
             endResponse(serverResponse, HttpCode.BadRequest, String.format("ID %s not supported", id));
+            return false;
+        }
+        return true;
+    }
+
+    private boolean checkIdConsistency(final ServerResponse serverResponse, JsonObject entityJson, String idFromUri) {
+        String idFromJson = entityJson.getString(Serializable.jsonIdFieldName, "");
+        if ("".equals(idFromJson) || "".equals(idFromUri) || !idFromJson.equals(idFromUri)) {
+            endResponse(serverResponse, HttpCode.BadRequest, String.format("IDs inconsistents: bodyId(%s) not equal uriId(%s)", idFromJson, idFromUri));
             return false;
         }
         return true;
