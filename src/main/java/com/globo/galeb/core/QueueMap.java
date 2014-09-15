@@ -66,36 +66,43 @@ public class QueueMap {
 
         boolean isOk = true;
         MessageBus messageBus = new MessageBus(message);
-        JsonObject virtualhostJson = messageBus.getVirtualhost();
-        String virtualhost = messageBus.getVirtualhostId();
         String uriBase = messageBus.getUriBase();
+        JsonObject entity = messageBus.getEntity();
+        String entityId = messageBus.getEntityId();
+        String parentId = messageBus.getParentId();
+
+        if ("".equals(entityId)) {
+            log.error(String.format("[%s] Inaccessible Entity Id: %s", verticle.toString(), entity.encode()));
+            return false;
+        }
 
         switch (uriBase) {
             case "virtualhost":
-                if (!virtualhosts.containsKey(virtualhost)) {
-                    Virtualhost newVirtualhostObj = new Virtualhost(virtualhostJson, vertx);
-                    virtualhosts.put(virtualhost, newVirtualhostObj);
-                    log.info(String.format("[%s] Virtualhost %s added", verticle.toString(), virtualhost));
+                if (!virtualhosts.containsKey(entityId)) {
+                    Virtualhost newVirtualhostObj = new Virtualhost(entity, vertx);
+                    virtualhosts.put(entityId, newVirtualhostObj);
+                    log.info(String.format("[%s] Virtualhost %s added", verticle.toString(), entityId));
                     isOk = true;
                 } else {
                     isOk = false;
                 }
                 break;
             case "backend":
-                if (!virtualhosts.containsKey(virtualhost)) {
-                    log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticle.toString(), virtualhost));
+                if ("".equals(parentId)) {
+                    log.error(String.format("[%s] Inaccessible ParentId: %s", verticle.toString(), entity.encode()));
+                    return false;
+                }
+                if (!virtualhosts.containsKey(parentId)) {
+                    log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticle.toString(), parentId));
                     isOk = false;
                 } else {
+                    boolean status = entity.getBoolean(Backend.propertyStatusFieldName, true);
 
-                    JsonObject backend = messageBus.getBackend();
-                    String backendId = messageBus.getBackendId();
-                    boolean status = backend.getBoolean(Backend.propertyStatusFieldName, true);
-
-                    final Virtualhost vhost = virtualhosts.get(virtualhost);
-                    if (vhost.addBackend(backend, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), backendId, virtualhost));
+                    final Virtualhost vhost = virtualhosts.get(parentId);
+                    if (vhost.addBackend(entity, status)) {
+                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), entityId, parentId));
                     } else {
-                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), backendId, virtualhost));
+                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), entityId, parentId));
                         isOk = false;
                     }
                 }
@@ -115,37 +122,46 @@ public class QueueMap {
 
         boolean isOk = true;
         MessageBus messageBus = new MessageBus(message);
-        String virtualhost = messageBus.getVirtualhostId();
         String uriBase = messageBus.getUriBase();
+        JsonObject entity = messageBus.getEntity();
+        String entityId = messageBus.getEntityId();
+        String parentId = messageBus.getParentId();
+
+        if ("".equals(entityId)) {
+            log.error(String.format("[%s] Inaccessible Entity Id: %s", verticle.toString(), entity.encode()));
+            return false;
+        }
 
         switch (uriBase) {
             case "virtualhost":
-                if (virtualhosts.containsKey(virtualhost)) {
-                    virtualhosts.get(virtualhost).clearAll();
-                    virtualhosts.remove(virtualhost);
-                    log.info(String.format("[%s] Virtualhost %s removed", verticle.toString(), virtualhost));
+                if (virtualhosts.containsKey(entityId)) {
+                    virtualhosts.get(entityId).clearAll();
+                    virtualhosts.remove(entityId);
+                    log.info(String.format("[%s] Virtualhost %s removed", verticle.toString(), entityId));
                 } else {
-                    log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticle.toString(), virtualhost));
+                    log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticle.toString(), entityId));
                     isOk = false;
                 }
                 break;
             case "backend":
-                JsonObject backend = messageBus.getBackend();
-                String backendId = messageBus.getBackendId();
-                boolean status = backend.getBoolean(Backend.propertyStatusFieldName, true);
+                if ("".equals(parentId)) {
+                    log.error(String.format("[%s] Inaccessible ParentId: %s", verticle.toString(), entity.encode()));
+                    return false;
+                }
+                boolean status = entity.getBoolean(Backend.propertyStatusFieldName, true);
 
-                if ("".equals(backendId)) {
+                if ("".equals(entityId)) {
                     log.warn(String.format("[%s] Backend UNDEF", verticle.toString()));
                     isOk = false;
-                } else if (!virtualhosts.containsKey(virtualhost)) {
-                    log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticle.toString(), virtualhost));
+                } else if (!virtualhosts.containsKey(parentId)) {
+                    log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticle.toString(), parentId));
                     isOk = false;
                 } else {
-                    final Virtualhost virtualhostObj = virtualhosts.get(virtualhost);
-                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backendId, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), backendId, virtualhost));
+                    final Virtualhost virtualhostObj = virtualhosts.get(parentId);
+                    if (virtualhostObj!=null && virtualhostObj.removeBackend(entityId, status)) {
+                        log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), entityId, parentId));
                     } else {
-                        log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), backendId, virtualhost));
+                        log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), entityId, parentId));
                         isOk = false;
                     }
                 }

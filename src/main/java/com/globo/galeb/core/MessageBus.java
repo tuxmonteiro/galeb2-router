@@ -5,13 +5,13 @@ import org.vertx.java.core.json.JsonObject;
 
 public class MessageBus {
 
-    public static final String virtualhostFieldName = "virtualhost";
-    public static final String backendFieldName     = "backend";
+    public static final String entityFieldName      = "entity";
+    public static final String parentIdFieldName    = "parentId";
     public static final String uriFieldName         = "uri";
 
-    private String virtualhostStr = "{}";
-    private String backendStr = "{}";
-    private String uriStr = "";
+    private String entityStr  = "{}";
+    private String parentId   = "";
+    private String uriStr     = "";
     private String properties = "{}";
     private String messageBus = "{}";
 
@@ -22,8 +22,8 @@ public class MessageBus {
     public MessageBus(String message) {
         try {
             JsonObject json = new JsonObject(message);
-            setVirtualhost(json.getString(virtualhostFieldName,"{}"));
-            setBackend(json.getString(backendFieldName,"{}"));
+            setEntity(json.getString(entityFieldName,"{}"));
+            setParentId(json.getString(parentIdFieldName, ""));
             setUri(json.getString(uriFieldName, ""));
             make();
         } catch (DecodeException ignore) {
@@ -31,78 +31,48 @@ public class MessageBus {
         }
     }
 
-    public JsonObject getVirtualhost() {
-        return new JsonObject(virtualhostStr);
+    public String getParentId() {
+        return parentId;
     }
 
-    public String getVirtualhostId() {
-        return getVirtualhost().getString(Serializable.jsonIdFieldName, "");
+    public MessageBus setParentId(String parentId) {
+        if (parentId!=null) {
+            this.parentId = parentId;
+        }
+        return this;
     }
 
-    public JsonObject getVirtualhostProperties() {
-        return new JsonObject(getVirtualhost().getString(Serializable.jsonPropertiesFieldName, "{}"));
+    public JsonObject getEntity() {
+        return new JsonObject(entityStr);
     }
 
-    public MessageBus setVirtualhost(String virtualhostStr) {
-        if (virtualhostStr!=null) {
+    public String getEntityId() {
+        return getEntity().getString(Serializable.jsonIdFieldName, "");
+    }
+
+    public JsonObject getEntityProperties() {
+        return new JsonObject(getEntity().getString(Serializable.jsonPropertiesFieldName, "{}"));
+    }
+
+    public MessageBus setEntity(String entityStr) {
+        if (entityStr!=null) {
             try {
-                new JsonObject(virtualhostStr);
-                this.virtualhostStr = virtualhostStr;
+                new JsonObject(entityStr);
+                this.entityStr = entityStr;
             } catch (DecodeException e) {
-                this.virtualhostStr = "{}";
+                this.entityStr = "{}";
             }
         } else {
-            this.virtualhostStr = "{}";
+            this.entityStr = "{}";
         }
         return this;
     }
 
-    public MessageBus setVirtualhost(JsonObject virtualhostJson) {
-        if (virtualhostJson!=null) {
-            this.virtualhostStr = virtualhostJson.encode();
+    public MessageBus setEntity(JsonObject entityJson) {
+        if (entityJson!=null) {
+            this.entityStr = entityJson.encode();
         } else {
-            this.virtualhostStr = "{}";
-        }
-        return this;
-    }
-
-    public JsonObject getBackend() {
-        JsonObject json = new JsonObject();
-        try {
-            json.mergeIn(new JsonObject(backendStr));
-        } catch (DecodeException ignore) {
-           // ignore
-        }
-        return json;
-    }
-
-    public String getBackendId() {
-        return getBackend().getString(Serializable.jsonIdFieldName, "");
-    }
-
-    public JsonObject getBackendProperties() {
-        return new JsonObject(getBackend().getString(Serializable.jsonPropertiesFieldName, "{}"));
-    }
-
-    public MessageBus setBackend(String backendStr) {
-        if (backendStr!=null) {
-            try {
-                new JsonObject(backendStr);
-                this.backendStr = backendStr;
-            } catch (DecodeException e) {
-                this.backendStr = "{}";
-            }
-        } else {
-            this.backendStr = "{}";
-        }
-        return this;
-    }
-
-    public MessageBus setBackend(JsonObject backendJson) {
-        if (backendStr!=null) {
-            this.backendStr = backendJson.encode();
-        } else {
-            this.backendStr = "{}";
+            this.entityStr = "{}";
         }
         return this;
     }
@@ -125,16 +95,15 @@ public class MessageBus {
 
     public MessageBus make() {
 
-        JsonObject messageJson = new JsonObject()
-                                        .putString(virtualhostFieldName,
-                                                getVirtualhost()
-                                                    .putObject(Serializable.jsonPropertiesFieldName,
-                                                            new JsonObject(properties))
-                                                    .encode())
-                                        .putString(backendFieldName, backendStr)
-                                        .putString(uriFieldName, uriStr);
-
-        messageBus = messageJson.toString();
+        messageBus = new JsonObject()
+                            .putString(uriFieldName, uriStr)
+                            .putString(parentIdFieldName, parentId)
+                            .putString(entityFieldName,
+                                    getEntity()
+                                        .putObject(Serializable.jsonPropertiesFieldName,
+                                                new JsonObject(properties))
+                                        .encode())
+                            .encode();
         return this;
     }
 

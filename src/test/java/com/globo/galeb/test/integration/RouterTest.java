@@ -18,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.Serializable;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
@@ -30,7 +31,6 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 
@@ -45,12 +45,14 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterWith1VHostAndNoBackend() {
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain");
-        JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
 
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
+
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
         newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.BadRequest).expectBodySize(0).after(action1);
         action1.run();
@@ -59,14 +61,14 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterNoVHostAddBackend() {
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "1.2.3.4:80");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
-        JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
+        String backendId = "1.2.3.4:80";
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, backendId);
 
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson);
+        JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
+
+        Action action1 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson);
 
         newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.BadRequest).expectBodySize(0).after(action1);
         action1.run();
@@ -75,16 +77,20 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterWith1VHostAnd1ClosedBackend() {
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 2L)
+                                    .putString(MessageBus.parentIdFieldName, vhostId)
+                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
 
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
-        Action action2 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
 
         newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.BadGateway).expectBodySize(0).after(action2);
 
@@ -95,16 +101,20 @@ public class RouterTest extends UtilTestVerticle {
     @Test
     public void testRouterWith1VHostAnd1TimeoutBackend() {
         // The timeout is set to 1s at test initialization
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "1.2.3.4:8888");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 2L)
+                                    .putString(MessageBus.parentIdFieldName, vhostId)
+                                    .putString(Serializable.jsonIdFieldName, "1.2.3.4:8888");
+
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
-        Action action2 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
 
         newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.GatewayTimeout).expectBodySize(0).after(action2);
 
@@ -125,16 +135,19 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 2L)
+                                    .putString(MessageBus.parentIdFieldName, vhostId)
+                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
         final Action action3 = newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain")
                 .expectCode(HttpCode.Ok).expectBody("response from backend").after(action2).setDontStop();
 
@@ -170,16 +183,19 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 2L)
+                                    .putString(MessageBus.parentIdFieldName, vhostId)
+                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
         final Action action3 = newPost().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").setBodyJson("{ \"some key\": \"some value\" }")
                 .expectCode(HttpCode.Ok).expectBody("{\"some key\":\"some value\"}").after(action2).setDontStop();
 
@@ -222,16 +238,19 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 2L)
+                                    .putString(MessageBus.parentIdFieldName, vhostId)
+                                    .putString(Serializable.jsonIdFieldName, "1.2.3.4:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
         Action actionn1 = action2; Action actionn2 = null;
         for (int http_code=HttpCode.Ok ; http_code < 600 ; http_code++) {
         	actionn2 = newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").atUri(String.format("/%d", http_code))
@@ -261,24 +280,27 @@ public class RouterTest extends UtilTestVerticle {
         server.requestHandler(new Handler<HttpServerRequest>() {
             @Override
             public void handle(HttpServerRequest request) {
-                request.response().setStatusCode(HttpCode.TemporaryRedirect).end();
+                request.response().setStatusCode(HttpCode.Found).end();
             }
         });
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain")
-                .putArray("backends", new JsonArray().addObject(backend));
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
+        JsonObject backend = new JsonObject()
+                                    .putNumber("version", 2L)
+                                    .putString(MessageBus.parentIdFieldName, vhostId)
+                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(postJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
         final Action action3 = newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain")
-                .expectCode(HttpCode.TemporaryRedirect).expectBodySize(0).after(action2).setDontStop();
+                .expectCode(HttpCode.Found).expectBodySize(0).after(action2).setDontStop();
 
         // Create handler to close server after the test
         getVertx().eventBus().registerHandler("ended.action", new Handler<Message<String>>() {

@@ -305,10 +305,10 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                     @Override
                     public void handle(Buffer body) {
                         String bodyStr = body.toString();
-                        int statusCode = postMessageStatus(bodyStr);
+                        int statusCode = postMessageStatus(bodyStr, req.uri());
 
                         if (statusCode==HttpCode.Ok) {
-                            setRoute(new JsonObject(bodyStr), ACTION.ADD, req.uri());
+                            sendMessageToBus(new JsonObject(bodyStr), ACTION.ADD, req.uri());
                         }
 
                         serverResponse.setStatusCode(statusCode)
@@ -322,44 +322,52 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         };
     }
 
-    public int postMessageStatus(String message) {
-        return postMessageStatus(message, true);
+    public int postMessageStatus(String message, String uri) {
+        return postMessageStatus(message, uri, true);
     }
 
-    public int postMessageStatus(String message, boolean registerLog) {
+    public int postMessageStatus(String message, String uri, boolean registerLog) {
 
-        JsonObject json = new JsonObject();
-        JsonArray jsonRoutes = new JsonArray();
         String key = "";
 
-        try {
-            json = new JsonObject(message);
-        } catch (DecodeException ex) {
+        if (!jsonIsOk(message)) {
             if (registerLog) log.error(String.format("Json decode error: %s", message));
             return HttpCode.BadRequest;
         }
-        if (json.containsField("routes")) {
-            try {
-                jsonRoutes = json.getArray("routes");
-            } catch (DecodeException e) {
-                if (registerLog) log.error(String.format("Routes has to be ARRAY: %s", message));
-                return HttpCode.BadRequest;
-            }
-        } else {
-            if (registerLog) log.error(String.format("Routes not found: %s", message));
+
+        JsonObject json = new JsonObject(message);
+
+        if (!json.containsField("version")) {
+            if (registerLog) log.error(String.format("Version is mandatory: %s", message));
             return HttpCode.BadRequest;
         }
 
-        for (Object routeObj: jsonRoutes) {
-            JsonObject routeJson = (JsonObject) routeObj;
-            if (!routeJson.containsField(Serializable.jsonIdFieldName)) {
-                if (registerLog) log.error(String.format("ID not found: %s", routeJson.toString()));
+        if (!uri.startsWith("/route")) {
+            if (!json.containsField(Serializable.jsonIdFieldName)) {
+                if (registerLog) log.error(String.format("ID is mandatory: %s", message));
+                return HttpCode.BadRequest;
+            }
+        } else {
+            JsonArray jsonRoutes = new JsonArray();
+
+            if (!hasRoutes(json)) {
+                if (registerLog) log.error(String.format("Reading routes failed: %s", message));
                 return HttpCode.BadRequest;
             } else {
-                key = routeJson.getString(Serializable.jsonIdFieldName);
-                if ("".equals(key)) {
-                    if (registerLog) log.error(String.format("ID is invalid: %s", routeJson.toString()));
+                jsonRoutes = json.getArray("routes");
+            }
+
+            for (Object routeObj: jsonRoutes) {
+                JsonObject routeJson = (JsonObject) routeObj;
+                if (!routeJson.containsField(Serializable.jsonIdFieldName)) {
+                    if (registerLog) log.error(String.format("ID not found: %s", routeJson.toString()));
                     return HttpCode.BadRequest;
+                } else {
+                    key = routeJson.getString(Serializable.jsonIdFieldName);
+                    if ("".equals(key)) {
+                        if (registerLog) log.error(String.format("ID is invalid: %s", routeJson.toString()));
+                        return HttpCode.BadRequest;
+                    }
                 }
             }
         }
@@ -393,6 +401,30 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         return true;
     }
 
+    private boolean jsonIsOk(String message) {
+        boolean jsonOk = false;
+        try {
+            new JsonObject(message);
+            jsonOk = true;
+        } catch (DecodeException ignore) {
+            // jsonOk = false
+        }
+        return jsonOk;
+    }
+
+    private boolean hasRoutes(final JsonObject jsonMessage) {
+        boolean routesOk = false;
+        if (jsonMessage.containsField("routes")) {
+            try {
+                jsonMessage.getArray("routes");
+                routesOk = true;
+            } catch (DecodeException isNotArray) {
+                // routesOk = false // because ins't array
+            }
+        } // else { routesOk = false // because not exist }
+        return routesOk;
+    }
+
     private boolean checkUriOk(final HttpServerRequest req, final ServerResponse serverResponse) {
         String uriBase = "";
         try {
@@ -412,13 +444,43 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         return false;
     }
 
-    private boolean checkMethodOk(HttpServerRequest req, ServerResponse serverResponse, String string) {
+    private boolean checkMethodOk(HttpServerRequest req, ServerResponse serverResponse, String methodId) {
         String method = req.method();
-        if (!"POST".equalsIgnoreCase(method)) {
+        if (!methodId.equalsIgnoreCase(method)) {
             endResponse(serverResponse, HttpCode.MethotNotAllowed, "Method Not Allowed");
             return false;
         }
         return true;
+    }
+
+    public void sendMessageToBus(JsonObject json, QueueMap.ACTION action, final String uri) {
+
+        Long timestamp = 0L;
+        try {
+            timestamp = json.getLong("version");
+        } catch (DecodeException e) {
+            log.error(e.getMessage());
+            return;
+        }
+        json.removeField("version");
+
+        String parentId = json.getString(MessageBus.parentIdFieldName, "");
+        json.removeField(parentId);
+
+        MessageBus messageBus = new MessageBus()
+                                    .setUri(uri)
+                                    .setEntity(json.encode());
+
+        if (!"".equals(parentId)) {
+            messageBus.setParentId(parentId);
+        }
+
+        String message = messageBus.make().toString();
+
+        sendAction(message, action);
+        sendAction(String.format("%d", timestamp), ACTION.SET_VERSION);
+
+
     }
 
     public void setRoute(final JsonObject json, final QueueMap.ACTION action, final String uri) throws RuntimeException {
@@ -453,8 +515,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                         throw new RouterException("Backend undef");
                     }
                     String message = new MessageBus()
-                                            .setVirtualhost(vhostJson)
-                                            .setBackend(backendJson)
+                                            .setEntity(backendJson)
+                                            .setParentId(vhostJson.getString(Serializable.jsonIdFieldName))
                                             .setUri(uri)
                                             .make()
                                             .toString();
@@ -462,7 +524,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                 }
             } else {
                 String message = new MessageBus()
-                                        .setVirtualhost(vhostJson)
+                                        .setEntity(vhostJson)
                                         .setUri(uri)
                                         .make()
                                         .toString();

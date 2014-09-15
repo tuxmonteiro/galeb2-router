@@ -49,36 +49,28 @@ fi
 curl -XPOST "http://$ROUTE/virtualhost" -d '
 {
     "version": 28031976,
-    "routes":[
-    {
-      "id": "'$VHOST'",
-      "properties": {
+    "id": "'$VHOST'",
+    "properties": {
         "loadBalancePolicy": "'$LOADBALANCE'"
-      },
-      "backends": []
-    }
-    ]
+      }
 }'
 
 curl -XPOST "http://$ROUTE/backend" -d '
 {
     "version": 28031977,
-    "routes":[
-    {
-      "id": "'$VHOST'",
-      "backends": [
-        {
-            "id":"'$BACKEND1_HOST:$BACKEND1_PORT'"
-        },
-        {
-            "id":"'$BACKEND2_HOST:$BACKEND2_PORT'"
-        }
-        ]
-    }
-    ]
+    "id":"'$BACKEND1_HOST:$BACKEND1_PORT'",
+    "parentId": "'$VHOST'"
+}'
+
+curl -XPOST "http://$ROUTE/backend" -d '
+{
+    "version": 28031978,
+    "id":"'$BACKEND2_HOST:$BACKEND2_PORT'",
+    "parentId": "'$VHOST'"
 }'
 
 # Examples:
-#curl -XPOST "http://127.0.0.1:9090/virtualhost" -d '{"version": 1, routes:[{"id": "lol.localdomain", "backends":[]}]}'
-#curl -XPOST "http://127.0.0.1:9090/backend" -d '{"version": 2, routes:[{"id": "lol.localdomain", "backends":[{"id":"127.0.0.1:8082"}]}]}'
+#curl -XPOST "http://127.0.0.1:9090/virtualhost" -d '{"version": 1, "id": "lol.localdomain", "properties": {}}'
+#curl -XPOST "http://127.0.0.1:9090/backend" -d '{"version": 2, "id": "127.0.0.1:8081", "parentId": "lol.localdomain"}'
+#curl -XPOST "http://127.0.0.1:9090/backend" -d '{"version": 3, "id": "127.0.0.1:8082", "parentId": "lol.localdomain"}'
 

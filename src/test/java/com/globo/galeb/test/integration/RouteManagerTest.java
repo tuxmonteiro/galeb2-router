@@ -58,12 +58,15 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyPostVHost() {
         int expectedStatusCode = HttpCode.Ok;
         String expectedStatusMessage = HttpResponseStatus.valueOf(expectedStatusCode).reasonPhrase();
-        JsonObject vhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.localdomain");
-        JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
-        JsonArray routesJson = new JsonArray().add(vhostJson);
-        JsonObject postJson = new JsonObject().putNumber("version", 1L).putArray("routes", routesJson);
+        String vhostId = "test.localdomain";
+        JsonObject vhostJson = new JsonObject()
+                                    .putNumber("version", 1L)
+                                    .putString(Serializable.jsonIdFieldName, vhostId);
 
-        Action action1 = newPost().onPort(9090).setBodyJson(postJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
+
+
+        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
         JsonObject getExpectedJson = new JsonObject()
             .putString(Serializable.jsonIdFieldName, "test.localdomain")

@@ -47,6 +47,7 @@ public class QueueMapTest {
     private Logger logger;
     private LogDelegate logDelegate;
     private JsonObject virtualhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.virtualhost.com");
+    private String virtualhostId = "test.virtualhost.com";
     private JsonObject backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, "0.0.0.0:00");
     private JsonObject properties;
 
@@ -79,7 +80,7 @@ public class QueueMapTest {
         String uriStr = "/virtualhost";
         String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
         String message = new MessageBus()
-                                .setVirtualhost(virtualhostJson)
+                                .setEntity(virtualhostJson)
                                 .setUri(uriStr)
                                 .make()
                                 .toString();
@@ -99,7 +100,7 @@ public class QueueMapTest {
         String uriStr = "/virtualhost";
         String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
         String message = new MessageBus()
-                                .setVirtualhost(virtualhostJson)
+                                .setEntity(virtualhostJson)
                                 .setUri(uriStr)
                                 .make()
                                 .toString();
@@ -118,13 +119,13 @@ public class QueueMapTest {
         ((FakeLogger)logger).setTestId("removeExistingVirtualhostFromRouteMap");
 
         String messageAdd = new MessageBus()
-                                .setVirtualhost(virtualhostJson)
+                                .setEntity(virtualhostJson)
                                 .setUri("/virtualhost")
                                 .make()
                                 .toString();
         String uriStr = String.format("/virtualhost/%s", virtualhostJson);
         String messageDel = new MessageBus()
-                                .setVirtualhost(virtualhostJson)
+                                .setEntity(virtualhostJson)
                                 .setUri(uriStr)
                                 .make()
                                 .toString();
@@ -145,7 +146,7 @@ public class QueueMapTest {
 
         String uriStr = String.format("/virtualhost/%s", virtualhostJson);
         String message = new MessageBus()
-                                .setVirtualhost(virtualhostJson)
+                                .setEntity(virtualhostJson)
                                 .setUri(uriStr)
                                 .make()
                                 .toString();
@@ -161,17 +162,15 @@ public class QueueMapTest {
     public void insertNewBackendToExistingVirtualhostSet() {
         ((FakeLogger)logger).setTestId("insertNewBackendToExistingVirtualhostSet");
 
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
-
         String messageVirtualhost = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setEntity(virtualhostJson)
                                         .setUri("/virtualhost")
                                         .make()
                                         .toString();
         String messageBackend = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setParentId(virtualhostId)
                                         .setUri("/backend")
-                                        .setBackend(backendJson)
+                                        .setEntity(backendJson)
                                         .make()
                                         .toString();
 
@@ -193,9 +192,9 @@ public class QueueMapTest {
         ((FakeLogger)logger).setTestId("insertNewBackendToAbsentVirtualhostSet");
 
         String messageBackend = new MessageBus()
-                                    .setVirtualhost(virtualhostJson)
+                                    .setParentId(virtualhostId)
                                     .setUri("/backend")
-                                    .setBackend(backendJson)
+                                    .setEntity(backendJson)
                                     .make()
                                     .toString();
 
@@ -214,14 +213,14 @@ public class QueueMapTest {
         String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
 
         String messageVirtualhost = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setEntity(virtualhostJson)
                                         .setUri("/virtualhost")
                                         .make()
                                         .toString();
         String messageBackend = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setParentId(virtualhostId)
                                         .setUri("/backend")
-                                        .setBackend(backendJson)
+                                        .setEntity(backendJson)
                                         .make()
                                         .toString();
 
@@ -246,14 +245,14 @@ public class QueueMapTest {
         String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
 
         String messageVirtualhost = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setEntity(virtualhostJson)
                                         .setUri("/virtualhost")
                                         .make()
                                         .toString();
         String messageBackend = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setParentId(virtualhostId)
                                         .setUri("/backend")
-                                        .setBackend(backendJson)
+                                        .setEntity(backendJson)
                                         .make()
                                         .toString();
 
@@ -276,9 +275,9 @@ public class QueueMapTest {
         ((FakeLogger)logger).setTestId("removeBackendFromAbsentVirtualhostSet");
 
         String messageBackend = new MessageBus()
-                                        .setVirtualhost(virtualhostJson)
+                                        .setParentId(virtualhostId)
                                         .setUri("/backend")
-                                        .setBackend(backendJson)
+                                        .setEntity(backendJson)
                                         .make()
                                         .toString();
         QueueMap queueMap = new QueueMap(verticle, virtualhosts);
@@ -297,14 +296,14 @@ public class QueueMapTest {
         String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
 
         String messageVirtualhost = new MessageBus()
-                                            .setVirtualhost(virtualhostJson)
+                                            .setEntity(virtualhostJson)
                                             .setUri("/virtualhost")
                                             .make()
                                             .toString();
         String messageBackend = new MessageBus()
-                                            .setVirtualhost(virtualhostJson)
+                                            .setParentId(virtualhostId)
                                             .setUri("/backend")
-                                            .setBackend(backendJson)
+                                            .setEntity(backendJson)
                                             .make()
                                             .toString();
 
@@ -333,7 +332,7 @@ public class QueueMapTest {
 
             String aVirtualhostStr = String.format("%d%s", idVirtualhost, virtualhostJson);
             String messageVirtualhost = new MessageBus()
-                                                .setVirtualhost(aVirtualhostStr)
+                                                .setEntity(aVirtualhostStr)
                                                 .setUri("/virtualhost")
                                                 .make()
                                                 .toString();
@@ -344,9 +343,9 @@ public class QueueMapTest {
                 String newBackendStr = String.format("%s:%d", backendJson.getString(Serializable.jsonIdFieldName).split(":")[0], idBackend);
                 JsonObject newBackendJson = new JsonObject().putString(Serializable.jsonIdFieldName, newBackendStr);
                 String messageBackend = new MessageBus()
-                                                .setVirtualhost(virtualhostJson)
+                                                .setParentId(virtualhostId)
                                                 .setUri("/backend")
-                                                .setBackend(newBackendJson.encode())
+                                                .setEntity(newBackendJson)
                                                 .make()
                                                 .toString();
                 queueMap.processAddMessage(messageBackend);

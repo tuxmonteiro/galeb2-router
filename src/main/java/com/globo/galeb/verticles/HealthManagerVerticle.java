@@ -137,31 +137,36 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
     public void postAddEvent(String message) {
 
         MessageBus messageBus = new MessageBus(message);
-        boolean backendStatus = messageBus.getBackend().getBoolean(Backend.propertyStatusFieldName, true);
-        String backendId = messageBus.getBackendId();
-        String virtualhostId = messageBus.getVirtualhostId();
-        final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+        if ("backend".equals(messageBus.getUriBase())) {
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyStatusFieldName, true);
+            String backendId = messageBus.getEntityId();
+            String virtualhostId = messageBus.getParentId();
+            final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
 
-        if (!tempMap.containsKey(backendId)) {
-            tempMap.put(backendId, new HashSet<String>());
+            if (!tempMap.containsKey(backendId)) {
+                tempMap.put(backendId, new HashSet<String>());
+            }
+            Set<String> virtualhosts = tempMap.get(backendId);
+            virtualhosts.add(virtualhostId);
         }
-        Set<String> virtualhosts = tempMap.get(backendId);
-        virtualhosts.add(virtualhostId);
     };
 
     @Override
     public void postDelEvent(String message) {
         MessageBus messageBus = new MessageBus(message);
-        boolean backendStatus = messageBus.getBackend().getBoolean(Backend.propertyStatusFieldName, true);
-        String backendId = messageBus.getBackendId();
-        String virtualhostId = messageBus.getVirtualhostId();
-        final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+        if ("backend".equals(messageBus.getUriBase())) {
 
-        if (tempMap.containsKey(backendId)) {
-            Set<String> virtualhosts = tempMap.get(backendId);
-            virtualhosts.remove(virtualhostId);
-            if (virtualhosts.isEmpty()) {
-                tempMap.remove(backendId);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyStatusFieldName, true);
+            String backendId = messageBus.getEntityId();
+            String virtualhostId = messageBus.getParentId();
+            final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+
+            if (tempMap.containsKey(backendId)) {
+                Set<String> virtualhosts = tempMap.get(backendId);
+                virtualhosts.remove(virtualhostId);
+                if (virtualhosts.isEmpty()) {
+                    tempMap.remove(backendId);
+                }
             }
         }
     };
@@ -178,8 +183,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 JsonObject virtualhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhost);
 
                 String messageDel = new MessageBus()
-                                            .setVirtualhost(virtualhostJson)
-                                            .setBackend(backendJson
+                                            .setParentId(virtualhostJson.getString(Serializable.jsonIdFieldName))
+                                            .setEntity(backendJson
                                                     .putBoolean(Backend.propertyStatusFieldName, !status).encode())
                                             .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
                                             .make()
@@ -189,8 +194,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 }
 
                 String messageAdd = new MessageBus()
-                                            .setVirtualhost(virtualhostJson)
-                                            .setBackend(backendJson
+                                            .setParentId(virtualhostJson.getString(Serializable.jsonIdFieldName))
+                                            .setEntity(backendJson
                                                     .putBoolean(Backend.propertyStatusFieldName, status).encode())
                                             .setUri("/backend")
                                             .make()
