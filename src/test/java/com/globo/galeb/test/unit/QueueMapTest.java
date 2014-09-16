@@ -22,9 +22,9 @@ import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.unit.util.FakeLogger;
@@ -46,9 +46,9 @@ public class QueueMapTest {
     private Container container;
     private Logger logger;
     private LogDelegate logDelegate;
-    private JsonObject virtualhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, "test.virtualhost.com");
+    private JsonObject virtualhostJson = new JsonObject().putString(IJsonable.jsonIdFieldName, "test.virtualhost.com");
     private String virtualhostId = "test.virtualhost.com";
-    private JsonObject backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, "0.0.0.0:00");
+    private JsonObject backendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00");
     private JsonObject properties;
 
     private Map<String, Virtualhost> virtualhosts = new HashMap<String, Virtualhost>();
@@ -78,7 +78,7 @@ public class QueueMapTest {
         ((FakeLogger)logger).setTestId("insertNewVirtualhostToRouteMap");
 
         String uriStr = "/virtualhost";
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
         String message = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -98,7 +98,7 @@ public class QueueMapTest {
         ((FakeLogger)logger).setTestId("insertDuplicatedVirtualhostToRouteMap");
 
         String uriStr = "/virtualhost";
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
         String message = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -210,7 +210,7 @@ public class QueueMapTest {
     public void insertDuplicatedBackendToExistingVirtualhostSet() {
         ((FakeLogger)logger).setTestId("insertDuplicatedBackendToExistingVirtualhostSet");
 
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
         String messageVirtualhost = new MessageBus()
                                         .setEntity(virtualhostJson)
@@ -242,7 +242,7 @@ public class QueueMapTest {
     public void removeExistingBackendFromExistingVirtualhostSet() throws UnsupportedEncodingException {
         ((FakeLogger)logger).setTestId("removeExistingBackendFromExistingVirtualhostSet");
 
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
         String messageVirtualhost = new MessageBus()
                                         .setEntity(virtualhostJson)
@@ -293,7 +293,7 @@ public class QueueMapTest {
         ((FakeLogger)logger).setTestId("removeAbsentBackendFromVirtualhostSet");
 
         String statusStr = "";
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
         String messageVirtualhost = new MessageBus()
                                             .setEntity(virtualhostJson)
@@ -340,8 +340,8 @@ public class QueueMapTest {
             queueMap.processAddMessage(messageVirtualhost);
 
             for (int idBackend=0; idBackend<10; idBackend++) {
-                String newBackendStr = String.format("%s:%d", backendJson.getString(Serializable.jsonIdFieldName).split(":")[0], idBackend);
-                JsonObject newBackendJson = new JsonObject().putString(Serializable.jsonIdFieldName, newBackendStr);
+                String newBackendStr = String.format("%s:%d", backendJson.getString(IJsonable.jsonIdFieldName).split(":")[0], idBackend);
+                JsonObject newBackendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, newBackendStr);
                 String messageBackend = new MessageBus()
                                                 .setParentId(virtualhostId)
                                                 .setUri("/backend")

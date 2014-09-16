@@ -28,10 +28,10 @@ import java.util.Set;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.QueueMap.ACTION;
-import com.globo.galeb.core.Serializable;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
@@ -179,11 +179,11 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
             Iterator<String> it = virtualhosts.iterator();
             while (it.hasNext()) {
                 String virtualhost = it.next();
-                JsonObject backendJson = new JsonObject().putString(Serializable.jsonIdFieldName, backend);
-                JsonObject virtualhostJson = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhost);
+                JsonObject backendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, backend);
+                JsonObject virtualhostJson = new JsonObject().putString(IJsonable.jsonIdFieldName, virtualhost);
 
                 String messageDel = new MessageBus()
-                                            .setParentId(virtualhostJson.getString(Serializable.jsonIdFieldName))
+                                            .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
                                             .setEntity(backendJson
                                                     .putBoolean(Backend.propertyStatusFieldName, !status).encode())
                                             .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
@@ -194,7 +194,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 }
 
                 String messageAdd = new MessageBus()
-                                            .setParentId(virtualhostJson.getString(Serializable.jsonIdFieldName))
+                                            .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
                                             .setEntity(backendJson
                                                     .putBoolean(Backend.propertyStatusFieldName, status).encode())
                                             .setUri("/backend")

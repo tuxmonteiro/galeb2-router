@@ -18,8 +18,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -48,7 +48,7 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
@@ -64,7 +64,7 @@ public class RouterTest extends UtilTestVerticle {
         String backendId = "1.2.3.4:80";
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, backendId);
+                                    .putString(IJsonable.jsonIdFieldName, backendId);
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
@@ -80,11 +80,11 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 2L)
                                     .putString(MessageBus.parentIdFieldName, vhostId)
-                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+                                    .putString(IJsonable.jsonIdFieldName, "127.0.0.1:8888");
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
@@ -104,11 +104,11 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 2L)
                                     .putString(MessageBus.parentIdFieldName, vhostId)
-                                    .putString(Serializable.jsonIdFieldName, "1.2.3.4:8888");
+                                    .putString(IJsonable.jsonIdFieldName, "1.2.3.4:8888");
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
@@ -138,11 +138,11 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 2L)
                                     .putString(MessageBus.parentIdFieldName, vhostId)
-                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+                                    .putString(IJsonable.jsonIdFieldName, "127.0.0.1:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
@@ -186,11 +186,11 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 2L)
                                     .putString(MessageBus.parentIdFieldName, vhostId)
-                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+                                    .putString(IJsonable.jsonIdFieldName, "127.0.0.1:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
@@ -241,11 +241,11 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 2L)
                                     .putString(MessageBus.parentIdFieldName, vhostId)
-                                    .putString(Serializable.jsonIdFieldName, "1.2.3.4:8888");
+                                    .putString(IJsonable.jsonIdFieldName, "1.2.3.4:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
@@ -289,11 +289,11 @@ public class RouterTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(Serializable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.jsonIdFieldName, vhostId);
         JsonObject backend = new JsonObject()
                                     .putNumber("version", 2L)
                                     .putString(MessageBus.parentIdFieldName, vhostId)
-                                    .putString(Serializable.jsonIdFieldName, "127.0.0.1:8888");
+                                    .putString(IJsonable.jsonIdFieldName, "127.0.0.1:8888");
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions

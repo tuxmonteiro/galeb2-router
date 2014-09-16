@@ -23,8 +23,8 @@ import java.util.Set;
 
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.HashPolicy;
 
@@ -46,8 +46,8 @@ public class HashPolicyTest {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(Serializable.jsonIdFieldName, "test.localdomain")
-            .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
+            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
@@ -89,7 +89,7 @@ public class HashPolicyTest {
                 long initialTime = System.currentTimeMillis();
                 for (int counter=0; counter<samples; counter++) {
                     RequestData requestData = new RequestData(Long.toString(counter), null);
-                    virtualhost.putString(HashPolicy.hashAlgorithmFieldName, hash.toString());
+                    virtualhost.getProperties().putString(HashPolicy.hashAlgorithmFieldName, hash.toString());
                     sum += virtualhost.getChoice(requestData).getPort();
                 }
                 long finishTime = System.currentTimeMillis();

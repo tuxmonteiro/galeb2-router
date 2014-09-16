@@ -47,11 +47,11 @@ public class MessageBus {
     }
 
     public String getEntityId() {
-        return getEntity().getString(Serializable.jsonIdFieldName, "");
+        return getEntity().getString(IJsonable.jsonIdFieldName, "");
     }
 
     public JsonObject getEntityProperties() {
-        return new JsonObject(getEntity().getString(Serializable.jsonPropertiesFieldName, "{}"));
+        return new JsonObject(getEntity().getString(IJsonable.jsonPropertiesFieldName, "{}"));
     }
 
     public MessageBus setEntity(String entityStr) {
@@ -100,7 +100,7 @@ public class MessageBus {
                             .putString(parentIdFieldName, parentId)
                             .putString(entityFieldName,
                                     getEntity()
-                                        .putObject(Serializable.jsonPropertiesFieldName,
+                                        .putObject(IJsonable.jsonPropertiesFieldName,
                                                 new JsonObject(properties))
                                         .encode())
                             .encode();

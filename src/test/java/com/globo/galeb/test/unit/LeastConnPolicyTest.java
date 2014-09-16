@@ -19,8 +19,8 @@ import static org.mockito.Mockito.mock;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.impl.LeastConnPolicy;
@@ -49,8 +49,8 @@ public class LeastConnPolicyTest extends TestVerticle {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, LeastConnPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(Serializable.jsonIdFieldName, "test.localdomain")
-            .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
+            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {

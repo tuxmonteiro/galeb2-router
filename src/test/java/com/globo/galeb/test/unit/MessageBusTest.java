@@ -9,8 +9,8 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LogDelegate;
 
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class MessageBusTest {
@@ -29,8 +29,8 @@ public class MessageBusTest {
         ((FakeLogger)logger).setTestId("");
 
         virtualhostId = "test.virtualhost.com";
-        virtualhostStr = new JsonObject().putString(Serializable.jsonIdFieldName, virtualhostId).encode();
-        backendStr = new JsonObject().putString(Serializable.jsonIdFieldName, "0.0.0.0:00").encode();
+        virtualhostStr = new JsonObject().putString(IJsonable.jsonIdFieldName, virtualhostId).encode();
+        backendStr = new JsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00").encode();
     }
 
     @Test
@@ -41,10 +41,10 @@ public class MessageBusTest {
         JsonObject virtualhostJson = new JsonObject(virtualhostStr);
         JsonObject backendJson = new JsonObject(backendStr);
 
-        virtualhostJson.putObject(Serializable.jsonPropertiesFieldName, properties);
-        backendJson.putObject(Serializable.jsonPropertiesFieldName, properties);
+        virtualhostJson.putObject(IJsonable.jsonPropertiesFieldName, properties);
+        backendJson.putObject(IJsonable.jsonPropertiesFieldName, properties);
 
-        String virtualhostId = virtualhostJson.getString(Serializable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
 
         String messageWithParentId = new MessageBus()

@@ -17,8 +17,8 @@ package com.globo.galeb.test.unit;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.RoundRobinPolicy;
 
@@ -49,8 +49,8 @@ public class RoundRobinPolicyTest {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, RoundRobinPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(Serializable.jsonIdFieldName, "test.localdomain")
-            .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
+            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
