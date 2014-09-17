@@ -122,8 +122,13 @@ public abstract class UtilTestVerticle extends TestVerticle {
                         // Assert body as Json
                         if (exp.bodyJson() != null) {
                             JsonObject respJson = Util.safeExtractJson(body.toString());
-                            respJson.removeField("created_at");
-                            respJson.removeField("modified_at");
+                            if (respJson!=null) {
+                                for (String key: respJson.toMap().keySet()) {
+                                    if (key.startsWith("_")) {
+                                        respJson.removeField(key);
+                                    }
+                                }
+                            }
                             assertEquals(exp.bodyJson(), respJson);
                         }
                         // Assert body size
