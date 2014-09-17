@@ -38,4 +38,7 @@ public class Constants {
     public static final String CONF_STATSD_PORT                  = "statsdPort";
     public static final String CONF_STATSD_PREFIX                = "statsdPrefix";
 
+    public static final String CONF_STARTER_CONF                 = "_starterConf";
+
+
 }
