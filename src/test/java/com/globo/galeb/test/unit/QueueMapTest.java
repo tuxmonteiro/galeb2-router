@@ -25,6 +25,7 @@ import java.util.Map;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.unit.util.FakeLogger;
@@ -33,7 +34,6 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.java.platform.Container;
@@ -46,10 +46,10 @@ public class QueueMapTest {
     private Container container;
     private Logger logger;
     private LogDelegate logDelegate;
-    private JsonObject virtualhostJson = new JsonObject().putString(IJsonable.jsonIdFieldName, "test.virtualhost.com");
+    private SafeJsonObject virtualhostJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "test.virtualhost.com");
     private String virtualhostId = "test.virtualhost.com";
-    private JsonObject backendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00");
-    private JsonObject properties;
+    private SafeJsonObject backendJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00");
+    private SafeJsonObject properties;
 
     private Map<String, Virtualhost> virtualhosts = new HashMap<String, Virtualhost>();
 
@@ -58,7 +58,7 @@ public class QueueMapTest {
         verticle = mock(Verticle.class);
         vertx = mock(Vertx.class);
         container = mock(Container.class);
-        properties = new JsonObject();
+        properties = new SafeJsonObject();
         properties.putString(Virtualhost.loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
         logDelegate = mock(LogDelegate.class);
         logger = new FakeLogger(logDelegate);
@@ -341,7 +341,7 @@ public class QueueMapTest {
 
             for (int idBackend=0; idBackend<10; idBackend++) {
                 String newBackendStr = String.format("%s:%d", backendJson.getString(IJsonable.jsonIdFieldName).split(":")[0], idBackend);
-                JsonObject newBackendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, newBackendStr);
+                SafeJsonObject newBackendJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, newBackendStr);
                 String messageBackend = new MessageBus()
                                                 .setParentId(virtualhostId)
                                                 .setUri("/backend")

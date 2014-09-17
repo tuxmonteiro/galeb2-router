@@ -14,13 +14,14 @@
  */
 package com.globo.galeb.core;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
-import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
@@ -67,7 +68,7 @@ public class QueueMap {
         boolean isOk = true;
         MessageBus messageBus = new MessageBus(message);
         String uriBase = messageBus.getUriBase();
-        JsonObject entity = messageBus.getEntity();
+        SafeJsonObject entity = messageBus.getEntity();
         String entityId = messageBus.getEntityId();
         String parentId = messageBus.getParentId();
 
@@ -123,7 +124,7 @@ public class QueueMap {
         boolean isOk = true;
         MessageBus messageBus = new MessageBus(message);
         String uriBase = messageBus.getUriBase();
-        JsonObject entity = messageBus.getEntity();
+        SafeJsonObject entity = messageBus.getEntity();
         String entityId = messageBus.getEntityId();
         String parentId = messageBus.getParentId();
 
@@ -242,4 +243,95 @@ public class QueueMap {
             ((IEventObserver)verticle).postAddEvent(message);
         }
     }
+
+    public void sendActionAdd(SafeJsonObject json, final String uri) {
+        putMessageToBus(json, ACTION.ADD, uri);
+    }
+
+    public void sendActionDel(SafeJsonObject json, final String uri) {
+        putMessageToBus(json, ACTION.DEL, uri);
+    }
+
+    private void putMessageToBus(SafeJsonObject json, QueueMap.ACTION action, final String uri) {
+        Long timestamp = 0L;
+
+        try {
+            timestamp = json.getLong("version");
+        } catch (DecodeException e) {
+            log.error(e.getMessage());
+            return;
+        }
+        json.removeField("version");
+
+        String parentId = json.getString(MessageBus.parentIdFieldName, "");
+        json.removeField(parentId);
+
+        MessageBus messageBus = new MessageBus()
+                                    .setUri(uri)
+                                    .setEntity(json.encode());
+
+        if (!"".equals(parentId)) {
+            messageBus.setParentId(parentId);
+        }
+
+        String message = messageBus.make().toString();
+
+        sendAction(message, action);
+        sendAction(String.format("%d", timestamp), ACTION.SET_VERSION);
+
+    }
+
+    public void sendGroupActionAdd(SafeJsonObject json, final String uri) {
+        putGroupMessageToBus(json, ACTION.ADD, uri);
+    }
+
+    public void sendGroupActionDel(SafeJsonObject json, final String uri) {
+        putGroupMessageToBus(json, ACTION.DEL, uri);
+    }
+
+    private void putGroupMessageToBus(final SafeJsonObject json, final QueueMap.ACTION action, final String uri) throws RuntimeException {
+        SafeJsonObject virtualhosts = new SafeJsonObject().makeArray(json.getArray("virtualhosts"));
+        Long timestamp = json.getLong("version", 0L);
+        String message = "{}";
+
+        Iterator<Object> it = virtualhosts.toList().iterator();
+        while (it.hasNext()) {
+            SafeJsonObject vhostJson = (SafeJsonObject) it.next();
+            String vhostId = vhostJson.getString(IJsonable.jsonIdFieldName);
+
+            message = new MessageBus()
+                .setEntity(vhostJson)
+                .setUri("/virtualhost")
+                .make()
+                .toString();
+
+            sendAction(message, action);
+
+            if (vhostJson.containsField(Virtualhost.backendsFieldName)) {
+                SafeJsonObject backends = vhostJson.getObject(Virtualhost.backendsFieldName)
+                        .getJsonArray(Virtualhost.backendsElegibleFieldName);
+
+                Iterator<Object> backendsIterator = backends.toList().iterator();
+                while (backendsIterator.hasNext()) {
+                    SafeJsonObject backendJson = (SafeJsonObject) backendsIterator.next();
+
+                    message = new MessageBus()
+                                            .setEntity(backendJson)
+                                            .setParentId(vhostId)
+                                            .setUri("/backend")
+                                            .make()
+                                            .toString();
+
+                    sendAction(message, action);
+                }
+            }
+        }
+        sendAction(String.format("%d", timestamp), ACTION.SET_VERSION);
+    }
+
+    private void sendAction(String message, final QueueMap.ACTION action) {
+        eb.publish(action.toString(), message);
+        log.debug(String.format("Sending %s to %s",message, action.toString()));
+    }
+
 }

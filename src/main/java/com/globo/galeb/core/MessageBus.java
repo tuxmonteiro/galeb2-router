@@ -1,8 +1,5 @@
 package com.globo.galeb.core;
 
-import org.vertx.java.core.json.DecodeException;
-import org.vertx.java.core.json.JsonObject;
-
 public class MessageBus {
 
     public static final String entityFieldName      = "entity";
@@ -20,15 +17,11 @@ public class MessageBus {
     }
 
     public MessageBus(String message) {
-        try {
-            JsonObject json = new JsonObject(message);
-            setEntity(json.getString(entityFieldName,"{}"));
-            setParentId(json.getString(parentIdFieldName, ""));
-            setUri(json.getString(uriFieldName, ""));
-            make();
-        } catch (DecodeException ignore) {
-            // ignore
-        }
+        SafeJsonObject json = new SafeJsonObject(message);
+        setEntity(json.getString(entityFieldName,"{}"));
+        setParentId(json.getString(parentIdFieldName, ""));
+        setUri(json.getString(uriFieldName, ""));
+        make();
     }
 
     public String getParentId() {
@@ -42,33 +35,24 @@ public class MessageBus {
         return this;
     }
 
-    public JsonObject getEntity() {
-        return new JsonObject(entityStr);
+    public SafeJsonObject getEntity() {
+        return new SafeJsonObject(entityStr);
     }
 
     public String getEntityId() {
         return getEntity().getString(IJsonable.jsonIdFieldName, "");
     }
 
-    public JsonObject getEntityProperties() {
-        return new JsonObject(getEntity().getString(IJsonable.jsonPropertiesFieldName, "{}"));
+    public SafeJsonObject getEntityProperties() {
+        return new SafeJsonObject(getEntity().getString(IJsonable.jsonPropertiesFieldName, "{}"));
     }
 
     public MessageBus setEntity(String entityStr) {
-        if (entityStr!=null) {
-            try {
-                new JsonObject(entityStr);
-                this.entityStr = entityStr;
-            } catch (DecodeException e) {
-                this.entityStr = "{}";
-            }
-        } else {
-            this.entityStr = "{}";
-        }
+        this.entityStr = new SafeJsonObject(entityStr).encode();
         return this;
     }
 
-    public MessageBus setEntity(JsonObject entityJson) {
+    public MessageBus setEntity(SafeJsonObject entityJson) {
         if (entityJson!=null) {
             this.entityStr = entityJson.encode();
         } else {
@@ -95,13 +79,13 @@ public class MessageBus {
 
     public MessageBus make() {
 
-        messageBus = new JsonObject()
+        messageBus = new SafeJsonObject()
                             .putString(uriFieldName, uriStr)
                             .putString(parentIdFieldName, parentId)
                             .putString(entityFieldName,
                                     getEntity()
                                         .putObject(IJsonable.jsonPropertiesFieldName,
-                                                new JsonObject(properties))
+                                                new SafeJsonObject(properties))
                                         .encode())
                             .encode();
         return this;
@@ -112,8 +96,8 @@ public class MessageBus {
         return messageBus;
     }
 
-    public JsonObject toJson() {
-        return new JsonObject(messageBus);
+    public SafeJsonObject toJson() {
+        return new SafeJsonObject(messageBus);
     }
 
 }
