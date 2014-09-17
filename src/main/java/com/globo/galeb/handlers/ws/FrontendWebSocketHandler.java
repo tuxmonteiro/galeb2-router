@@ -14,9 +14,10 @@
  */
 package com.globo.galeb.handlers.ws;
 
-import java.util.Map;
 import java.util.Map.Entry;
+
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 
@@ -35,17 +36,17 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
     private final Vertx vertx;
 //    private final JsonObject conf;
     private final Logger log;
-    private final Map<String, Virtualhost> virtualhosts;
+    private Farm farm;
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
 
     public FrontendWebSocketHandler(
             final Vertx vertx,
             final Container container,
-            final Map<String, Virtualhost> virtualhosts) {
+            final Farm farm) {
         this.vertx = vertx;
 //        this.conf = container.config();
+        this.farm = farm;
         this.log = container.logger();
-        this.virtualhosts = virtualhosts;
     }
 
     @Override
@@ -68,13 +69,13 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
         String hostname = hostnameWithPort.split(":")[0];
 
-        if (!virtualhosts.containsKey(hostname)) {
+        final Virtualhost virtualhost = farm.getVirtualhost(hostname);
+
+        if (virtualhost==null) {
             log.warn(String.format("Host: %s UNDEF", hostname));
             serverWebSocket.close();
             return;
         }
-
-        final Virtualhost virtualhost = virtualhosts.get(hostname);
 
         if (!virtualhost.hasBackends()) {
             log.warn(String.format("Host %s without backends", hostname));

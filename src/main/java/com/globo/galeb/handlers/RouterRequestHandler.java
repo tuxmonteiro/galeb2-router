@@ -16,9 +16,8 @@ package com.globo.galeb.handlers;
 
 import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
 
-import java.util.Map;
-
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.Virtualhost;
@@ -46,8 +45,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private final Vertx vertx;
     private final JsonObject conf;
     private final Logger log;
-    private final Map<String, Virtualhost> virtualhosts;
     private final Container container;
+    private final Farm farm;
     private final ICounter counter;
     private String headerHost = "";
     private String backendId = "";
@@ -78,6 +77,14 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         sRequest.response().setChunked(true);
 
+        final Virtualhost virtualhost = farm.getVirtualhost(headerHost);
+
+        if (virtualhost==null) {
+            log.warn("Host UNDEF");
+            sResponse.showErrorAndClose(new BadRequestException());
+            return;
+        }
+
         final Long requestTimeoutTimer = vertx.setTimer(backendRequestTimeOut, new Handler<Long>() {
             @Override
             public void handle(Long event) {
@@ -86,22 +93,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                     .showErrorAndClose(new java.util.concurrent.TimeoutException());
             }
         });
-
-        if (!"".equals(headerHost)) {
-            if (!virtualhosts.containsKey(headerHost)) {
-                vertx.cancelTimer(requestTimeoutTimer);
-                log.warn(String.format("Host: %s UNDEF", headerHost));
-                sResponse.showErrorAndClose(new BadRequestException());
-                return;
-            }
-        } else {
-            vertx.cancelTimer(requestTimeoutTimer);
-            log.warn("Host UNDEF");
-            sResponse.showErrorAndClose(new BadRequestException());
-            return;
-        }
-
-        final Virtualhost virtualhost = virtualhosts.get(headerHost);
 
         if (!virtualhost.hasBackends()) {
             vertx.cancelTimer(requestTimeoutTimer);
@@ -201,20 +192,20 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     public RouterRequestHandler(
             final Vertx vertx,
             final Container container,
-            final Map<String, Virtualhost> virtualhosts) {
-        this(vertx, container, virtualhosts, null);
+            final Farm farm) {
+        this(vertx, container, farm, null);
     }
 
     public RouterRequestHandler(
             final Vertx vertx,
             final Container container,
-            final Map<String, Virtualhost> virtualhosts,
+            final Farm farm,
             final ICounter counter) {
         this.vertx = vertx;
         this.container = container;
+        this.farm = farm;
         this.conf = container.config();
         this.log = container.logger();
-        this.virtualhosts = virtualhosts;
         this.counter = counter;
     }
 
