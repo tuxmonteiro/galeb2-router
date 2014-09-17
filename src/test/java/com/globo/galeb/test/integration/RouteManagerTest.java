@@ -41,7 +41,11 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyGetRoute() {
         // Test GET /route
         // Expected: { "version" : 0, "routes" : [ ] }
-        JsonObject expectedJson = new JsonObject().putNumber("version", 0).putArray("routes", new JsonArray());
+        JsonObject expectedJson = new JsonObject()
+            .putString("id", "")
+            .putObject("properties", new JsonObject())
+            .putNumber("version", 0)
+            .putArray("virtualhosts", new JsonArray());
         newGet().onPort(9090).atUri("/farm").expectBodyJson(expectedJson).run();;
     }
 
@@ -72,7 +76,7 @@ public class RouteManagerTest extends UtilTestVerticle {
             .putObject(IJsonable.jsonPropertiesFieldName,
                     new JsonObject().putString(Virtualhost.loadBalancePolicyFieldName, new DefaultLoadBalancePolicy().toString()))
             .putObject(Virtualhost.backendsFieldName, new JsonObject()
-                    .putArray(Virtualhost.backendsOkFieldName, new JsonArray())
+                    .putArray(Virtualhost.backendsElegibleFieldName, new JsonArray())
                     .putArray(Virtualhost.backendsFailedFieldName, new JsonArray()));
 
         newGet().onPort(9090).atUri("/virtualhost/test.localdomain").expectBodyJson(getExpectedJson).after(action1);

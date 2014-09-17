@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
 
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Serializable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
@@ -48,8 +48,8 @@ public class VirtualhostTest {
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(Serializable.jsonIdFieldName, virtualhostName)
-            .putObject(Serializable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.jsonIdFieldName, virtualhostName)
+            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         backend = "0.0.0.0:0";
@@ -137,7 +137,7 @@ public class VirtualhostTest {
 
     @Test
     public void loadBalancePolicyClassFound() {
-        virtualhost.putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+        virtualhost.setLoadBalancePolicy(RandomPolicy.class.getSimpleName());
 
         ILoadBalancePolicy loadBalance = virtualhost.getLoadBalancePolicy();
 
@@ -147,7 +147,7 @@ public class VirtualhostTest {
     @Test
     public void loadBalancePolicyClassNotFound() {
         String loadBalancePolicyStr = "ClassNotExist";
-        virtualhost.putString(Virtualhost.loadBalancePolicyFieldName, loadBalancePolicyStr);
+        virtualhost.setLoadBalancePolicy(loadBalancePolicyStr);
 
         ILoadBalancePolicy loadBalance = virtualhost.getLoadBalancePolicy();
 
@@ -156,7 +156,7 @@ public class VirtualhostTest {
 
     @Test
     public void getBackendWithLoadBalancePolicy() {
-        virtualhost.putString(Virtualhost.loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
+        virtualhost.setLoadBalancePolicy(DefaultLoadBalancePolicy.class.getSimpleName());
 
         virtualhost.addBackend(backend, true);
 

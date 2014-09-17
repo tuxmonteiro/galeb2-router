@@ -25,37 +25,28 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-public class Virtualhost extends JsonObject implements Serializable {
-
-    private static final long serialVersionUID = -3715150640575829972L;
+public class Virtualhost extends Serializable {
 
     public static final String backendsFieldName          = "backends";
-    public static final String badBackendsFieldName       = "badBackends";
-    public static final String transientStateFieldName    = "transientState";
+    public static final String backendsElegibleFieldName  = "eligible";
+    public static final String backendsFailedFieldName    = "failed";
     public static final String loadBalancePolicyFieldName = "loadBalancePolicy";
 
-    private final String                   virtualhostName;
+    public static final String transientStateFieldName    = "_transientState";
+
     private final UniqueArrayList<Backend> backends;
     private final UniqueArrayList<Backend> badBackends;
     private final Vertx                    vertx;
-
     private ILoadBalancePolicy loadbalancePolicy     = null;
-
-    private final Long createdAt = System.currentTimeMillis();
-    private Long modifiedAt = System.currentTimeMillis();
-
-    private void updateModifiedTimestamp() {
-        modifiedAt = System.currentTimeMillis();
-    }
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
         super();
-        this.virtualhostName = json.getString(jsonIdFieldName, "UNDEF");
+        this.id = json.getString(IJsonable.jsonIdFieldName, "UNDEF");
         this.backends = new UniqueArrayList<Backend>();
         this.badBackends = new UniqueArrayList<Backend>();
         this.vertx = vertx;
-        mergeIn(json.getObject(jsonPropertiesFieldName));
-        if (!this.containsField(loadBalancePolicyFieldName)) {
+        properties.mergeIn(json.getObject(IJsonable.jsonPropertiesFieldName));
+        if (!properties.containsField(loadBalancePolicyFieldName)) {
             getLoadBalancePolicy();
         }
     }
@@ -65,14 +56,18 @@ public class Virtualhost extends JsonObject implements Serializable {
         return getVirtualhostName();
     }
 
+    private void updateModifiedTimestamp() {
+        modifiedAt = System.currentTimeMillis();
+    }
+
     public boolean addBackend(String backend, boolean backendOk) {
-        return addBackend(new JsonObject().putString(jsonIdFieldName, backend), backendOk);
+        return addBackend(new JsonObject().putString(IJsonable.jsonIdFieldName, backend), backendOk);
     }
 
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         updateModifiedTimestamp();
         if (backendOk) {
-            putBoolean(transientStateFieldName, true);
+            setTransientState();
             return backends.add(new Backend(backendJson, vertx));
         } else {
             return badBackends.add(new Backend(backendJson, vertx));
@@ -84,13 +79,13 @@ public class Virtualhost extends JsonObject implements Serializable {
     }
 
     public String getVirtualhostName() {
-        return virtualhostName;
+        return id;
     }
 
     public Boolean removeBackend(String backend, boolean backendOk) {
         updateModifiedTimestamp();
         if (backendOk) {
-            putBoolean(transientStateFieldName, true);
+            setTransientState();
             return backends.remove(new Backend(backend, vertx));
         } else {
             return badBackends.remove(new Backend(backend, vertx));
@@ -101,7 +96,7 @@ public class Virtualhost extends JsonObject implements Serializable {
         updateModifiedTimestamp();
         if (backendOk) {
             backends.clear();
-            putBoolean(transientStateFieldName, true);
+            setTransientState();
         } else {
             badBackends.clear();
         }
@@ -111,26 +106,31 @@ public class Virtualhost extends JsonObject implements Serializable {
         updateModifiedTimestamp();
         backends.clear();
         badBackends.clear();
-        putBoolean(transientStateFieldName, true);
+        setTransientState();
     }
 
     public Backend getChoice(RequestData requestData) {
-        requestData.setProperties(this);
+        requestData.setProperties(properties);
         Backend chosen;
         if (loadbalancePolicy==null) {
             getLoadBalancePolicy();
         }
         chosen = loadbalancePolicy.getChoice(backends, requestData);
-        putBoolean(transientStateFieldName, false);
+        unSetTransientState();
         return chosen;
     }
 
+    public Virtualhost setLoadBalancePolicy(String loadBalancePolicyName) {
+        properties.putString(Virtualhost.loadBalancePolicyFieldName, loadBalancePolicyName);
+        return this;
+    }
+
     public ILoadBalancePolicy getLoadBalancePolicy() {
-        String loadBalancePolicyStr = getString(loadBalancePolicyFieldName,
+        String loadBalancePolicyStr = properties.getString(loadBalancePolicyFieldName,
                 DefaultLoadBalancePolicy.class.getSimpleName());
         loadbalancePolicy = loadBalancePolicyClassLoader(loadBalancePolicyStr);
         if (loadbalancePolicy.isDefault()) {
-            putString(loadBalancePolicyFieldName, loadbalancePolicy.toString());
+            properties.putString(loadBalancePolicyFieldName, loadbalancePolicy.toString());
         }
         return loadbalancePolicy;
     }
@@ -168,31 +168,38 @@ public class Virtualhost extends JsonObject implements Serializable {
 
     @Override
     public JsonObject toJson() {
+        prepareJson();
 
-        JsonObject virtualhostJson = new JsonObject();
-        JsonObject propertiesJson = new JsonObject(this.encode());
-        JsonArray backendsJson = new JsonArray();
+        JsonArray backendsOkJson = new JsonArray();
         JsonArray badBackendsJson = new JsonArray();
-
-        virtualhostJson.putString(jsonIdFieldName, getVirtualhostName());
-        virtualhostJson.putNumber(jsonCreatedAtFieldName, createdAt);
-        virtualhostJson.putNumber(jsonModifiedAtFieldName, modifiedAt);
-        virtualhostJson.putObject(jsonPropertiesFieldName, propertiesJson);
 
         for (Backend backend: backends) {
             if (backend!=null) {
-                backendsJson.addObject(backend.toJson());
+                backendsOkJson.addObject(backend.toJson());
             }
         }
+
         for (Backend badBackend: badBackends) {
             if (badBackend!=null) {
                 badBackendsJson.addObject(badBackend.toJson());
             }
         }
-        virtualhostJson.putArray(backendsFieldName, backendsJson);
-        virtualhostJson.putArray(badBackendsFieldName, badBackendsJson);
 
-        return virtualhostJson;
+        JsonObject backends = new JsonObject();
+
+        backends.putArray(backendsElegibleFieldName, backendsOkJson);
+        backends.putArray(backendsFailedFieldName, badBackendsJson);
+
+        idObj.putObject(backendsFieldName, backends);
+
+        return super.toJson();
     }
 
+    public void setTransientState() {
+        idObj.putBoolean(transientStateFieldName, true);
+    }
+
+    private void unSetTransientState() {
+        idObj.putBoolean(transientStateFieldName, false);
+    }
 }

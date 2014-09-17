@@ -22,31 +22,24 @@ import org.vertx.java.core.json.JsonObject;
 
 import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
 
-public class Backend implements Serializable {
+public class Backend extends Serializable {
 
     public static String propertyKeepAliveFieldName           = "keepalive";
     public static String propertyConnectionTimeoutFieldName   = "connectionTimeout";
     public static String propertyKeepaliveMaxRequestFieldName = "keepaliveMaxRequest";
     public static String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
     public static String propertyMaxPoolSizeFieldName         = "maxPoolSize";
-    public static String propertyActiveConnectionsFieldName   = "activeConnections";
     public static String propertyStatusFieldName              = "status";
+
+    public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
     private final EventBus eb;
     private final ConnectionsCounter connectionsCounter;
-    private final String id;
     private final String host;
     private final Integer port;
-    private final Long createdAt = System.currentTimeMillis();
-    private Long modifiedAt = System.currentTimeMillis();
 
     private HttpClient client;
-    private Integer connectionTimeout;
-    private boolean keepalive;
-    private Long keepAliveMaxRequest;
-    private Long keepAliveTimeOut;
-    private int backendMaxPoolSize;
 
     private Long keepAliveTimeMark;
     private Long requestCount;
@@ -75,43 +68,56 @@ public class Backend implements Serializable {
         return this.toString().hashCode();
     }
 
-    public Backend(final String hostWithPort, final Vertx vertx) {
-        String[] hostWithPortArray = hostWithPort!=null ? hostWithPort.split(":") : null;
+    public Backend(final String backendId, final Vertx vertx) {
+        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx);
+    }
+
+    public Backend(JsonObject json, final Vertx vertx) {
+        super();
         this.vertx = vertx;
         this.eb = (vertx!=null) ? vertx.eventBus() : null;
         this.client = null;
+        this.id = json.getString(IJsonable.jsonIdFieldName, "127.0.0.1:80");
+
+        String[] hostWithPortArray = id!=null ? id.split(":") : null;
         if (hostWithPortArray != null && hostWithPortArray.length>1) {
             this.host = hostWithPortArray[0];
             int myPort;
             try {
                 myPort = Integer.parseInt(hostWithPortArray[1]);
             } catch (NumberFormatException e) {
-                myPort = -1;
+                myPort = 80;
             }
             this.port = myPort;
         } else {
-            this.host = hostWithPort;
-            this.port = -1;
+            this.host = id;
+            this.port = 80;
         }
-        this.id = hostWithPort;
-        this.connectionTimeout = 60000;
-        this.keepalive = true;
-        this.keepAliveMaxRequest = Long.MAX_VALUE-1;
+
+        boolean defaultKeepAlive           = true;
+        int     defaultConnectionTimeout   = 60000; // 10 minutes
+        Long    defaultKeepaliveMaxRequest = Long.MAX_VALUE-1;
+        Long    defaultKeepAliveTimeOut    = 86400000L; // One day
+        int     defaultMaxPoolSize         = 1;
+
+        if (json.containsField(IJsonable.jsonPropertiesFieldName)) {
+            JsonObject jsonProperties = json.getObject(jsonPropertiesFieldName);
+            properties.putBoolean(propertyKeepAliveFieldName, jsonProperties.getBoolean(propertyKeepAliveFieldName, defaultKeepAlive));
+            properties.putNumber(propertyConnectionTimeoutFieldName, jsonProperties.getInteger(propertyConnectionTimeoutFieldName, defaultConnectionTimeout));
+            properties.putNumber(propertyKeepaliveMaxRequestFieldName, jsonProperties.getLong(propertyKeepaliveMaxRequestFieldName, defaultKeepaliveMaxRequest));
+            properties.putNumber(propertyKeepAliveTimeOutFieldName, jsonProperties.getLong(propertyKeepAliveTimeOutFieldName, defaultKeepAliveTimeOut));
+            properties.putNumber(propertyMaxPoolSizeFieldName, jsonProperties.getInteger(propertyMaxPoolSizeFieldName, defaultMaxPoolSize));
+        } else {
+            properties.putBoolean(propertyKeepAliveFieldName, defaultKeepAlive);
+            properties.putNumber(propertyConnectionTimeoutFieldName, defaultConnectionTimeout);
+            properties.putNumber(propertyKeepaliveMaxRequestFieldName, defaultKeepaliveMaxRequest);
+            properties.putNumber(propertyKeepAliveTimeOutFieldName, defaultKeepAliveTimeOut);
+            properties.putNumber(propertyMaxPoolSizeFieldName, defaultMaxPoolSize);
+        }
+
         this.keepAliveTimeMark = System.currentTimeMillis();
-        this.keepAliveTimeOut = 86400000L; // One day
         this.requestCount = 0L;
         this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx);
-    }
-
-    public Backend(JsonObject json, final Vertx vertx) {
-        this(json.getString(jsonIdFieldName, "127.0.0.1:0"), vertx);
-        if (json.containsField(jsonPropertiesFieldName)) {
-            JsonObject properties = json.getObject(jsonPropertiesFieldName);
-            this.connectionTimeout = properties.getInteger(propertyConnectionTimeoutFieldName, connectionTimeout);
-            this.keepalive = properties.getBoolean(propertyKeepAliveFieldName, keepalive);
-            this.keepAliveMaxRequest = properties.getLong(propertyKeepaliveMaxRequestFieldName, keepAliveMaxRequest);
-            this.keepAliveTimeOut = properties.getLong(propertyKeepAliveTimeOutFieldName, keepAliveTimeOut); // One day
-        }
     }
 
     private void updateModifiedTimestamp() {
@@ -127,47 +133,50 @@ public class Backend implements Serializable {
     }
 
     public Integer getConnectionTimeout() {
-        return connectionTimeout;
+        return properties.getInteger(propertyConnectionTimeoutFieldName);
     }
 
     public Backend setConnectionTimeout(Integer timeout) {
-        this.connectionTimeout = timeout;
+        properties.putNumber(propertyConnectionTimeoutFieldName, timeout);
         updateModifiedTimestamp();
         return this;
     }
 
     public boolean isKeepalive() {
-        return keepalive;
+        System.out.println(properties==null? "PROPERTIES IS NULL": "");
+        return properties.getBoolean(propertyKeepAliveFieldName);
     }
 
     public Backend setKeepAlive(boolean keepalive) {
-        this.keepalive = keepalive;
+        properties.putBoolean(propertyKeepAliveFieldName, keepalive);
         updateModifiedTimestamp();
         return this;
     }
 
     public Long getKeepAliveMaxRequest() {
-      return keepAliveMaxRequest;
+      return properties.getLong(propertyKeepaliveMaxRequestFieldName);
     }
 
     public Backend setKeepAliveMaxRequest(Long maxRequestCount) {
-      this.keepAliveMaxRequest = maxRequestCount;
+      properties.putNumber(propertyKeepaliveMaxRequestFieldName, maxRequestCount);
       updateModifiedTimestamp();
       return this;
     }
 
     public Long getKeepAliveTimeOut() {
-        return keepAliveTimeOut;
+        return properties.getLong(propertyKeepAliveTimeOutFieldName);
     }
 
     public Backend setKeepAliveTimeOut(Long keepAliveTimeOut) {
-        this.keepAliveTimeOut = keepAliveTimeOut;
+        properties.putNumber(propertyKeepAliveTimeOutFieldName, keepAliveTimeOut);
         this.connectionsCounter.setConnectionMapTimeout(getKeepAliveTimeOut());
         updateModifiedTimestamp();
         return this;
     }
 
     public boolean isKeepAliveLimit() {
+        Long keepAliveMaxRequest = getKeepAliveMaxRequest();
+        Long keepAliveTimeOut = getKeepAliveTimeOut();
         Long now = System.currentTimeMillis();
         if (requestCount<=keepAliveMaxRequest) {
             requestCount++;
@@ -182,11 +191,11 @@ public class Backend implements Serializable {
     }
 
     public Integer getMaxPoolSize() {
-        return backendMaxPoolSize;
+        return properties.getInteger(propertyMaxPoolSizeFieldName);
     }
 
     public Backend setMaxPoolSize(Integer maxPoolSize) {
-        this.backendMaxPoolSize = maxPoolSize;
+        properties.putNumber(propertyMaxPoolSizeFieldName, maxPoolSize);
         updateModifiedTimestamp();
         return this;
     }
@@ -195,10 +204,10 @@ public class Backend implements Serializable {
     public HttpClient connect(String remoteIP, String remotePort) {
         if (client==null && vertx!=null) {
             client = vertx.createHttpClient()
-                .setKeepAlive(keepalive)
-                .setTCPKeepAlive(keepalive)
-                .setConnectTimeout(connectionTimeout)
-                .setMaxPoolSize(backendMaxPoolSize);
+                .setKeepAlive(isKeepalive())
+                .setTCPKeepAlive(isKeepalive())
+                .setConnectTimeout(getConnectionTimeout())
+                .setMaxPoolSize(getMaxPoolSize());
             if (!"".equals(host) || port!=-1) {
                 client.setHost(host)
                       .setPort(port);
@@ -250,22 +259,9 @@ public class Backend implements Serializable {
 
     @Override
     public JsonObject toJson() {
-        JsonObject backendJson = new JsonObject();
-        backendJson.putString(jsonIdFieldName, id);
-        backendJson.putNumber(jsonCreatedAtFieldName, createdAt);
-        backendJson.putNumber(jsonModifiedAtFieldName, modifiedAt);
-
-        JsonObject propertiesJson = new JsonObject();
-        propertiesJson.putBoolean(propertyKeepAliveFieldName, keepalive);
-        propertiesJson.putNumber(propertyConnectionTimeoutFieldName, connectionTimeout);
-        propertiesJson.putNumber(propertyKeepaliveMaxRequestFieldName, keepAliveMaxRequest);
-        propertiesJson.putNumber(propertyKeepAliveTimeOutFieldName, keepAliveTimeOut);
-        propertiesJson.putNumber(propertyMaxPoolSizeFieldName, backendMaxPoolSize);
-        propertiesJson.putNumber(propertyActiveConnectionsFieldName, getSessionController().getActiveConnections());
-
-        backendJson.putObject(jsonPropertiesFieldName, propertiesJson);
-
-        return backendJson;
+        prepareJson();
+        idObj.putNumber(propertyActiveConnectionsFieldName, getSessionController().getActiveConnections());
+        return super.toJson();
     }
 
 }
