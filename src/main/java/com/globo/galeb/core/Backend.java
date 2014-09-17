@@ -41,6 +41,9 @@ public class Backend extends Serializable {
 
     private HttpClient client;
 
+    public Long keepAliveMaxRequest  = null;
+    public Long keepAliveTimeOut     = null;
+
     private Long keepAliveTimeMark;
     private Long requestCount;
 
@@ -143,7 +146,6 @@ public class Backend extends Serializable {
     }
 
     public boolean isKeepalive() {
-        System.out.println(properties==null? "PROPERTIES IS NULL": "");
         return properties.getBoolean(propertyKeepAliveFieldName);
     }
 
@@ -154,7 +156,10 @@ public class Backend extends Serializable {
     }
 
     public Long getKeepAliveMaxRequest() {
-      return properties.getLong(propertyKeepaliveMaxRequestFieldName);
+        if (keepAliveMaxRequest==null) {
+            keepAliveMaxRequest = properties.getLong(propertyKeepaliveMaxRequestFieldName);
+        }
+        return keepAliveMaxRequest;
     }
 
     public Backend setKeepAliveMaxRequest(Long maxRequestCount) {
@@ -164,7 +169,10 @@ public class Backend extends Serializable {
     }
 
     public Long getKeepAliveTimeOut() {
-        return properties.getLong(propertyKeepAliveTimeOutFieldName);
+        if (keepAliveTimeOut==null) {
+            keepAliveTimeOut = properties.getLong(propertyKeepAliveTimeOutFieldName);
+        }
+        return keepAliveTimeOut;
     }
 
     public Backend setKeepAliveTimeOut(Long keepAliveTimeOut) {
