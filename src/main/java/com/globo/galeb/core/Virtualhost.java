@@ -25,7 +25,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-public class Virtualhost extends Serializable {
+public class Virtualhost extends Entity {
 
     public static final String backendsFieldName          = "backends";
     public static final String backendsElegibleFieldName  = "eligible";

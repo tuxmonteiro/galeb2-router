@@ -22,7 +22,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
 
-public class Backend extends Serializable {
+public class Backend extends Entity {
 
     public static String propertyKeepAliveFieldName           = "keepalive";
     public static String propertyConnectionTimeoutFieldName   = "connectionTimeout";

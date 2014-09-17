@@ -16,7 +16,7 @@ package com.globo.galeb.core;
 
 import org.vertx.java.core.json.JsonObject;
 
-public abstract class Serializable implements IJsonable {
+public abstract class Entity implements IJsonable {
 
     protected String           id            = "";
     protected final Long       createdAt     = System.currentTimeMillis();
@@ -29,7 +29,7 @@ public abstract class Serializable implements IJsonable {
         return properties;
     }
 
-    protected Serializable prepareJson() {
+    protected Entity prepareJson() {
         idObj.putString(IJsonable.jsonIdFieldName, id);
         idObj.putObject(jsonLinksFieldName, new JsonObject()
             .putString(jsonLinksRelFieldName, "self")

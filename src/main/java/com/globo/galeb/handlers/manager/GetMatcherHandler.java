@@ -26,7 +26,7 @@ import org.vertx.java.core.logging.Logger;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
-import com.globo.galeb.core.Serializable;
+import com.globo.galeb.core.Entity;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
 
@@ -108,12 +108,12 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
         log.info(String.format("GET /%s", uriBase));
     }
 
-    public String getResult(String key, Collection<? extends Serializable> collection, String arrayFieldName) {
+    public String getResult(String key, Collection<? extends Entity> collection, String arrayFieldName) {
         String result = "";
         boolean isArray = false;
         JsonArray entityArray = new JsonArray();
 
-        for (Serializable entityObj: collection) {
+        for (Entity entityObj: collection) {
             entityArray.add(entityObj.toJson());
             if (!"".equals(key)) {
                 if (entityObj.toString().equalsIgnoreCase(key)) {
