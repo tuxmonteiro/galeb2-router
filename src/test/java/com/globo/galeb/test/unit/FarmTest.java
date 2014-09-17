@@ -7,7 +7,6 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.java.platform.Container;
@@ -17,6 +16,7 @@ import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class FarmTest {
@@ -45,7 +45,7 @@ public class FarmTest {
         when(verticle.getVertx().eventBus()).thenReturn(null);
         when(verticle.getContainer()).thenReturn(container);
         when(verticle.getContainer().logger()).thenReturn(logger);
-        when(verticle.getContainer().config()).thenReturn(new JsonObject());
+        when(verticle.getContainer().config()).thenReturn(new SafeJsonObject());
 
         farm = new Farm(verticle);
         queueMap = farm.getQueueMap();
@@ -56,8 +56,8 @@ public class FarmTest {
     public void insert10NewVirtualhost() {
 
         for (int x=0; x<10;x++) {
-            JsonObject virtualhostJson =
-                    new JsonObject().putString(IJsonable.jsonIdFieldName, String.valueOf(x));
+            SafeJsonObject virtualhostJson =
+                    new SafeJsonObject().putString(IJsonable.jsonIdFieldName, String.valueOf(x));
             String message = new MessageBus()
                                     .setEntity(virtualhostJson)
                                     .setUri("/virtualhost")
@@ -74,8 +74,8 @@ public class FarmTest {
     public void insert10NewBackends() {
 
         String message = "";
-        JsonObject virtualhostJson =
-                new JsonObject().putString(IJsonable.jsonIdFieldName, "test.localdomain");
+        SafeJsonObject virtualhostJson =
+                new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "test.localdomain");
         message = new MessageBus().setEntity(virtualhostJson)
                                   .setUri("/virtualhost")
                                   .make()
@@ -84,8 +84,8 @@ public class FarmTest {
         queueMap.processAddMessage(message);
 
         for (int x=0; x<10;x++) {
-            JsonObject backendJson =
-                    new JsonObject().putString(IJsonable.jsonIdFieldName, String.format("0:%d", x));
+            SafeJsonObject backendJson =
+                    new SafeJsonObject().putString(IJsonable.jsonIdFieldName, String.format("0:%d", x));
             message = new MessageBus().setEntity(backendJson)
                                       .setParentId("test.localdomain")
                                       .setUri("/backend")
