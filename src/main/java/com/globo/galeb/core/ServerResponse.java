@@ -12,27 +12,36 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
  * PARTICULAR PURPOSE.
  */
-package com.globo.galeb.handlers;
+package com.globo.galeb.core;
 
-import io.netty.handler.codec.http.HttpResponseStatus;
 import com.globo.galeb.exceptions.BadRequestException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
 
 import org.vertx.java.core.MultiMap;
-import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.logging.Logger;
 
 public class ServerResponse {
 
-    private final HttpServerRequest req;
+    private final HttpServerResponse resp;
     private final Logger log;
     private final ICounter counter;
     private final boolean enableAccessLog;
-    private final String httpHeaderHost = HttpHeaders.HOST.toString();
+    private String message = "";
+    private String id = "";
+    private String headerHost = "";
 
+    private int exceptionToHttpCode(final Throwable e) {
+        if (e instanceof java.util.concurrent.TimeoutException) {
+            return HttpCode.GatewayTimeout;
+        } else if (e instanceof BadRequestException) {
+            return HttpCode.BadRequest;
+        } else {
+            return HttpCode.BadGateway;
+        }
+    }
 
     public ServerResponse(final HttpServerRequest req,
                           final Logger log,
@@ -41,38 +50,50 @@ public class ServerResponse {
         this.log = log;
         this.counter = counter;
         this.enableAccessLog = enableAccessLog;
-        this.req = req;
+        this.resp = req.response();
     }
 
-    public void setStatusCode(Integer code, String messageCode) {
-        req.response().setStatusCode(code);
-        String message = messageCode != null ? messageCode : HttpResponseStatus.valueOf(code).reasonPhrase();
-        req.response().setStatusMessage(message);
+    public ServerResponse setId(String id) {
+        this.id = id;
+        return this;
     }
 
-    public void setHeaders(final MultiMap headers) {
-        req.headers().set(headers);
+    public ServerResponse setHeaderHost(String headerHost) {
+        this.headerHost = headerHost;
+        return this;
     }
 
-    public void showErrorAndClose(final Throwable event, String key) {
+    public ServerResponse setMessage(final String message) {
+        this.message = message;
+        return this;
+    }
 
-        int statusCode;
-        if (event instanceof java.util.concurrent.TimeoutException) {
-            statusCode = 504;
-        } else if (event instanceof BadRequestException) {
-            statusCode = 400;
-        } else {
-            statusCode = 502;
-        }
+    public ServerResponse setStatusCode(Integer code) {
 
-        setStatusCode(statusCode, null);
-        end(key);
-        String message = String.format("FAIL with HttpStatus %d (virtualhost %s): %s",
+        resp.setStatusCode(code);
+        String message = HttpCode.getMessage(code);
+        resp.setStatusMessage(message);
+        return this;
+    }
+
+    public ServerResponse setHeaders(final MultiMap headers) {
+        resp.headers().set(headers);
+        return this;
+    }
+
+    public void showErrorAndClose(final Throwable event) {
+
+        int statusCode = exceptionToHttpCode(event);
+        setStatusCode(statusCode);
+
+        end();
+
+        String message = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
-                req.headers().contains(httpHeaderHost)? req.headers().get(httpHeaderHost): "UNDEF",
-                HttpResponseStatus.valueOf(statusCode).reasonPhrase());
+                !"".equals(headerHost) ? " (virtualhost: "+headerHost+")" : "",
+                HttpCode.getMessage(statusCode, false));
 
-        if (statusCode>499) {
+        if (statusCode>=HttpCode.InternalServerError) {
             log.error(message);
         } else {
             log.warn(message);
@@ -83,57 +104,47 @@ public class ServerResponse {
 
     public void closeResponse() {
         try {
-            req.response().close();
+            resp.close();
         } catch (RuntimeException ignoreAlreadyClose) {
             return;
         }
     }
 
     private void realEnd(String message) {
-        Integer code = req.response().getStatusCode();
 
         try {
             if (!"".equals(message)) {
 
-                req.response().end(message);
+                resp.end(message);
             } else {
-                req.response().end();
+                resp.end();
             }
         } catch (RuntimeException e) {
-            // java.lang.IllegalStateException: Response has already been written ?
-            log.error(String.format("FAIL: statusCode %d, Error > %s", code, e.getMessage()));
+            if (e instanceof java.lang.IllegalStateException) {
+                // Response has already been written ? Ignore.
+                log.debug(e.getMessage());
+            } else {
+                log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e.getMessage()));
+            }
             return;
         }
     }
 
-    public void end(String id) {
-        end("", id);
-    }
-
-    public void end(String message, String id) {
-
-        Integer code = req.response().getStatusCode();
-
+    public void end() {
         logRequest(enableAccessLog);
-        sendRequestCount(id, code);
-
-        if (!"".equals(message)) {
-            JsonObject json = new JsonObject(message);
-            message = json.encodePrettily();
-        }
-
+        sendRequestCount(id, resp.getStatusCode());
         realEnd(message);
     }
 
     public void logRequest(boolean enable) {
 
         if (enableAccessLog) {
-            Integer code = req.response().getStatusCode();
+            Integer code = resp.getStatusCode();
             String message = "";
             int codeFamily = code.intValue()/100;
             // TODO: Dependency Injection
             String httpLogMessage = new NcsaLogExtendedFormatter()
-                                        .setRequestData(req, message)
+                                        .setRequestData(resp, message)
                                         .getFormatedLog();
             switch (codeFamily) {
                 case 5: // SERVER_ERROR
@@ -152,7 +163,7 @@ public class ServerResponse {
     }
 
     public void sendRequestCount(String id, int code) {
-        if (counter!=null && id!=null) {
+        if (counter!=null && !"".equals(id)) {
             counter.httpCode(id, code);
         }
     }

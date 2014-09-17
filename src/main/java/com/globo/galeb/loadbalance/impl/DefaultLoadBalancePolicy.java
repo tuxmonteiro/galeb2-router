@@ -18,6 +18,8 @@ import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 public class DefaultLoadBalancePolicy extends RandomPolicy implements ILoadBalancePolicy {
 
+    public static final String cacheTimeOutFieldName = "cacheTimeout";
+
     @Override
     public String toString() {
         return super.toString();

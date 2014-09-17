@@ -14,12 +14,8 @@
  */
 package com.globo.galeb.verticles;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.Server;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.handlers.RouterRequestHandler;
 import com.globo.galeb.handlers.ws.FrontendWebSocketHandler;
 import com.globo.galeb.metrics.CounterWithStatsd;
@@ -40,20 +36,15 @@ public class RouterVerticle extends Verticle {
       final Logger log = container.logger();
       final JsonObject conf = container.config();
       final ICounter counter = new CounterWithStatsd(conf, vertx, log);
-
-      final Map<String, Virtualhost> virtualhosts = new HashMap<>();
-      final QueueMap queueMap = new QueueMap(this, virtualhosts);
-
-      queueMap.registerQueueAdd();
-      queueMap.registerQueueDel();
+      final Farm farm = new Farm(this);
 
       final Server server = new Server(vertx, container, counter);
 
       final Handler<HttpServerRequest> handlerHttpServerRequest =
-              new RouterRequestHandler(vertx, container, virtualhosts, counter);
+              new RouterRequestHandler(vertx, container, farm, counter);
 
       final Handler<ServerWebSocket> serverWebSocketHandler =
-              new FrontendWebSocketHandler(vertx, container, virtualhosts);
+              new FrontendWebSocketHandler(vertx, container, farm);
 
       server.setDefaultPort(9000)
           .setHttpServerRequestHandler(handlerHttpServerRequest)

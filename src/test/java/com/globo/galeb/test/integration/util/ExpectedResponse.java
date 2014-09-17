@@ -2,8 +2,10 @@ package com.globo.galeb.test.integration.util;
 
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.core.HttpCode;
+
 public class ExpectedResponse {
-    private int code = 200;
+    private int code = HttpCode.Ok;
     private String body;
     private JsonObject bodyJson;
     private int bodySize = -1;

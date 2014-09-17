@@ -17,9 +17,7 @@ package com.globo.galeb.test.unit;
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
-import java.util.Map;
-
-import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.handlers.RouterRequestHandler;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
@@ -43,7 +41,7 @@ public class RouterRequestHandlerTest {
     private Container container;
     private LogDelegate logDelegate;
     private FakeLogger logger;
-    private Map<String, Virtualhost> virtualhosts;
+    private Farm farm;
 
     @Before
     public void setUp() {
@@ -53,13 +51,15 @@ public class RouterRequestHandlerTest {
         container = mock(Container.class);
         logDelegate = mock(LogDelegate.class);
         logger = new FakeLogger(logDelegate);
+        farm = new Farm(null);
+
 
         when(verticle.getVertx()).thenReturn(vertx);
         when(verticle.getVertx().eventBus()).thenReturn(null);
         when(verticle.getContainer()).thenReturn(container);
         when(verticle.getContainer().logger()).thenReturn(logger);
 
-        routerRequestHandler = new RouterRequestHandler(vertx, container, virtualhosts, null);
+        routerRequestHandler = new RouterRequestHandler(vertx, container, farm);
     }
 
     @Test

@@ -14,14 +14,19 @@
  */
 package com.globo.galeb.test.unit;
 
-import static com.globo.galeb.core.Constants.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.RandomPolicy;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.impl.DefaultVertx;
+import org.vertx.java.core.json.JsonObject;
 
 public class RandomPolicyTest {
 
@@ -30,9 +35,15 @@ public class RandomPolicyTest {
 
     @Before
     public void setUp() throws Exception {
-        virtualhost = new Virtualhost("test.localdomain", null);
 
-        virtualhost.putString(loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+        Vertx vertx = mock(DefaultVertx.class);
+
+        JsonObject virtualhostProperties = new JsonObject()
+            .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+        JsonObject virtualhostJson = new JsonObject()
+            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
+            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
+        virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
             virtualhost.addBackend(String.format("0:%s", x), true);

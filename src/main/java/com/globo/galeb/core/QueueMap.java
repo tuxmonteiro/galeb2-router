@@ -14,10 +14,6 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_ADD;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_DEL;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_VERSION;
-
 import java.util.Iterator;
 import java.util.Map;
 
@@ -26,11 +22,28 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.DecodeException;
-import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
 public class QueueMap {
+
+    private enum ACTION {
+
+        ADD("route.add"),
+        DEL("route.del"),
+        SET_VERSION("route.version");
+
+        private String queue;
+        private ACTION(final String queue) {
+            this.queue = queue;
+        }
+
+        @Override
+        public String toString() {
+            return queue;
+        }
+
+    }
 
     private final Verticle verticle;
     private final Vertx vertx;
@@ -38,23 +51,6 @@ public class QueueMap {
     private final Logger log;
     private final Map<String, Virtualhost> virtualhosts;
 
-    public static String buildMessage(String virtualhostStr,
-                                      String hostStr,
-                                      String portStr,
-                                      String statusStr,
-                                      String uriStr,
-                                      String properties)
-    {
-        JsonObject messageJson = new JsonObject();
-        messageJson.putString("virtualhost", virtualhostStr);
-        messageJson.putString("host", hostStr);
-        messageJson.putString("port", portStr);
-        messageJson.putString("status", statusStr);
-        messageJson.putString("uri", uriStr);
-        messageJson.putString("properties", properties);
-
-        return messageJson.toString();
-    }
 
     public QueueMap(final Verticle verticle, final Map<String, Virtualhost> virtualhosts) {
         this.verticle = verticle;
@@ -70,52 +66,44 @@ public class QueueMap {
         }
 
         boolean isOk = true;
-        JsonObject messageJson = new JsonObject(message);
-        String virtualhost = messageJson.getString("virtualhost", "");
-        String uri = messageJson.getString("uri", "");
-        String uriBase = uri.split("/")[1];
+        MessageBus messageBus = new MessageBus(message);
+        String uriBase = messageBus.getUriBase();
+        SafeJsonObject entity = messageBus.getEntity();
+        String entityId = messageBus.getEntityId();
+        String parentId = messageBus.getParentId();
+
+        if ("".equals(entityId)) {
+            log.error(String.format("[%s] Inaccessible Entity Id: %s", verticle.toString(), entity.encode()));
+            return false;
+        }
 
         switch (uriBase) {
-            case "route":
             case "virtualhost":
-                if (!virtualhosts.containsKey(virtualhost)) {
-                    String properties = messageJson.getString("properties", "{}");
-
-                    Virtualhost virtualhostObj = new Virtualhost(virtualhost, vertx);
-                    try {
-                        if (!"".equals(properties)) {
-                            JsonObject propertiesJson = new JsonObject(properties);
-                            virtualhostObj.mergeIn(propertiesJson);
-                        }
-                    } catch (DecodeException e1) {
-                        log.error(String.format("[%s] Properties decode failed (%s): %s", verticle.toString(), virtualhost, properties));
-                    } catch (Exception e2) {
-                        log.error(String.format("[%s] %s", verticle.toString(), e2.getMessage()));
-                    }
-                    virtualhosts.put(virtualhost, virtualhostObj);
-                    log.info(String.format("[%s] Virtualhost %s added", verticle.toString(), virtualhost));
+                if (!virtualhosts.containsKey(entityId)) {
+                    Virtualhost newVirtualhostObj = new Virtualhost(entity, vertx);
+                    virtualhosts.put(entityId, newVirtualhostObj);
+                    log.info(String.format("[%s] Virtualhost %s added", verticle.toString(), entityId));
                     isOk = true;
                 } else {
                     isOk = false;
                 }
                 break;
             case "backend":
-                if (!virtualhosts.containsKey(virtualhost)) {
-                    log.warn(String.format("[%s] Backend didnt create, because Virtualhost %s not exist", verticle.toString(), virtualhost));
+                if ("".equals(parentId)) {
+                    log.error(String.format("[%s] Inaccessible ParentId: %s", verticle.toString(), entity.encode()));
+                    return false;
+                }
+                if (!virtualhosts.containsKey(parentId)) {
+                    log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticle.toString(), parentId));
                     isOk = false;
                 } else {
+                    boolean status = entity.getBoolean(Backend.propertyStatusFieldName, true);
 
-                    String host = messageJson.getString("host", "");
-                    String port = messageJson.getString("port", "");
-                    boolean status = !"0".equals(messageJson.getString("status", ""));
-                    String backend = (!"".equals(host) && !"".equals(port)) ?
-                            String.format("%s:%s", host, port) : "";
-
-                    final Virtualhost vhost = virtualhosts.get(virtualhost);
-                    if (vhost.addBackend(backend, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), backend, virtualhost));
+                    final Virtualhost vhost = virtualhosts.get(parentId);
+                    if (vhost.addBackend(entity, status)) {
+                        log.info(String.format("[%s] Backend %s (%s) added", verticle.toString(), entityId, parentId));
                     } else {
-                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), backend, virtualhost));
+                        log.warn(String.format("[%s] Backend %s (%s) already exist", verticle.toString(), entityId, parentId));
                         isOk = false;
                     }
                 }
@@ -134,54 +122,47 @@ public class QueueMap {
         }
 
         boolean isOk = true;
-        JsonObject messageJson = new JsonObject(message);
-        String virtualhost = messageJson.getString("virtualhost", "");
-        String host = messageJson.getString("host", "");
-        String port = messageJson.getString("port");
-        boolean status = !"0".equals(messageJson.getString("status", ""));
-        String uri = messageJson.getString("uri", "");
-//        String properties = messageJson.getString("properties", "{}");
+        MessageBus messageBus = new MessageBus(message);
+        String uriBase = messageBus.getUriBase();
+        SafeJsonObject entity = messageBus.getEntity();
+        String entityId = messageBus.getEntityId();
+        String parentId = messageBus.getParentId();
 
-        String backend = (!"".equals(host) && !"".equals(port)) ?
-                String.format("%s:%s", host, port) : "";
-        String uriBase = uri.split("/")[1];
+        if ("".equals(entityId)) {
+            log.error(String.format("[%s] Inaccessible Entity Id: %s", verticle.toString(), entity.encode()));
+            return false;
+        }
 
         switch (uriBase) {
-            case "route":
-                Iterator<Virtualhost> iterVirtualhost = virtualhosts.values().iterator();
-                while (iterVirtualhost.hasNext()) {
-                    Virtualhost aVirtualhost = iterVirtualhost.next();
-                    if (aVirtualhost!=null) {
-                        aVirtualhost.clear(true);
-                        aVirtualhost.clear(false);
-                    }
-                }
-                virtualhosts.clear();
-                log.info(String.format("[%s] All routes were cleaned", verticle.toString()));
-                break;
             case "virtualhost":
-                if (virtualhosts.containsKey(virtualhost)) {
-                    virtualhosts.get(virtualhost).clearAll();
-                    virtualhosts.remove(virtualhost);
-                    log.info(String.format("[%s] Virtualhost %s removed", verticle.toString(), virtualhost));
+                if (virtualhosts.containsKey(entityId)) {
+                    virtualhosts.get(entityId).clearAll();
+                    virtualhosts.remove(entityId);
+                    log.info(String.format("[%s] Virtualhost %s removed", verticle.toString(), entityId));
                 } else {
-                    log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticle.toString(), virtualhost));
+                    log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticle.toString(), entityId));
                     isOk = false;
                 }
                 break;
             case "backend":
-                if ("".equals(backend)) {
+                if ("".equals(parentId)) {
+                    log.error(String.format("[%s] Inaccessible ParentId: %s", verticle.toString(), entity.encode()));
+                    return false;
+                }
+                boolean status = entity.getBoolean(Backend.propertyStatusFieldName, true);
+
+                if ("".equals(entityId)) {
                     log.warn(String.format("[%s] Backend UNDEF", verticle.toString()));
                     isOk = false;
-                } else if (!virtualhosts.containsKey(virtualhost)) {
-                    log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticle.toString(), virtualhost));
+                } else if (!virtualhosts.containsKey(parentId)) {
+                    log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticle.toString(), parentId));
                     isOk = false;
                 } else {
-                    final Virtualhost virtualhostObj = virtualhosts.get(virtualhost);
-                    if (virtualhostObj!=null && virtualhostObj.removeBackend(backend, status)) {
-                        log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), backend, virtualhost));
+                    final Virtualhost virtualhostObj = virtualhosts.get(parentId);
+                    if (virtualhostObj!=null && virtualhostObj.removeBackend(entityId, status)) {
+                        log.info(String.format("[%s] Backend %s (%s) removed", verticle.toString(), entityId, parentId));
                     } else {
-                        log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), backend, virtualhost));
+                        log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticle.toString(), entityId, parentId));
                         isOk = false;
                     }
                 }
@@ -200,7 +181,13 @@ public class QueueMap {
         } catch (java.lang.NumberFormatException e) {}
     }
 
-    public void registerQueueAdd() {
+    public void register() {
+        registerQueueAdd();
+        registerQueueDel();
+        registerQueueVersion();
+    }
+
+    private void registerQueueAdd() {
         Handler<Message<String>> queueAddHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -209,11 +196,11 @@ public class QueueMap {
             }
         };
         if (eb != null) {
-            eb.registerHandler(QUEUE_ROUTE_ADD, queueAddHandler);
+            eb.registerHandler(ACTION.ADD.toString(), queueAddHandler);
         }
     }
 
-    public void registerQueueDel() {
+    private void registerQueueDel() {
         Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -222,11 +209,11 @@ public class QueueMap {
             }
         };
         if (eb!=null) {
-            eb.registerHandler(QUEUE_ROUTE_DEL,queueDelHandler);
+            eb.registerHandler(ACTION.DEL.toString(),queueDelHandler);
         }
     }
 
-    public void registerQueueVersion() {
+    private void registerQueueVersion() {
         Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -234,7 +221,7 @@ public class QueueMap {
             }
         };
         if (eb!=null) {
-            eb.registerHandler(QUEUE_ROUTE_VERSION, queueVersionHandler);
+            eb.registerHandler(ACTION.SET_VERSION.toString(), queueVersionHandler);
         }
     }
 
@@ -256,4 +243,95 @@ public class QueueMap {
             ((IEventObserver)verticle).postAddEvent(message);
         }
     }
+
+    public void sendActionAdd(SafeJsonObject json, final String uri) {
+        putMessageToBus(json, ACTION.ADD, uri);
+    }
+
+    public void sendActionDel(SafeJsonObject json, final String uri) {
+        putMessageToBus(json, ACTION.DEL, uri);
+    }
+
+    private void putMessageToBus(SafeJsonObject json, QueueMap.ACTION action, final String uri) {
+        Long timestamp = 0L;
+
+        try {
+            timestamp = json.getLong("version");
+        } catch (DecodeException e) {
+            log.error(e.getMessage());
+            return;
+        }
+        json.removeField("version");
+
+        String parentId = json.getString(MessageBus.parentIdFieldName, "");
+        json.removeField(parentId);
+
+        MessageBus messageBus = new MessageBus()
+                                    .setUri(uri)
+                                    .setEntity(json.encode());
+
+        if (!"".equals(parentId)) {
+            messageBus.setParentId(parentId);
+        }
+
+        String message = messageBus.make().toString();
+
+        sendAction(message, action);
+        sendAction(String.format("%d", timestamp), ACTION.SET_VERSION);
+
+    }
+
+    public void sendGroupActionAdd(SafeJsonObject json, final String uri) {
+        putGroupMessageToBus(json, ACTION.ADD, uri);
+    }
+
+    public void sendGroupActionDel(SafeJsonObject json, final String uri) {
+        putGroupMessageToBus(json, ACTION.DEL, uri);
+    }
+
+    private void putGroupMessageToBus(final SafeJsonObject json, final QueueMap.ACTION action, final String uri) throws RuntimeException {
+        SafeJsonObject virtualhosts = new SafeJsonObject().makeArray(json.getArray("virtualhosts"));
+        Long timestamp = json.getLong("version", 0L);
+        String message = "{}";
+
+        Iterator<Object> it = virtualhosts.toList().iterator();
+        while (it.hasNext()) {
+            SafeJsonObject vhostJson = (SafeJsonObject) it.next();
+            String vhostId = vhostJson.getString(IJsonable.jsonIdFieldName);
+
+            message = new MessageBus()
+                .setEntity(vhostJson)
+                .setUri("/virtualhost")
+                .make()
+                .toString();
+
+            sendAction(message, action);
+
+            if (vhostJson.containsField(Virtualhost.backendsFieldName)) {
+                SafeJsonObject backends = vhostJson.getObject(Virtualhost.backendsFieldName)
+                        .getJsonArray(Virtualhost.backendsElegibleFieldName);
+
+                Iterator<Object> backendsIterator = backends.toList().iterator();
+                while (backendsIterator.hasNext()) {
+                    SafeJsonObject backendJson = (SafeJsonObject) backendsIterator.next();
+
+                    message = new MessageBus()
+                                            .setEntity(backendJson)
+                                            .setParentId(vhostId)
+                                            .setUri("/backend")
+                                            .make()
+                                            .toString();
+
+                    sendAction(message, action);
+                }
+            }
+        }
+        sendAction(String.format("%d", timestamp), ACTION.SET_VERSION);
+    }
+
+    private void sendAction(String message, final QueueMap.ACTION action) {
+        eb.publish(action.toString(), message);
+        log.debug(String.format("Sending %s to %s",message, action.toString()));
+    }
+
 }

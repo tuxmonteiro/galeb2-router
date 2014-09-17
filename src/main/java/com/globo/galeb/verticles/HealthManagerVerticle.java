@@ -14,6 +14,9 @@
  */
 package com.globo.galeb.verticles;
 
+import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
+import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_OK;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -22,7 +25,11 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
+import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
 
 import org.vertx.java.core.Handler;
@@ -36,16 +43,12 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_OK;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_ADD;
-import static com.globo.galeb.core.Constants.QUEUE_ROUTE_DEL;
-
 public class HealthManagerVerticle extends Verticle implements IEventObserver {
 
     private final Map<String, Set<String>> backendsMap = new HashMap<>();
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
+    private QueueMap queue;
 
     @Override
     public void start() {
@@ -55,9 +58,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
-        final QueueMap queueMap = new QueueMap(this, null);
-        queueMap.registerQueueAdd();
-        queueMap.registerQueueDel();
+        queue = new QueueMap(this, null);
+        queue.register();
 
         final EventBus eb = vertx.eventBus();
         eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
@@ -69,7 +71,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 } catch (UnsupportedEncodingException e) {
                     log.error(e.getMessage());
                 }
-                log.debug(String.format("Backend %s OK", message.body()));
+                log.debug(String.format("Backend %s OK", backend));
             };
         });
         eb.registerHandler(QUEUE_HEALTHCHECK_FAIL, new Handler<Message<String>>() {
@@ -107,7 +109,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                             HttpClientRequest cReq = client.get(uriHealthCheck, new Handler<HttpClientResponse>() {
                                     @Override
                                     public void handle(HttpClientResponse cResp) {
-                                        if (cResp!=null && cResp.statusCode()==200) {
+                                        if (cResp!=null && cResp.statusCode()==HttpCode.Ok) {
                                             eb.publish(QUEUE_HEALTHCHECK_OK, backend);
                                             log.info(String.format("Backend %s OK. Enabling it", backend));
                                         }
@@ -134,28 +136,38 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
 
     @Override
     public void postAddEvent(String message) {
-        Map<String, String> map = new HashMap<>();
-        messageToMap(message, map);
-        final Map <String, Set<String>> tempMap = "true".equals(map.get("status")) ? backendsMap : badBackendsMap;
 
-        if (!tempMap.containsKey(map.get("backend"))) {
-            tempMap.put(map.get("backend"), new HashSet<String>());
+        MessageBus messageBus = new MessageBus(message);
+        if ("backend".equals(messageBus.getUriBase())) {
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyStatusFieldName, true);
+            String backendId = messageBus.getEntityId();
+            String virtualhostId = messageBus.getParentId();
+            final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+
+            if (!tempMap.containsKey(backendId)) {
+                tempMap.put(backendId, new HashSet<String>());
+            }
+            Set<String> virtualhosts = tempMap.get(backendId);
+            virtualhosts.add(virtualhostId);
         }
-        Set<String> virtualhosts = tempMap.get(map.get("backend"));
-        virtualhosts.add(map.get("virtualhost"));
     };
 
     @Override
     public void postDelEvent(String message) {
-        Map<String, String> map = new HashMap<>();
-        messageToMap(message, map);
-        final Map <String, Set<String>> tempMap = "true".equals(map.get("status")) ? backendsMap : badBackendsMap;
+        MessageBus messageBus = new MessageBus(message);
+        if ("backend".equals(messageBus.getUriBase())) {
 
-        if (tempMap.containsKey(map.get("backend"))) {
-            Set<String> virtualhosts = tempMap.get(map.get("backend"));
-            virtualhosts.remove(map.get("virtualhost"));
-            if (virtualhosts.isEmpty()) {
-                tempMap.remove(map.get("backend"));
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyStatusFieldName, true);
+            String backendId = messageBus.getEntityId();
+            String virtualhostId = messageBus.getParentId();
+            final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+
+            if (tempMap.containsKey(backendId)) {
+                Set<String> virtualhosts = tempMap.get(backendId);
+                virtualhosts.remove(virtualhostId);
+                if (virtualhosts.isEmpty()) {
+                    tempMap.remove(backendId);
+                }
             }
         }
     };
@@ -167,50 +179,30 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         if (virtualhosts!=null) {
             Iterator<String> it = virtualhosts.iterator();
             while (it.hasNext()) {
-                String message;
                 String virtualhost = it.next();
-                String[] backendArray = backend.split(":");
-                String host = backendArray[0];
-                String port = backendArray[1];
-                String statusStr = status ? "0" : "1";
+                JsonObject backendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, backend);
+                JsonObject virtualhostJson = new JsonObject().putString(IJsonable.jsonIdFieldName, virtualhost);
 
-                message = QueueMap.buildMessage(virtualhost,
-                                                host,
-                                                port,
-                                                statusStr,
-                                                String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")),
-                                                "{}");
-                if (eb!=null) {
-                    eb.publish(QUEUE_ROUTE_DEL, message);
-                }
+                String messageDel = new MessageBus()
+                                            .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
+                                            .setEntity(backendJson
+                                                    .putBoolean(Backend.propertyStatusFieldName, !status).encode())
+                                            .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
+                                            .make()
+                                            .toString();
 
-                message = QueueMap.buildMessage(virtualhost,
-                                                host,
-                                                port,
-                                                statusStr,
-                                                "/backend",
-                                                "{}");
-                if (eb!=null) {
-                    eb.publish(QUEUE_ROUTE_ADD, message);
-                }
+                queue.processDelMessage(messageDel);
+
+                String messageAdd = new MessageBus()
+                                            .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
+                                            .setEntity(backendJson
+                                                    .putBoolean(Backend.propertyStatusFieldName, status).encode())
+                                            .setUri("/backend")
+                                            .make()
+                                            .toString();
+
+                queue.processAddMessage(messageAdd);
             }
-        }
-    }
-
-    private void messageToMap(final String message, final Map<String, String> map) {
-        if (map!=null) {
-            JsonObject messageJson = new JsonObject(message);
-            map.put("virtualhost", messageJson.getString("virtualhost", ""));
-            String host = messageJson.getString("host", "");
-            map.put("host", host);
-            String port = messageJson.getString("port", "");
-            map.put("port", port);
-            map.put("status", !"0".equals(messageJson.getString("status", "")) ? "true":"false");
-            String uri = messageJson.getString("uri", "");
-            map.put("uri", uri);
-            map.put("properties", messageJson.getString("properties", "{}"));
-            map.put("backend",(!"".equals(host) && !"".equals(port)) ? String.format("%s:%s", host, port) : "");
-            map.put("uriBase", uri.contains("/")? uri.split("/")[1]:"");
         }
     }
 

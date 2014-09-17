@@ -16,19 +16,23 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static com.globo.galeb.consistenthash.HashAlgorithm.HashType;
-import static com.globo.galeb.core.Constants.*;
+import static org.mockito.Mockito.*;
 
 import java.util.EnumSet;
 import java.util.Set;
 
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.impl.HashPolicy;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.impl.DefaultVertx;
+import org.vertx.java.core.json.JsonObject;
 
 public class HashPolicyTest {
 
@@ -37,8 +41,14 @@ public class HashPolicyTest {
 
     @Before
     public void setUp() throws Exception {
-        virtualhost = new Virtualhost("test.localdomain", null);
-        virtualhost.putString(loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
+        Vertx vertx = mock(DefaultVertx.class);
+
+        JsonObject virtualhostProperties = new JsonObject()
+            .putString(Virtualhost.loadBalancePolicyFieldName, HashPolicy.class.getSimpleName());
+        JsonObject virtualhostJson = new JsonObject()
+            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
+            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
+        virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
             virtualhost.addBackend(String.format("0:%s", x), true);
@@ -79,7 +89,7 @@ public class HashPolicyTest {
                 long initialTime = System.currentTimeMillis();
                 for (int counter=0; counter<samples; counter++) {
                     RequestData requestData = new RequestData(Long.toString(counter), null);
-                    virtualhost.putString(hashAlgorithmFieldName, hash.toString());
+                    virtualhost.getProperties().putString(HashPolicy.hashAlgorithmFieldName, hash.toString());
                     sum += virtualhost.getChoice(requestData).getPort();
                 }
                 long finishTime = System.currentTimeMillis();

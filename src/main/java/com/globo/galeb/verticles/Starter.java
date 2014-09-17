@@ -41,6 +41,7 @@ public class Starter extends Verticle{
             confRouterManager.putString(CONF_STATSD_HOST, confStatsd.getString(CONF_HOST, "localhost"));
             confRouterManager.putString(CONF_STATSD_PREFIX, confStatsd.getString(CONF_PREFIX, "stats"));
             confRouterManager.putNumber(CONF_STATSD_PORT, confStatsd.getInteger(CONF_PORT, 8125));
+            confRouterManager.putObject(CONF_STARTER_CONF, conf);
         }
 
         int numCpuCores = Runtime.getRuntime().availableProcessors();
