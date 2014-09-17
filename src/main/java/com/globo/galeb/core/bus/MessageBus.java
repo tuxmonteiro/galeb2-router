@@ -1,4 +1,7 @@
-package com.globo.galeb.core;
+package com.globo.galeb.core.bus;
+
+import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.SafeJsonObject;
 
 public class MessageBus {
 

@@ -23,10 +23,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.MessageBus;
-import com.globo.galeb.core.QueueMap;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.bus.MessageBus;
+import com.globo.galeb.core.bus.QueueMap;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.unit.util.FakeLogger;
 

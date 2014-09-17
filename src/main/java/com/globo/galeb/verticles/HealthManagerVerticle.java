@@ -27,10 +27,10 @@ import java.util.Set;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.MessageBus;
-import com.globo.galeb.core.QueueMap;
+import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.MessageBus;
+import com.globo.galeb.core.bus.QueueMap;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;

@@ -12,7 +12,7 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
  * PARTICULAR PURPOSE.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.bus;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -24,6 +24,11 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
+
+import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.SafeJsonObject;
+import com.globo.galeb.core.Virtualhost;
 
 public class QueueMap {
 

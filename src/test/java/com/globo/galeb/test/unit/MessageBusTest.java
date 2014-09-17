@@ -10,7 +10,7 @@ import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LogDelegate;
 
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.MessageBus;
+import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class MessageBusTest {

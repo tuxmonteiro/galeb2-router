@@ -23,6 +23,8 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
+import com.globo.galeb.core.bus.QueueMap;
+
 public class Farm extends Entity {
 
     private final Map<String, Virtualhost> virtualhosts = new HashMap<>();
