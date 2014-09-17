@@ -15,6 +15,7 @@
 package com.globo.galeb.core;
 
 import static com.globo.galeb.core.Constants.CONF_PORT;
+
 import com.globo.galeb.metrics.ICounter;
 
 import org.vertx.java.core.AsyncResult;
@@ -30,12 +31,22 @@ import org.vertx.java.platform.Container;
 
 public class Server {
 
+    private static String httpServerName = "SERVER";
+
     private final Vertx vertx;
     private final JsonObject conf;
     private final Logger log;
     private final HttpServer httpServer;
 
     private Integer port = 9000;
+
+    public static String getHttpServerName() {
+        return httpServerName;
+    }
+
+    public static void setHttpServerName(String httpServerName) {
+        Server.httpServerName = httpServerName;
+    }
 
     public Server(final Vertx vertx, final Container container, final ICounter counter) {
         this.vertx = vertx;
