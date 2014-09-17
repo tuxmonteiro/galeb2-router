@@ -20,6 +20,7 @@ import java.util.Map;
 import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.json.impl.Json;
 
 public class SafeJsonObject extends JsonObject {
 
@@ -33,7 +34,7 @@ public class SafeJsonObject extends JsonObject {
 
     public SafeJsonObject(String jsonStr) {
         this();
-        mergeIn(new JsonObject(safeExtractJson(jsonStr)));
+        if (isJson(jsonStr)) mergeIn(new JsonObject(jsonStr));
     }
 
     public SafeJsonObject(Map<String, Object> map) {
@@ -45,35 +46,25 @@ public class SafeJsonObject extends JsonObject {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public SafeJsonObject getObject(String fieldName) {
-        return new SafeJsonObject(super.getObject(fieldName));
+        Map<String, Object> m = (Map<String, Object>) map.get(fieldName);
+        return m == null ? null : new SafeJsonObject(m);
     }
 
     @Override
-    public SafeJsonObject getObject(String fieldName, JsonObject def) {
-        return new SafeJsonObject(super.getObject(fieldName, def));
+    public SafeJsonObject putString(String fieldName, String value) {
+        map.put(fieldName, value);
+        return this;
     }
 
     public boolean isJson(String jsonStr) {
         try {
-            new SafeJsonObject(jsonStr);
+            Json.decodeValue(jsonStr, Map.class);
         } catch (DecodeException ignore) {
             return false;
         }
         return true;
-    }
-
-    private String safeExtractJson(String jsonStr) {
-        try {
-            new JsonObject(jsonStr);
-            return jsonStr;
-        } catch (DecodeException ignore) {
-            return "{}";
-        }
-    }
-
-    public SafeJsonObject putJsonArray(String fieldName, List<Object> list) {
-        return new SafeJsonObject(super.putArray(fieldName, new JsonArray(list)));
     }
 
     public SafeJsonObject getJsonArray(String key) {
