@@ -27,7 +27,7 @@ import org.vertx.java.platform.Verticle;
 
 public class QueueMap {
 
-    public enum ACTION {
+    private enum ACTION {
 
         ADD("route.add"),
         DEL("route.del"),

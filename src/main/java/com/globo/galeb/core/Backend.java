@@ -29,8 +29,8 @@ public class Backend extends Entity {
     public static String propertyKeepaliveMaxRequestFieldName = "keepaliveMaxRequest";
     public static String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
     public static String propertyMaxPoolSizeFieldName         = "maxPoolSize";
-    public static String propertyStatusFieldName              = "status";
 
+    public static String propertyStatusFieldName              = "_status";
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
@@ -245,6 +245,8 @@ public class Backend extends Entity {
                 // Already closed. Ignore exception.
             } finally {
                 client=null;
+                keepAliveMaxRequest  = null;
+                keepAliveTimeOut     = null;
                 connectionsCounter.unregisterEventBus();
             }
         }

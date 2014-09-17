@@ -31,7 +31,6 @@ import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.MessageBus;
 import com.globo.galeb.core.QueueMap;
-import com.globo.galeb.core.QueueMap.ACTION;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
@@ -49,6 +48,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
     private final Map<String, Set<String>> backendsMap = new HashMap<>();
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
+    private QueueMap queue;
 
     @Override
     public void start() {
@@ -58,7 +58,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
-        new QueueMap(this, null).register();
+        queue = new QueueMap(this, null);
+        queue.register();
 
         final EventBus eb = vertx.eventBus();
         eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
@@ -189,9 +190,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                             .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
                                             .make()
                                             .toString();
-                if (eb!=null) {
-                    eb.publish(ACTION.DEL.toString(), messageDel);
-                }
+
+                queue.processDelMessage(messageDel);
 
                 String messageAdd = new MessageBus()
                                             .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
@@ -200,9 +200,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                             .setUri("/backend")
                                             .make()
                                             .toString();
-                if (eb!=null) {
-                    eb.publish(ACTION.ADD.toString(), messageAdd);
-                }
+
+                queue.processAddMessage(messageAdd);
             }
         }
     }

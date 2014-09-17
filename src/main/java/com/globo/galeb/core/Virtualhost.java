@@ -30,8 +30,11 @@ public class Virtualhost extends Entity {
     public static final String backendsFieldName          = "backends";
     public static final String backendsElegibleFieldName  = "eligible";
     public static final String backendsFailedFieldName    = "failed";
+
+    // Modifiable
     public static final String loadBalancePolicyFieldName = "loadBalancePolicy";
 
+    //
     public static final String transientStateFieldName    = "_transientState";
 
     private final UniqueArrayList<Backend> backends;

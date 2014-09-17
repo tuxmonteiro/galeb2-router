@@ -18,12 +18,12 @@ import org.vertx.java.core.json.JsonObject;
 
 public abstract class Entity implements IJsonable {
 
-    protected String           id            = "";
-    protected final Long       createdAt     = System.currentTimeMillis();
-    protected Long             modifiedAt    = System.currentTimeMillis();
-    protected final JsonObject properties    = new JsonObject();
-    protected final JsonObject idObj         = new JsonObject();
-    protected String           entityType    = this.getClass().getSimpleName().toLowerCase();
+    protected String               id            = "";
+    protected final Long           createdAt     = System.currentTimeMillis();
+    protected Long                 modifiedAt    = System.currentTimeMillis();
+    protected final JsonObject     properties    = new JsonObject();
+    protected final JsonObject     idObj         = new JsonObject();
+    protected String               entityType    = this.getClass().getSimpleName().toLowerCase();
 
     public JsonObject getProperties() {
         return properties;
@@ -31,7 +31,7 @@ public abstract class Entity implements IJsonable {
 
     protected Entity prepareJson() {
         idObj.putString(IJsonable.jsonIdFieldName, id);
-        idObj.putObject(jsonLinksFieldName, new JsonObject()
+        idObj.putObject(jsonLinksFieldName, new SafeJsonObject()
             .putString(jsonLinksRelFieldName, "self")
             .putString(jsonLinksHrefFieldName, String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
         );
