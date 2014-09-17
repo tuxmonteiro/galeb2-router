@@ -12,7 +12,7 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
  * PARTICULAR PURPOSE.
  */
-package com.globo.galeb.handlers.manager;
+package com.globo.galeb.handlers.rest;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;

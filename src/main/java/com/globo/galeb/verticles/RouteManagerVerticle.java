@@ -21,7 +21,7 @@ import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
-import com.globo.galeb.handlers.manager.GetMatcherHandler;
+import com.globo.galeb.handlers.rest.GetMatcherHandler;
 import com.globo.galeb.metrics.CounterWithStatsd;
 import com.globo.galeb.metrics.ICounter;
 
