@@ -18,15 +18,16 @@ import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.SafeJsonObject;
-import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
+import com.globo.galeb.handlers.rest.DeleteMatcherHandler;
 import com.globo.galeb.handlers.rest.GetMatcherHandler;
+import com.globo.galeb.handlers.rest.PostMatcherHandler;
+import com.globo.galeb.handlers.rest.PutMatcherHandler;
 import com.globo.galeb.metrics.CounterWithStatsd;
 import com.globo.galeb.metrics.ICounter;
 
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
@@ -41,6 +42,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private Server server;
     private String httpServerName = null;
     private Farm farm;
+
+    private final String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
     @Override
     public void start() {
@@ -76,12 +79,13 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         RouteMatcher routeMatcher = new RouteMatcher();
 
-        routeMatcher.getWithRegEx("\\/([^\\/]+)[\\/]?([^\\/]+)?", new GetMatcherHandler(routeManagerId, log, farm));
+        routeMatcher.getWithRegEx(patternRegex, new GetMatcherHandler(routeManagerId, log, farm));
 
-        routeMatcher.post("/:uriBase", postMethodHandler());
+        routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, farm));
 
-        routeMatcher.delete("/:uriBase/:id", deleteMethodWithIdHandler());
-//        routeMatcher.delete("/:uriBase", deleteMethodHandler());
+        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, farm));
+
+        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, farm));
 
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
 
@@ -104,92 +108,6 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         });
 
         server.setDefaultPort(9090).setHttpServerRequestHandler(routeMatcher).start(this);
-    }
-
-    private Handler<HttpServerRequest> postMethodHandler() {
-
-        return new Handler<HttpServerRequest>() {
-
-            @Override
-            public void handle(final HttpServerRequest req) {
-                final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
-                final ManagerService managerService = new ManagerService(routeManagerId, log);
-
-                managerService.setRequest(req).setResponse(serverResponse);
-
-                if (!managerService.checkMethodOk("POST") || !managerService.checkUriOk()) {
-                    return;
-                }
-
-                req.bodyHandler(new Handler<Buffer>() {
-                    @Override
-                    public void handle(Buffer body) {
-                        String bodyStr = body.toString();
-                        String uri = req.uri();
-                        int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
-
-                        if (statusCode==HttpCode.Ok) {
-                            if (uri.startsWith("/farm")) {
-                                farm.getQueueMap().sendGroupActionAdd(new SafeJsonObject(bodyStr), uri);
-                            } else {
-                                farm.getQueueMap().sendActionAdd(new SafeJsonObject(bodyStr), uri);
-                            }
-                        }
-
-                        serverResponse.setStatusCode(statusCode)
-                            .setMessage(HttpCode.getMessage(statusCode, true))
-                            .setId(routeManagerId)
-                            .end();
-                    }
-                });
-
-            }
-        };
-    }
-
-    private Handler<HttpServerRequest> deleteMethodWithIdHandler() {
-
-        return new Handler<HttpServerRequest>() {
-
-            @Override
-            public void handle(final HttpServerRequest req) {
-                final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
-                final ManagerService managerService = new ManagerService(routeManagerId, log);
-
-                managerService.setRequest(req).setResponse(serverResponse);
-
-                final String id = managerService.getRequestId();
-                if (!managerService.checkMethodOk("DELETE") ||
-                        !managerService.checkUriOk() ||
-                        !managerService.checkIdPresent()) {
-                    return;
-                }
-
-                req.bodyHandler(new Handler<Buffer>() {
-                    @Override
-                    public void handle(Buffer body) {
-                        String bodyStr = body.toString();
-                        SafeJsonObject bodyJson = new SafeJsonObject(body.toString());
-
-                        if (!managerService.checkIdConsistency(bodyJson, id)) {
-                            return;
-                        }
-                        int statusCode = managerService.statusFromMessageSchema(bodyStr, req.uri());
-
-                        if (statusCode==HttpCode.Ok) {
-                            farm.getQueueMap().sendActionDel(bodyJson, req.uri());
-                            statusCode = HttpCode.Accepted;
-                        }
-
-                        serverResponse.setStatusCode(statusCode)
-                            .setMessage(HttpCode.getMessage(statusCode, true))
-                            .setId(routeManagerId)
-                            .end();
-                    }
-                });
-
-            }
-        };
     }
 
 }
