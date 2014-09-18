@@ -14,28 +14,49 @@
  */
 package com.globo.galeb.core;
 
+import static com.globo.galeb.core.bus.QueueMap.ACTION.*;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.vertx.java.core.Handler;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.eventbus.EventBus;
+import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
+import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.MessageToMapBuilder;
 import com.globo.galeb.core.bus.QueueMap;
 
 public class Farm extends Entity {
 
     private final Map<String, Virtualhost> virtualhosts = new HashMap<>();
     private Long version = 0L;
+    private final Verticle verticle;
+    private final Logger log;
+    private final EventBus eb;
     private final QueueMap queueMap;
 
     public Farm(final Verticle verticle) {
         this.id = "";
-        this.queueMap = new QueueMap(verticle, virtualhosts);
-        queueMap.register();
-        if (verticle!=null) properties.mergeIn(verticle.getContainer().config());
+        this.verticle = verticle;
+        if (verticle!=null) {
+            properties.mergeIn(verticle.getContainer().config());
+            this.eb = verticle.getVertx().eventBus();
+            this.log = verticle.getContainer().logger();
+            register();
+        } else {
+            this.eb = null;
+            this.log = null;
+        }
+
+        this.queueMap = new QueueMap(eb, log);
     }
 
     public Long getVersion() {
@@ -44,10 +65,24 @@ public class Farm extends Entity {
 
     public void setVersion(Long version) {
         this.version = version;
+        String infoMessage = String.format("Version changed to %d", verticle.toString(), version);
+        if (verticle!=null) {
+            log.info(infoMessage);
+        } else {
+            System.out.println(infoMessage);
+        }
     }
 
-    public QueueMap getQueueMap() {
-        return queueMap;
+    public Vertx getVertx() {
+        return (verticle!=null) ? verticle.getVertx() : null;
+    }
+
+    public Logger getLogger() {
+        return (verticle!=null) ? log : null;
+    }
+
+    public String getVerticleId() {
+        return (verticle!=null) ? verticle.toString() : "";
     }
 
     public Set<Backend> getBackends() {
@@ -84,6 +119,106 @@ public class Farm extends Entity {
 
         idObj.putArray("virtualhosts", virtualhostArray);
         return super.toJson();
+    }
+
+    public Map<String, Virtualhost> getVirtualhostsToMap() {
+        return virtualhosts;
+    }
+
+    public boolean addToMap(String message) {
+        return MessageToMapBuilder.getInstance(message, this).add();
+    }
+
+    public boolean delFromMap(String message) {
+        return MessageToMapBuilder.getInstance(message, this).del();
+    }
+
+    public void queueToAdd(SafeJsonObject bodyJson, String uri) {
+        queueMap.queueToAdd(bodyJson, uri);
+    }
+
+    public void queueToDel(SafeJsonObject bodyJson, String uri) {
+        queueMap.queueToDel(bodyJson, uri);
+    }
+
+    public void queueToChange(SafeJsonObject bodyJson, String uri) {
+        new RuntimeException("Not implemented");
+    }
+
+    public void queueToMultiAdd(SafeJsonObject bodyJson, String uri) {
+        queueMap.putGroupMessageAddToQueue(bodyJson, uri);
+    }
+
+    public void queueToMultiDel(SafeJsonObject bodyJson, String uri) {
+        new RuntimeException("Not implemented");
+    }
+
+    public boolean processAddMessage(String message) {
+        return MessageToMapBuilder.getInstance(message, this).add();
+    }
+
+    public boolean processDelMessage(String message) {
+        return MessageToMapBuilder.getInstance(message, this).del();
+    }
+
+    public void registerQueueAdd() {
+        Handler<Message<String>> addHandler = new Handler<Message<String>>() {
+            @Override
+            public void handle(Message<String> message) {
+                processAddMessage(message.body());
+
+                if (verticle != null && verticle instanceof IEventObserver) {
+                    ((IEventObserver)verticle).postAddEvent(message.body());
+                }
+            }
+        };
+        if (eb!=null) {
+            eb.registerHandler(ADD.toString(), addHandler);
+        } else {
+            if (log!=null) log.warn("EventBus is null");
+        }
+    }
+
+    public void registerQueueDel() {
+        Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
+            @Override
+            public void handle(Message<String> message) {
+                processDelMessage(message.body());
+                if (verticle != null && verticle instanceof IEventObserver) {
+                    ((IEventObserver)verticle).postDelEvent(message.body());
+                }
+            }
+        };
+        if (eb!=null) {
+            eb.registerHandler(DEL.toString(),queueDelHandler);
+        } else {
+            Logger log = verticle.getContainer().logger();
+            if (log!=null) log.warn("EventBus is null");
+        }
+    }
+
+    public void registerQueueVersion() {
+        Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
+            @Override
+            public void handle(Message<String> message) {
+                try {
+                    setVersion(Long.parseLong(message.body()));
+                } catch (java.lang.NumberFormatException ignore) {
+                    // not change version
+                }
+            }
+        };
+        if (eb!=null) {
+            eb.registerHandler(SET_VERSION.toString(), queueVersionHandler);
+        } else {
+            if (log!=null) log.warn("EventBus is null");
+        }
+    }
+
+    public void register() {
+        registerQueueAdd();
+        registerQueueDel();
+        registerQueueVersion();
     }
 
 }
