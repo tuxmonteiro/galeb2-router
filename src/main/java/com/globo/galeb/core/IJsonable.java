@@ -19,6 +19,7 @@ import org.vertx.java.core.json.JsonObject;
 public interface IJsonable {
 
     public static final String jsonIdFieldName         = "id";
+    public static final String jsonParentIdFieldName   = "parentId";
     public static final String jsonPropertiesFieldName = "properties";
 
     public static final String jsonCreatedAtFieldName  = "_created_at";
