@@ -11,7 +11,7 @@ public class NullMap extends MapProcessor<Object> {
         if (log!=null) {
             log.warn(String.format("[%s] uriBase %s not supported", verticleId, uriBase));
         } else {
-            System.err.println("Farm is Null and uriBase not supported");
+            System.err.println("Farm is NULL or uriBase not supported");
         }
         return super.add();
     }
