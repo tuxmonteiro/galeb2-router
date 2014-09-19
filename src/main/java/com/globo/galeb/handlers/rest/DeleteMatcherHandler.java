@@ -53,7 +53,11 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-                    queue.queueToDel(bodyJson, uri);
+                    if ("".equals(id)) {
+                        queue.queueToMultiDel(bodyJson, uri);
+                    } else {
+                        queue.queueToDel(bodyJson, uri);
+                    }
                     statusCode = HttpCode.Accepted;
                 }
 
