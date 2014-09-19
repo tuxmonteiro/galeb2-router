@@ -3,7 +3,7 @@ package com.globo.galeb.core.bus;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Virtualhost;
 
-public class BackendMap extends MapProcessor<Virtualhost> {
+public class BackendMap extends MessageToMap<Virtualhost> {
 
     public BackendMap() {
         super();

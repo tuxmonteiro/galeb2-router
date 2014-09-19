@@ -8,7 +8,7 @@ import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.SafeJsonObject;
 
-public abstract class MapProcessor<T> {
+public abstract class MessageToMap<T> {
 
     protected String uriBase        = "";
     protected SafeJsonObject entity = new SafeJsonObject();
@@ -21,17 +21,17 @@ public abstract class MapProcessor<T> {
     protected String verticleId     = "";
     protected Vertx vertx           = null;
 
-    public MapProcessor<T> setVerticleId(String id) {
+    public MessageToMap<T> setVerticleId(String id) {
         this.verticleId = id;
         return this;
     }
 
-    public MapProcessor<T> setLogger(final Logger log) {
+    public MessageToMap<T> setLogger(final Logger log) {
         this.log = log;
         return this;
     }
 
-    public MapProcessor<T> setMessageBus(final MessageBus messageBus) {
+    public MessageToMap<T> setMessageBus(final MessageBus messageBus) {
         this.messageBus = messageBus;
 
         if (messageBus!=null) {
@@ -44,14 +44,14 @@ public abstract class MapProcessor<T> {
         return this;
     }
 
-    public MapProcessor<T> setMap(final Map<String, T> map) {
+    public MessageToMap<T> setMap(final Map<String, T> map) {
         if (map!=null) {
             this.map = map;
         }
         return this;
     }
 
-    public MapProcessor<T> setVertx(final Vertx vertx) {
+    public MessageToMap<T> setVertx(final Vertx vertx) {
         this.vertx = vertx;
         return this;
     }
