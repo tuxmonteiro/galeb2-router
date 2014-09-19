@@ -65,7 +65,7 @@ public class Farm extends Entity {
 
     public void setVersion(Long version) {
         this.version = version;
-        String infoMessage = String.format("Version changed to %d", verticle.toString(), version);
+        String infoMessage = String.format("Version changed to %d", version);
         if (verticle!=null) {
             log.info(infoMessage);
         } else {
