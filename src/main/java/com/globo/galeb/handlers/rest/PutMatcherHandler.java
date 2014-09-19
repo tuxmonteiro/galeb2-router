@@ -5,21 +5,21 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
+import com.globo.galeb.core.bus.QueueMap;
 
 public class PutMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
-    private final Farm farm;
+    private final QueueMap queueMap;
     private final String classId;
 
-    public PutMatcherHandler(String id, final Logger log, final Farm farm) {
+    public PutMatcherHandler(String id, final Logger log, final QueueMap queueMap) {
         this.log = log;
-        this.farm = farm;
+        this.queueMap = queueMap;
         this.classId = id;
     }
 
@@ -56,7 +56,7 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-                    farm.queueToChange(bodyJson, uri);
+                    queueMap.queueToChange(bodyJson, uri);
                     statusCode = HttpCode.Accepted;
                 }
 

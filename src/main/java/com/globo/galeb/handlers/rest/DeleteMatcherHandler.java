@@ -5,22 +5,22 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
+import com.globo.galeb.core.bus.QueueMap;
 
 public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
     private final String classId;
-    private final Farm farm;
+    private final QueueMap queueMap;
 
-    public DeleteMatcherHandler(String id, final Logger log, final Farm farm) {
+    public DeleteMatcherHandler(String id, final Logger log, final QueueMap queueMap) {
         this.log = log;
         this.classId = id;
-        this.farm = farm;
+        this.queueMap = queueMap;
     }
 
     @Override
@@ -49,10 +49,11 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
                 if (!managerService.checkIdConsistency(bodyJson, id)) {
                     return;
                 }
-                int statusCode = managerService.statusFromMessageSchema(bodyStr, req.uri());
+                String uri = req.uri();
+                int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-                    farm.queueToDel(bodyJson, req.uri());
+                    queueMap.queueToDel(bodyJson, uri);
                     statusCode = HttpCode.Accepted;
                 }
 

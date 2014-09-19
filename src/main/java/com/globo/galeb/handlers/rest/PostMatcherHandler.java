@@ -19,21 +19,21 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
+import com.globo.galeb.core.bus.QueueMap;
 
 public class PostMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
-    private final Farm farm;
+    private final QueueMap queueMap;
     private final String classId;
 
-    public PostMatcherHandler(String id, final Logger log, final Farm farm) {
+    public PostMatcherHandler(String id, final Logger log, final QueueMap queueMap) {
         this.log = log;
-        this.farm = farm;
+        this.queueMap = queueMap;
         this.classId = id;
     }
 
@@ -59,9 +59,9 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
                     SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
 
                     if (uri.startsWith("/farm")) {
-                        farm.queueToMultiAdd(bodyJson, uri);
+                        queueMap.queueToMultiAdd(bodyJson, uri);
                     } else {
-                        farm.queueToAdd(bodyJson, uri);
+                        queueMap.queueToAdd(bodyJson, uri);
                     }
                 }
 

@@ -57,6 +57,11 @@ public class QueueMap {
         putMessageToQueue(json, ACTION.DEL, uri);
     }
 
+    public void queueToChange(SafeJsonObject json, final String uri) {
+        // putMessageToQueue(json, ACTION.CHANGE, uri);
+        log.warn(String.format("%s: Change not implemented", this.toString()));
+    }
+
     private void putMessageToQueue(SafeJsonObject json, ACTION action, final String uri) {
         Long version = 0L;
 
@@ -89,11 +94,11 @@ public class QueueMap {
 
     }
 
-    public void putGroupMessageAddToQueue(SafeJsonObject json, final String uri) {
+    public void queueToMultiAdd(SafeJsonObject json, final String uri) {
         putGroupMessageToQueue(json, ACTION.ADD, uri);
     }
 
-    public void putGroupMessageDelToQueue(SafeJsonObject json, final String uri) {
+    public void queueToMultiDel(SafeJsonObject json, final String uri) {
         putGroupMessageToQueue(json, ACTION.DEL, uri);
     }
 
