@@ -1,5 +1,8 @@
 package com.globo.galeb.core.bus;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.logging.Logger;
 
@@ -19,6 +22,14 @@ public class MessageToMapBuilder {
         final String verticleId = farm.getVerticleId();
 
         switch (messageBus.getUriBase()) {
+            case "farm":
+                Map<String, Farm> map = new HashMap<>();
+                map.put("farm", farm);
+                return new FarmMap()
+                    .setLogger(log)
+                    .setVertx(vertx)
+                    .setMap(map)
+                    .setVerticleId(verticleId);
             case "virtualhost":
                 return new VirtualhostMap()
                     .setMessageBus(messageBus)
