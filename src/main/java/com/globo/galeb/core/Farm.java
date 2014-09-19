@@ -142,7 +142,8 @@ public class Farm extends Entity {
     }
 
     public void queueToChange(SafeJsonObject bodyJson, String uri) {
-        new RuntimeException("Not implemented");
+        queueMap.queueToDel(bodyJson, uri);
+        queueMap.queueToAdd(bodyJson, uri);
     }
 
     public void queueToMultiAdd(SafeJsonObject bodyJson, String uri) {
