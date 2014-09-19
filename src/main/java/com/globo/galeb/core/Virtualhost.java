@@ -48,7 +48,7 @@ public class Virtualhost extends Entity {
         this.backends = new UniqueArrayList<Backend>();
         this.badBackends = new UniqueArrayList<Backend>();
         this.vertx = vertx;
-        properties.mergeIn(json.getObject(IJsonable.jsonPropertiesFieldName));
+        properties.mergeIn(json.getObject(IJsonable.jsonPropertiesFieldName, new JsonObject()));
         if (!properties.containsField(loadBalancePolicyFieldName)) {
             getLoadBalancePolicy();
         }

@@ -16,6 +16,7 @@ package com.globo.galeb.handlers.rest;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Collection;
+
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
@@ -39,8 +40,8 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
 
     public GetMatcherHandler(String id, final Logger log, final Farm farm) {
         this.log = log;
-        this.farm = farm;
         this.classId = id;
+        this.farm = farm;
     }
 
     @Override

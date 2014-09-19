@@ -40,6 +40,7 @@ public class Backend extends Entity {
     private final Integer port;
 
     private HttpClient client;
+    private String virtualhostId = "";
 
     public Long keepAliveMaxRequest  = null;
     public Long keepAliveTimeOut     = null;
@@ -81,6 +82,7 @@ public class Backend extends Entity {
         this.eb = (vertx!=null) ? vertx.eventBus() : null;
         this.client = null;
         this.id = json.getString(IJsonable.jsonIdFieldName, "127.0.0.1:80");
+        this.virtualhostId = json.getString(IJsonable.jsonParentIdFieldName, "");
 
         String[] hostWithPortArray = id!=null ? id.split(":") : null;
         if (hostWithPortArray != null && hostWithPortArray.length>1) {
@@ -270,6 +272,7 @@ public class Backend extends Entity {
     @Override
     public JsonObject toJson() {
         prepareJson();
+        idObj.putString(Entity.jsonParentIdFieldName, virtualhostId);
         idObj.putNumber(propertyActiveConnectionsFieldName, getSessionController().getActiveConnections());
         return super.toJson();
     }

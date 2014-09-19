@@ -1,4 +1,7 @@
-package com.globo.galeb.core;
+package com.globo.galeb.core.bus;
+
+import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.SafeJsonObject;
 
 public class MessageBus {
 
@@ -74,7 +77,7 @@ public class MessageBus {
 
     public String getUriBase() {
         String[] uriStrArray = uriStr.split("/");
-        return uriStrArray.length > 0 ? uriStrArray[1] : "";
+        return uriStrArray.length > 1 ? uriStrArray[1] : "";
     }
 
     public MessageBus make() {

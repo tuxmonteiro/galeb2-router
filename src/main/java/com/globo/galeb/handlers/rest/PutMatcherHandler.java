@@ -8,6 +8,7 @@ import org.vertx.java.core.logging.Logger;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
+import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
 
 public class PutMatcherHandler implements Handler<HttpServerRequest> {
@@ -29,7 +30,9 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
 
         managerService.setRequest(req).setResponse(serverResponse);
 
-        if (!managerService.checkMethodOk("PUT") || !managerService.checkUriOk()) {
+        if (!managerService.checkMethodOk("PUT") ||
+            !managerService.checkUriOk() ||
+            !managerService.checkIdPresent()) {
             return;
         }
 
@@ -38,10 +41,23 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
             public void handle(Buffer body) {
                 String bodyStr = body.toString();
                 String uri = req.uri();
+                String id = "";
+
+                if (req.params()!=null) {
+                    id = req.params().contains("param1") ? req.params().get("param1") : "";
+                }
+
+                SafeJsonObject bodyJson = new SafeJsonObject(body.toString());
+
+                if (!managerService.checkIdConsistency(bodyJson, id)) {
+                    return;
+                }
+
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-//                    farm.getQueueMap().sendActionAdd(new SafeJsonObject(bodyStr), uri);
+                    farm.queueToChange(bodyJson, uri);
+                    statusCode = HttpCode.Accepted;
                 }
 
                 serverResponse.setStatusCode(statusCode)

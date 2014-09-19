@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.MessageBus;
+import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 

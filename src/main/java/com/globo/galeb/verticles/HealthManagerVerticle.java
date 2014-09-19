@@ -26,12 +26,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.IEventObserver;
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.MessageBus;
-import com.globo.galeb.core.QueueMap;
-
+import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.MessageBus;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -48,7 +47,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
     private final Map<String, Set<String>> backendsMap = new HashMap<>();
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
-    private QueueMap queue;
+    private Farm farm;
 
     @Override
     public void start() {
@@ -58,8 +57,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
-        queue = new QueueMap(this, null);
-        queue.register();
+        farm = new Farm(this);
 
         final EventBus eb = vertx.eventBus();
         eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
@@ -191,7 +189,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                             .make()
                                             .toString();
 
-                queue.processDelMessage(messageDel);
+                farm.delFromMap(messageDel);
 
                 String messageAdd = new MessageBus()
                                             .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
@@ -201,7 +199,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                             .make()
                                             .toString();
 
-                queue.processAddMessage(messageAdd);
+                farm.addToMap(messageAdd);
             }
         }
     }
