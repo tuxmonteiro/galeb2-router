@@ -31,16 +31,25 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
     @Override
     public boolean del() {
         boolean isOk = false;
-        if (map.containsKey(entityId)) {
-            ((Virtualhost) map.get(entityId)).clearAll();
-            map.remove(entityId);
-            log.info(String.format("[%s] Virtualhost %s removed", verticleId, entityId));
-            isOk = true;
+        boolean hasUriBaseOnly = ("/"+messageBus.getUriBase()).equals(messageBus.getUri()) ||
+                messageBus.getUri().endsWith("/");
+
+        if (!hasUriBaseOnly) {
+            if (map.containsKey(entityId)) {
+                ((Virtualhost) map.get(entityId)).clearAll();
+                map.remove(entityId);
+                log.info(String.format("[%s] Virtualhost %s removed", verticleId, entityId));
+                isOk = true;
+            } else {
+                log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticleId, entityId));
+                isOk = false;
+            }
+            return isOk;
         } else {
-            log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticleId, entityId));
-            isOk = false;
+            map.clear();
+            log.info(String.format("[%s] All Virtualhosts removed", verticleId));
+            return true;
         }
-        return isOk;
     }
 
     @Override

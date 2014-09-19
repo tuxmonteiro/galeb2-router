@@ -38,29 +38,41 @@ public class BackendMap extends MessageToMap<Virtualhost> {
     @Override
     public boolean del() {
         boolean isOk = false;
-        if ("".equals(parentId)) {
-            log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
-            return false;
-        }
-        boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
+        boolean hasUriBaseOnly = ("/"+messageBus.getUriBase()).equals(messageBus.getUri()) ||
+                messageBus.getUri().endsWith("/");
 
-        if ("".equals(entityId)) {
-            log.warn(String.format("[%s] Backend UNDEF", verticleId));
-            return false;
-        } else if (!map.containsKey(parentId)) {
-            log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticleId, parentId));
-            return false;
-        }
-        final Virtualhost virtualhostObj = map.get(parentId);
-        if (virtualhostObj!=null && virtualhostObj.removeBackend(entityId, status)) {
-            log.info(String.format("[%s] Backend %s (%s) removed", verticleId, entityId, parentId));
-            isOk = true;
+        if (!hasUriBaseOnly) {
+
+            if ("".equals(parentId)) {
+                log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
+                return false;
+            }
+            boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
+
+            if ("".equals(entityId)) {
+                log.warn(String.format("[%s] Backend UNDEF", verticleId));
+                return false;
+            } else if (!map.containsKey(parentId)) {
+                log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticleId, parentId));
+                return false;
+            }
+            final Virtualhost virtualhostObj = map.get(parentId);
+            if (virtualhostObj!=null && virtualhostObj.removeBackend(entityId, status)) {
+                log.info(String.format("[%s] Backend %s (%s) removed", verticleId, entityId, parentId));
+                isOk = true;
+            } else {
+                log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticleId, entityId, parentId));
+                isOk = false;
+            }
+
+            return isOk;
         } else {
-            log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticleId, entityId, parentId));
-            isOk = false;
+            for (Virtualhost virtualhost: map.values()) {
+                virtualhost.clearAll();
+                log.info(String.format("[%s] All Backends removed", verticleId));
+            }
+            return true;
         }
-
-        return isOk;
     }
 
     @Override

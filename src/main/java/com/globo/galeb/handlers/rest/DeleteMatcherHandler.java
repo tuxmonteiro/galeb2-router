@@ -30,9 +30,7 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
 
         managerService.setRequest(req).setResponse(serverResponse);
 
-        if (!managerService.checkMethodOk("DELETE") ||
-                !managerService.checkUriOk() ||
-                !managerService.checkIdPresent()) {
+        if (!managerService.checkMethodOk("DELETE") || !managerService.checkUriOk()) {
             return;
         }
 
@@ -46,18 +44,16 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
                     id = req.params().contains("param1") ? req.params().get("param1") : "";
                 }
 
-                if (!managerService.checkIdConsistency(bodyJson, id)) {
+                if (!"".equals(id) && !managerService.checkIdConsistency(bodyJson, id)) {
                     return;
                 }
+
                 String uri = req.uri();
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-                    if ("".equals(id)) {
-                        queue.queueToMultiDel(bodyJson, uri);
-                    } else {
-                        queue.queueToDel(bodyJson, uri);
-                    }
+                    queue.queueToDel(bodyJson, uri);
+                    log.info(String.format("[%s] DEL %s : json '%s'", this.toString(), uri, bodyStr));
                     statusCode = HttpCode.Accepted;
                 }
 

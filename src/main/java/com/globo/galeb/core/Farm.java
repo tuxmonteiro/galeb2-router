@@ -191,4 +191,8 @@ public class Farm extends Entity {
         registerQueueVersion();
     }
 
+    public void clearAll() {
+        virtualhosts.clear();
+    }
+
 }

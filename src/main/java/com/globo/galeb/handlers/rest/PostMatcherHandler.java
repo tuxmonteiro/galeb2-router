@@ -57,12 +57,7 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
 
                 if (statusCode==HttpCode.Ok) {
                     SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
-
-                    if (uri.startsWith("/farm")) {
-                        queue.queueToMultiAdd(bodyJson, uri);
-                    } else {
-                        queue.queueToAdd(bodyJson, uri);
-                    }
+                    queue.queueToAdd(bodyJson, uri);
                 }
 
                 serverResponse.setStatusCode(statusCode)

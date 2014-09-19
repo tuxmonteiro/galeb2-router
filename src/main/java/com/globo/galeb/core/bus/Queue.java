@@ -14,14 +14,10 @@
  */
 package com.globo.galeb.core.bus;
 
-import java.util.Iterator;
-
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.logging.Logger;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.SafeJsonObject;
-import com.globo.galeb.core.Virtualhost;
 
 public class Queue {
 
@@ -92,54 +88,6 @@ public class Queue {
         publish(message, action);
         publish(String.format("%d", version), ACTION.SET_VERSION);
 
-    }
-
-    public void queueToMultiAdd(SafeJsonObject json, final String uri) {
-        putGroupMessageToQueue(json, ACTION.ADD, uri);
-    }
-
-    public void queueToMultiDel(SafeJsonObject json, final String uri) {
-        putGroupMessageToQueue(json, ACTION.DEL, uri);
-    }
-
-    private void putGroupMessageToQueue(final SafeJsonObject json, final ACTION action, final String uri) throws RuntimeException {
-        SafeJsonObject virtualhosts = new SafeJsonObject().makeArray(json.getArray("virtualhosts"));
-        Long timestamp = json.getLong("version", 0L);
-        String message = "{}";
-
-        Iterator<Object> it = virtualhosts.toList().iterator();
-        while (it.hasNext()) {
-            SafeJsonObject vhostJson = (SafeJsonObject) it.next();
-            String vhostId = vhostJson.getString(IJsonable.jsonIdFieldName);
-
-            message = new MessageBus()
-                .setEntity(vhostJson)
-                .setUri("/virtualhost")
-                .make()
-                .toString();
-
-            publish(message, action);
-
-            if (vhostJson.containsField(Virtualhost.backendsFieldName)) {
-                SafeJsonObject backends = vhostJson.getObject(Virtualhost.backendsFieldName)
-                        .getJsonArray(Virtualhost.backendsElegibleFieldName);
-
-                Iterator<Object> backendsIterator = backends.toList().iterator();
-                while (backendsIterator.hasNext()) {
-                    SafeJsonObject backendJson = (SafeJsonObject) backendsIterator.next();
-
-                    message = new MessageBus()
-                                            .setEntity(backendJson)
-                                            .setParentId(vhostId)
-                                            .setUri("/backend")
-                                            .make()
-                                            .toString();
-
-                    publish(message, action);
-                }
-            }
-        }
-        publish(String.format("%d", timestamp), ACTION.SET_VERSION);
     }
 
     private void publish(String message, final ACTION action) {
