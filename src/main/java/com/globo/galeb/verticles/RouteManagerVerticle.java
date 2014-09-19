@@ -20,6 +20,7 @@ import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.QueueMap;
 import com.globo.galeb.handlers.rest.DeleteMatcherHandler;
 import com.globo.galeb.handlers.rest.GetMatcherHandler;
 import com.globo.galeb.handlers.rest.PostMatcherHandler;
@@ -42,6 +43,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private Server server;
     private String httpServerName = null;
     private Farm farm;
+    private QueueMap queueMap;
 
     private final String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
@@ -52,6 +54,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         final ICounter counter = new CounterWithStatsd(conf, vertx, log);
         server = new Server(vertx, container, counter);
         farm = new Farm(this);
+        queueMap = new QueueMap(vertx.eventBus(), log);
 
         startHttpServer(conf);
 
@@ -81,11 +84,11 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         routeMatcher.getWithRegEx(patternRegex, new GetMatcherHandler(routeManagerId, log, farm));
 
-        routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, farm));
+        routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, queueMap));
 
-        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, farm));
+        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, queueMap));
 
-        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, farm));
+        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, queueMap));
 
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
 
