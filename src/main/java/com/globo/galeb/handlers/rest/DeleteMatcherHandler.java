@@ -14,13 +14,13 @@ import com.globo.galeb.core.ServerResponse;
 public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
-    private final Farm farm;
     private final String classId;
+    private final Farm farm;
 
     public DeleteMatcherHandler(String id, final Logger log, final Farm farm) {
         this.log = log;
-        this.farm = farm;
         this.classId = id;
+        this.farm = farm;
     }
 
     @Override
@@ -40,11 +40,9 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
             @Override
             public void handle(Buffer body) {
                 String bodyStr = body.toString();
-                String uriBase = "";
                 String id = "";
                 SafeJsonObject bodyJson = new SafeJsonObject(body.toString());
                 if (req.params()!=null) {
-                    uriBase = req.params().contains("param0") ? req.params().get("param0") : "";
                     id = req.params().contains("param1") ? req.params().get("param1") : "";
                 }
 
@@ -54,7 +52,7 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, req.uri());
 
                 if (statusCode==HttpCode.Ok) {
-                    farm.getQueueMap().sendActionDel(bodyJson, req.uri());
+                    farm.queueToDel(bodyJson, req.uri());
                     statusCode = HttpCode.Accepted;
                 }
 

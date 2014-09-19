@@ -56,10 +56,12 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
+                    SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
+
                     if (uri.startsWith("/farm")) {
-                        farm.getQueueMap().sendGroupActionAdd(new SafeJsonObject(bodyStr), uri);
+                        farm.queueToMultiAdd(bodyJson, uri);
                     } else {
-                        farm.getQueueMap().sendActionAdd(new SafeJsonObject(bodyStr), uri);
+                        farm.queueToAdd(bodyJson, uri);
                     }
                 }
 
