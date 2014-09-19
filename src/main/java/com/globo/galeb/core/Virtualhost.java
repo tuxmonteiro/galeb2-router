@@ -173,25 +173,25 @@ public class Virtualhost extends Entity {
     public JsonObject toJson() {
         prepareJson();
 
-        JsonArray backendsOkJson = new JsonArray();
-        JsonArray badBackendsJson = new JsonArray();
+        JsonArray backendsElegiblesJson = new JsonArray();
+        JsonArray backendsFailedJson    = new JsonArray();
 
         for (Backend backend: backends) {
             if (backend!=null) {
-                backendsOkJson.addObject(backend.toJson());
+                backendsElegiblesJson.addObject(backend.toJson());
             }
         }
 
         for (Backend badBackend: badBackends) {
             if (badBackend!=null) {
-                badBackendsJson.addObject(badBackend.toJson());
+                backendsFailedJson.addObject(badBackend.toJson());
             }
         }
 
         JsonObject backends = new JsonObject();
 
-        backends.putArray(backendsElegibleFieldName, backendsOkJson);
-        backends.putArray(backendsFailedFieldName, badBackendsJson);
+        backends.putArray(backendsElegibleFieldName, backendsElegiblesJson);
+        backends.putArray(backendsFailedFieldName, backendsFailedJson);
 
         idObj.putObject(backendsFieldName, backends);
 

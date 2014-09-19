@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2014 Globo.com - ATeam
+ * All rights reserved.
+ *
+ * This source is subject to the Apache License, Version 2.0.
+ * Please see the LICENSE file for more information.
+ *
+ * Authors: See AUTHORS file
+ *
+ * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ */
 package com.globo.galeb.core.bus;
 
 import com.globo.galeb.core.Virtualhost;
@@ -31,16 +45,25 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
     @Override
     public boolean del() {
         boolean isOk = false;
-        if (map.containsKey(entityId)) {
-            ((Virtualhost) map.get(entityId)).clearAll();
-            map.remove(entityId);
-            log.info(String.format("[%s] Virtualhost %s removed", verticleId, entityId));
-            isOk = true;
+        boolean hasUriBaseOnly = ("/"+messageBus.getUriBase()).equals(messageBus.getUri()) ||
+                messageBus.getUri().endsWith("/");
+
+        if (!hasUriBaseOnly) {
+            if (map.containsKey(entityId)) {
+                ((Virtualhost) map.get(entityId)).clearAll();
+                map.remove(entityId);
+                log.info(String.format("[%s] Virtualhost %s removed", verticleId, entityId));
+                isOk = true;
+            } else {
+                log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticleId, entityId));
+                isOk = false;
+            }
+            return isOk;
         } else {
-            log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticleId, entityId));
-            isOk = false;
+            map.clear();
+            log.info(String.format("[%s] All Virtualhosts removed", verticleId));
+            return true;
         }
-        return isOk;
     }
 
     @Override

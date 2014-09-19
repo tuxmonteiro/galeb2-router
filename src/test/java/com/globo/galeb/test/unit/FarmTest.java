@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2014 Globo.com - ATeam
+ * All rights reserved.
+ *
+ * This source is subject to the Apache License, Version 2.0.
+ * Please see the LICENSE file for more information.
+ *
+ * Authors: See AUTHORS file
+ *
+ * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ */
 package com.globo.galeb.test.unit;
 
 import static com.globo.galeb.test.unit.assertj.custom.FarmAssert.assertThat;
@@ -273,7 +287,7 @@ public class FarmTest {
                                         .toString();
         String messageBackend = new MessageBus()
                                         .setParentId(virtualhostId)
-                                        .setUri("/backend")
+                                        .setUri("/backend/0.0.0.0:00")
                                         .setEntity(backendJson)
                                         .make()
                                         .toString();
@@ -296,7 +310,7 @@ public class FarmTest {
 
         String messageBackend = new MessageBus()
                                         .setParentId(virtualhostId)
-                                        .setUri("/backend")
+                                        .setUri("/backend/0.0.0.0:00")
                                         .setEntity(backendJson)
                                         .make()
                                         .toString();
@@ -316,12 +330,12 @@ public class FarmTest {
 
         String messageVirtualhost = new MessageBus()
                                             .setEntity(virtualhostJson)
-                                            .setUri("/virtualhost")
+                                            .setUri("/virtualhost/test.localdomain")
                                             .make()
                                             .toString();
         String messageBackend = new MessageBus()
                                             .setParentId(virtualhostId)
-                                            .setUri("/backend")
+                                            .setUri("/backend/0.0.0.0:00")
                                             .setEntity(backendJson)
                                             .make()
                                             .toString();

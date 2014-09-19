@@ -28,9 +28,12 @@ import java.util.Set;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.SafeJsonObject;
+import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.MessageBus;
+import com.globo.galeb.core.bus.Queue;
+
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
@@ -48,6 +51,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
     private Farm farm;
+    private Queue queue;
 
     @Override
     public void start() {
@@ -58,6 +62,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
         farm = new Farm(this);
+        queue = new Queue(vertx.eventBus(),container.logger());
 
         final EventBus eb = vertx.eventBus();
         eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
@@ -170,36 +175,37 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         }
     };
 
-    private void moveBackend(final String backend, final Boolean status, final EventBus eb) throws UnsupportedEncodingException {
+    private void moveBackend(final String backend, final Boolean elegible, final EventBus eb) throws UnsupportedEncodingException {
 
-        Set<String> virtualhosts = status ? badBackendsMap.get(backend) : backendsMap.get(backend);
+        Set<String> virtualhosts = elegible ? badBackendsMap.get(backend) : backendsMap.get(backend);
 
         if (virtualhosts!=null) {
             Iterator<String> it = virtualhosts.iterator();
             while (it.hasNext()) {
-                String virtualhost = it.next();
-                JsonObject backendJson = new JsonObject().putString(IJsonable.jsonIdFieldName, backend);
-                JsonObject virtualhostJson = new JsonObject().putString(IJsonable.jsonIdFieldName, virtualhost);
+                Virtualhost virtualhost = farm.getVirtualhost(it.next());
 
-                String messageDel = new MessageBus()
-                                            .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
-                                            .setEntity(backendJson
-                                                    .putBoolean(Backend.propertyElegibleFieldName, !status).encode())
-                                            .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
-                                            .make()
-                                            .toString();
+                SafeJsonObject backendJson = null;
+                if (virtualhost!=null) {
 
-                farm.delFromMap(messageDel);
+                    for (Backend backendSearched: virtualhost.getBackends(!elegible)) {
+                        if (backend.equals(backendSearched.toString())) {
+                            backendJson = new SafeJsonObject(backendSearched.toJson());
+                            break;
+                        }
+                    }
 
-                String messageAdd = new MessageBus()
-                                            .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
-                                            .setEntity(backendJson
-                                                    .putBoolean(Backend.propertyElegibleFieldName, status).encode())
-                                            .setUri("/backend")
-                                            .make()
-                                            .toString();
+                    if (backendJson!=null) {
+                        String uriDel = String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8"));
+                        String uriAdd = "/backend";
 
-                farm.addToMap(messageAdd);
+                        backendJson.putBoolean(Backend.propertyElegibleFieldName, !elegible);
+                        queue.queueToDel(backendJson, uriDel);
+
+                        backendJson.putBoolean(Backend.propertyElegibleFieldName, elegible);
+                        queue.queueToAdd(backendJson, uriAdd);
+                    }
+
+                }
             }
         }
     }
