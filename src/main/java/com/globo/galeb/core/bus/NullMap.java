@@ -1,6 +1,6 @@
 package com.globo.galeb.core.bus;
 
-public class NullMap extends MapProcessor<Object> {
+public class NullMap extends MessageToMap<Object> {
 
     public NullMap() {
         super();

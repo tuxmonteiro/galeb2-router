@@ -23,7 +23,7 @@ import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
 
-public class QueueMap {
+public class Queue {
 
     public enum ACTION {
 
@@ -44,7 +44,7 @@ public class QueueMap {
     public final EventBus eb;
     private final Logger log;
 
-    public QueueMap(final EventBus eb, final Logger log) {
+    public Queue(final EventBus eb, final Logger log) {
         this.eb=eb;
         this.log=log;
     }

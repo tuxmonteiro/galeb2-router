@@ -2,7 +2,7 @@ package com.globo.galeb.core.bus;
 
 import com.globo.galeb.core.Virtualhost;
 
-public class VirtualhostMap extends MapProcessor<Virtualhost> {
+public class VirtualhostMap extends MessageToMap<Virtualhost> {
 
     public VirtualhostMap() {
         super();

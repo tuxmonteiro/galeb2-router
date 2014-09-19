@@ -137,7 +137,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
 
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyStatusFieldName, true);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyElegibleFieldName, true);
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
             final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
@@ -155,7 +155,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
 
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyStatusFieldName, true);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyElegibleFieldName, true);
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
             final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
@@ -184,7 +184,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 String messageDel = new MessageBus()
                                             .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
                                             .setEntity(backendJson
-                                                    .putBoolean(Backend.propertyStatusFieldName, !status).encode())
+                                                    .putBoolean(Backend.propertyElegibleFieldName, !status).encode())
                                             .setUri(String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8")))
                                             .make()
                                             .toString();
@@ -194,7 +194,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                 String messageAdd = new MessageBus()
                                             .setParentId(virtualhostJson.getString(IJsonable.jsonIdFieldName))
                                             .setEntity(backendJson
-                                                    .putBoolean(Backend.propertyStatusFieldName, status).encode())
+                                                    .putBoolean(Backend.propertyElegibleFieldName, status).encode())
                                             .setUri("/backend")
                                             .make()
                                             .toString();

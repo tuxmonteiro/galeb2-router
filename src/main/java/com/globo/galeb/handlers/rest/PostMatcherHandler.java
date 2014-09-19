@@ -23,17 +23,17 @@ import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
-import com.globo.galeb.core.bus.QueueMap;
+import com.globo.galeb.core.bus.Queue;
 
 public class PostMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
-    private final QueueMap queueMap;
+    private final Queue queue;
     private final String classId;
 
-    public PostMatcherHandler(String id, final Logger log, final QueueMap queueMap) {
+    public PostMatcherHandler(String id, final Logger log, final Queue queue) {
         this.log = log;
-        this.queueMap = queueMap;
+        this.queue = queue;
         this.classId = id;
     }
 
@@ -59,9 +59,9 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
                     SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
 
                     if (uri.startsWith("/farm")) {
-                        queueMap.queueToMultiAdd(bodyJson, uri);
+                        queue.queueToMultiAdd(bodyJson, uri);
                     } else {
-                        queueMap.queueToAdd(bodyJson, uri);
+                        queue.queueToAdd(bodyJson, uri);
                     }
                 }
 

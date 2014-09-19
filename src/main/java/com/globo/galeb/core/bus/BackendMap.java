@@ -3,7 +3,7 @@ package com.globo.galeb.core.bus;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Virtualhost;
 
-public class BackendMap extends MapProcessor<Virtualhost> {
+public class BackendMap extends MessageToMap<Virtualhost> {
 
     public BackendMap() {
         super();
@@ -21,7 +21,7 @@ public class BackendMap extends MapProcessor<Virtualhost> {
             log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticleId, parentId));
             return false;
         } else {
-            boolean status = entity.getBoolean(Backend.propertyStatusFieldName, true);
+            boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
 
             final Virtualhost vhost = map.get(parentId);
             if (vhost.addBackend(entity, status)) {
@@ -42,7 +42,7 @@ public class BackendMap extends MapProcessor<Virtualhost> {
             log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
             return false;
         }
-        boolean status = entity.getBoolean(Backend.propertyStatusFieldName, true);
+        boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
 
         if ("".equals(entityId)) {
             log.warn(String.format("[%s] Backend UNDEF", verticleId));

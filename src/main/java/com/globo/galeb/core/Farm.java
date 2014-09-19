@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.bus.QueueMap.ACTION.*;
+import static com.globo.galeb.core.bus.Queue.ACTION.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,6 +103,7 @@ public class Farm extends Entity {
     public JsonObject toJson() {
         prepareJson();
 
+        idObj.removeField(jsonStatusFieldName);
         idObj.putNumber("version", version);
         JsonArray virtualhostArray = new JsonArray();
 

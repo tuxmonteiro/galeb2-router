@@ -18,7 +18,6 @@ import java.io.UnsupportedEncodingException;
 import java.util.EnumSet;
 
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
@@ -150,43 +149,9 @@ public class ManagerService {
             return HttpCode.BadRequest;
         }
 
-        if (!uri.startsWith("/farm")) {
-            if (!json.containsField(IJsonable.jsonIdFieldName)) {
-                if (registerLog) log.error(String.format("ID is mandatory: %s", message));
-                return HttpCode.BadRequest;
-            }
-        } else {
-            SafeJsonObject jsonRoutes = new SafeJsonObject();
-
-            boolean hasVistualhosts = true;
-            if (json.containsField("virtualhosts")) {
-                try {
-                    jsonRoutes = json.getJsonArray("virtualhosts");
-                } catch (DecodeException itsNotArray) {
-                    hasVistualhosts = false;
-                }
-            } else {
-                hasVistualhosts = false;
-            }
-
-            if (!hasVistualhosts) {
-                if (registerLog) log.error(String.format("Reading virtualhosts failed: %s", message));
-                return HttpCode.BadRequest;
-            }
-
-            for (Object routeObj: jsonRoutes.toList()) {
-                SafeJsonObject routeJson = (SafeJsonObject) routeObj;
-                if (!routeJson.containsField(IJsonable.jsonIdFieldName)) {
-                    if (registerLog) log.error(String.format("ID not found: %s", routeJson.toString()));
-                    return HttpCode.BadRequest;
-                } else {
-                    String key = routeJson.getString(IJsonable.jsonIdFieldName);
-                    if ("".equals(key)) {
-                        if (registerLog) log.error(String.format("ID is invalid: %s", routeJson.toString()));
-                        return HttpCode.BadRequest;
-                    }
-                }
-            }
+        if (!json.containsField(IJsonable.jsonIdFieldName)) {
+            if (registerLog) log.error(String.format("ID is mandatory: %s", message));
+            return HttpCode.BadRequest;
         }
         return HttpCode.Ok;
     }
