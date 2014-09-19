@@ -1,6 +1,8 @@
 package com.globo.galeb.test.unit;
 
+import static com.globo.galeb.test.unit.assertj.custom.FarmAssert.assertThat;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.assertThat;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -77,7 +79,7 @@ public class FarmTest {
             farm.addToMap(message);
         }
 
-        assertThat(farm.getVirtualhosts()).hasSize(10);
+        assertThat(farm).hasVirtualhostsSize(10);
     }
 
     @Test
@@ -105,7 +107,7 @@ public class FarmTest {
             farm.addToMap(message);
         }
 
-        assertThat(farm.getBackends()).hasSize(10);
+        assertThat(farm).hasBackendsSize(10);
     }
 
     @Test
@@ -123,7 +125,6 @@ public class FarmTest {
         boolean isOk = farm.addToMap(message);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
-        assertThat(farm.getVirtualhostsToMap().get(virtualhostId)).hasProperty(Virtualhost.loadBalancePolicyFieldName);
         assertThat(isOk).isTrue();
     }
 
@@ -205,12 +206,10 @@ public class FarmTest {
 
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackend = farm.addToMap(messageBackend);
-        Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
 
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackend).as("isOkBackend").isTrue();
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
-        assertThat(virtualhost).containsBackend(backendJson, true);
 
     }
 
