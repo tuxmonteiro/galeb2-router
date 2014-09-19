@@ -9,18 +9,18 @@ import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
-import com.globo.galeb.core.bus.QueueMap;
+import com.globo.galeb.core.bus.Queue;
 
 public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
     private final String classId;
-    private final QueueMap queueMap;
+    private final Queue queue;
 
-    public DeleteMatcherHandler(String id, final Logger log, final QueueMap queueMap) {
+    public DeleteMatcherHandler(String id, final Logger log, final Queue queue) {
         this.log = log;
         this.classId = id;
-        this.queueMap = queueMap;
+        this.queue = queue;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-                    queueMap.queueToDel(bodyJson, uri);
+                    queue.queueToDel(bodyJson, uri);
                     statusCode = HttpCode.Accepted;
                 }
 

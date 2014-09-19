@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.bus.QueueMap.ACTION.*;
+import static com.globo.galeb.core.bus.Queue.ACTION.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
