@@ -76,8 +76,8 @@ public class BackendMapTest {
     }
 
     @Test
-    public void DelReturnFalseIfNotExist() {
-        assertFalse(backendMap.del());
+    public void DelAllReturnTrue() {
+        assertTrue(backendMap.del());
     }
 
     @Test

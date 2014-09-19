@@ -40,7 +40,7 @@ public class VirtualhostMapTest {
         logger.setTestId("");
 
         messageBus = new MessageBus();
-        messageBus.setUri("/virtualhost")
+        messageBus.setUri("/virtualhost/test.localdomain")
                   .setEntity(new JsonObject().putString(Entity.jsonIdFieldName, "test.localdomain").encode());
 
         virtualhostMap = new VirtualhostMap();
