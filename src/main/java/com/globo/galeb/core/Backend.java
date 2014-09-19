@@ -30,7 +30,7 @@ public class Backend extends Entity {
     public static String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
     public static String propertyMaxPoolSizeFieldName         = "maxPoolSize";
 
-    public static String propertyStatusFieldName              = "_status";
+    public static String propertyElegibleFieldName            = "_elegible";
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
