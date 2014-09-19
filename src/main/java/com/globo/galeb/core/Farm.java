@@ -32,7 +32,6 @@ import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
-import com.globo.galeb.core.bus.QueueMap;
 
 public class Farm extends Entity {
 
@@ -41,7 +40,6 @@ public class Farm extends Entity {
     private final Verticle verticle;
     private final Logger log;
     private final EventBus eb;
-    private final QueueMap queueMap;
 
     public Farm(final Verticle verticle) {
         this.id = "";
@@ -56,7 +54,6 @@ public class Farm extends Entity {
             this.log = null;
         }
 
-        this.queueMap = new QueueMap(eb, log);
     }
 
     public Long getVersion() {
@@ -133,40 +130,11 @@ public class Farm extends Entity {
         return MessageToMapBuilder.getInstance(message, this).del();
     }
 
-    public void queueToAdd(SafeJsonObject bodyJson, String uri) {
-        queueMap.queueToAdd(bodyJson, uri);
-    }
-
-    public void queueToDel(SafeJsonObject bodyJson, String uri) {
-        queueMap.queueToDel(bodyJson, uri);
-    }
-
-    public void queueToChange(SafeJsonObject bodyJson, String uri) {
-        queueMap.queueToDel(bodyJson, uri);
-        queueMap.queueToAdd(bodyJson, uri);
-    }
-
-    public void queueToMultiAdd(SafeJsonObject bodyJson, String uri) {
-        queueMap.putGroupMessageAddToQueue(bodyJson, uri);
-    }
-
-    public void queueToMultiDel(SafeJsonObject bodyJson, String uri) {
-        new RuntimeException("Not implemented");
-    }
-
-    public boolean processAddMessage(String message) {
-        return MessageToMapBuilder.getInstance(message, this).add();
-    }
-
-    public boolean processDelMessage(String message) {
-        return MessageToMapBuilder.getInstance(message, this).del();
-    }
-
     public void registerQueueAdd() {
         Handler<Message<String>> addHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
-                processAddMessage(message.body());
+                addToMap(message.body());
 
                 if (verticle != null && verticle instanceof IEventObserver) {
                     ((IEventObserver)verticle).postAddEvent(message.body());
@@ -176,7 +144,7 @@ public class Farm extends Entity {
         if (eb!=null) {
             eb.registerHandler(ADD.toString(), addHandler);
         } else {
-            if (log!=null) log.warn("EventBus is null");
+            if (log!=null) log.warn("registerQueueAdd is not possible: EventBus is null");
         }
     }
 
@@ -184,7 +152,7 @@ public class Farm extends Entity {
         Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
-                processDelMessage(message.body());
+                delFromMap(message.body());
                 if (verticle != null && verticle instanceof IEventObserver) {
                     ((IEventObserver)verticle).postDelEvent(message.body());
                 }
@@ -194,7 +162,7 @@ public class Farm extends Entity {
             eb.registerHandler(DEL.toString(),queueDelHandler);
         } else {
             Logger log = verticle.getContainer().logger();
-            if (log!=null) log.warn("EventBus is null");
+            if (log!=null) log.warn("registerQueueDel is not possible: EventBus is null");
         }
     }
 
@@ -212,7 +180,7 @@ public class Farm extends Entity {
         if (eb!=null) {
             eb.registerHandler(SET_VERSION.toString(), queueVersionHandler);
         } else {
-            if (log!=null) log.warn("EventBus is null");
+            if (log!=null) log.warn("registerQueueVersion is not possible: EventBus is null");
         }
     }
 
