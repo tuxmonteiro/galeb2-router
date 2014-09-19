@@ -103,6 +103,7 @@ public class Farm extends Entity {
     public JsonObject toJson() {
         prepareJson();
 
+        idObj.removeField(jsonStatusFieldName);
         idObj.putNumber("version", version);
         JsonArray virtualhostArray = new JsonArray();
 
