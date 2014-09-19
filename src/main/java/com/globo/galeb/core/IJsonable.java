@@ -22,11 +22,12 @@ public interface IJsonable {
     public static final String jsonParentIdFieldName   = "parentId";
     public static final String jsonPropertiesFieldName = "properties";
 
+    public static final String jsonStatusFieldName     = "_status";
     public static final String jsonCreatedAtFieldName  = "_created_at";
     public static final String jsonModifiedAtFieldName = "_modified_at";
     public static final String jsonLinksFieldName      = "_links";
-    public static final String jsonLinksRelFieldName   = "_rel";
-    public static final String jsonLinksHrefFieldName  = "_href";
+    public static final String jsonLinksRelFieldName   = "rel";
+    public static final String jsonLinksHrefFieldName  = "href";
 
     public JsonObject toJson();
 

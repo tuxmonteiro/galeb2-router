@@ -35,6 +35,7 @@ public abstract class Entity implements IJsonable {
             .putString(jsonLinksRelFieldName, "self")
             .putString(jsonLinksHrefFieldName, String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
         );
+        idObj.putString(jsonStatusFieldName, "created");
         idObj.putNumber(IJsonable.jsonCreatedAtFieldName, createdAt);
         idObj.putNumber(IJsonable.jsonModifiedAtFieldName, modifiedAt);
         idObj.putObject(IJsonable.jsonPropertiesFieldName, properties);
