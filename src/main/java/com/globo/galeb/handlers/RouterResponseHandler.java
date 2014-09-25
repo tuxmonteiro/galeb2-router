@@ -14,10 +14,9 @@
  */
 package com.globo.galeb.handlers;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.ServerResponse;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.metrics.ICounter;
 
 import org.vertx.java.core.Handler;
@@ -92,7 +91,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             @Override
             public void handle(Throwable event) {
                 log.error(String.format("host+backend: %s, message: %s", getKey(), event.getMessage()));
-                vertx.eventBus().publish(QUEUE_HEALTHCHECK_FAIL, backend.toString() );
+                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend.toString() );
                 sResponse.setHeaderHost(getHeaderHost())
                     .setId(getKey())
                     .showErrorAndClose(event);

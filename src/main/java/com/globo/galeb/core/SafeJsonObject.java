@@ -45,6 +45,10 @@ public class SafeJsonObject extends JsonObject {
         super(json.encode());
     }
 
+    public SafeJsonObject(SafeJsonObject json) {
+        super(json.encode());
+    }
+
     @Override
     @SuppressWarnings("unchecked")
     public SafeJsonObject getObject(String fieldName) {
@@ -75,6 +79,11 @@ public class SafeJsonObject extends JsonObject {
     public SafeJsonObject makeArray(JsonArray array) {
         this.array = new JsonArray().addArray(array);
         return this;
+    }
+
+    @Override
+    public SafeJsonObject clone() {
+        return new SafeJsonObject(this.encode());
     }
 
     @SuppressWarnings("unchecked")

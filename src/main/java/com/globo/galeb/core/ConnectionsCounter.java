@@ -1,6 +1,5 @@
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.Constants.QUEUE_BACKEND_CONNECTIONS_PREFIX;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -9,17 +8,18 @@ import java.util.UUID;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.eventbus.EventBus;
-import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonObject;
 
-public class ConnectionsCounter {
+import com.globo.galeb.core.bus.ICallbackConnectionCounter;
+import com.globo.galeb.core.bus.IQueueService;
+
+public class ConnectionsCounter implements ICallbackConnectionCounter {
 
     public static final String numConnectionFieldName  = "numConnections";
     public static final String uuidFieldName           = "uuid";
 
     private final Vertx vertx;
-    private final EventBus eb;
+    private final IQueueService queueService;
 
     private Long schedulerId = 0L;
     private Long schedulerDelay = 10000L;
@@ -37,44 +37,30 @@ public class ConnectionsCounter {
     private boolean newConnection = true;
     private int activeConnections = 0;
 
-    public ConnectionsCounter(final String backendWithPort, final Vertx vertx) {
+    public ConnectionsCounter(final String backendWithPort, final Vertx vertx, final IQueueService queueService) {
         this.vertx = vertx;
-        this.eb = (vertx!=null) ? vertx.eventBus() : null;
-        this.queueActiveConnections = String.format("%s%s", QUEUE_BACKEND_CONNECTIONS_PREFIX, backendWithPort);
+        this.queueService = queueService;
+        this.queueActiveConnections = String.format("%s%s", IQueueService.QUEUE_BACKEND_CONNECTIONS_PREFIX, backendWithPort);
         this.myUUID = UUID.randomUUID().toString();
     }
 
-    private JsonObject zeroConnectionJson() {
-        JsonObject myConnections = new JsonObject();
-        myConnections.putString(uuidFieldName, myUUID);
-        myConnections.putNumber(numConnectionFieldName, 0);
-        return myConnections;
+    @Override
+    public void setRegistered(boolean registered) {
+        this.registered = registered;
     }
 
-    public void initEventBus() {
-        eb.publish(queueActiveConnections, zeroConnectionJson());
+    @Override
+    public boolean isRegistered() {
+        return registered;
     }
 
-    public void registerEventBus() {
-        if (!registered && eb!=null) {
-            eb.registerLocalHandler(queueActiveConnections, getHandlerListenGlobalConnections());
-            registered = true;
+    @Override
+    public void callbackGlobalConnectionsInfo(JsonObject message) {
+        String uuid = message.getString(uuidFieldName);
+        if (uuid != myUUID) {
+            int numConnections = message.getInteger(numConnectionFieldName);
+            globalConnections.put(uuid, numConnections);
         }
-    }
-
-    private Handler<Message<JsonObject>> getHandlerListenGlobalConnections() {
-        return new Handler<Message<JsonObject>>() {
-
-            @Override
-            public void handle(Message<JsonObject> message) {
-                JsonObject messageJson = message.body();
-                String uuid = messageJson.getString(uuidFieldName);
-                if (uuid != myUUID) {
-                    int numConnections = messageJson.getInteger(numConnectionFieldName);
-                    globalConnections.put(uuid, numConnections);
-                }
-            }
-        };
     }
 
     public boolean addConnection(String connectionId) {
@@ -90,16 +76,6 @@ public class ConnectionsCounter {
 
     public boolean removeConnection(String connectionId) {
         return connections.remove(connectionId) != null;
-    }
-
-    public void unregisterEventBus() {
-        if (eb!=null) {
-            eb.publish(queueActiveConnections, zeroConnectionJson());
-            if (registered) {
-                eb.unregisterHandler(queueActiveConnections, getHandlerListenGlobalConnections());
-                registered = false;
-            }
-        }
     }
 
     public void clearConnectionsMap() {
@@ -165,10 +141,10 @@ public class ConnectionsCounter {
     private void notifyNumConnections() {
         Integer localConnections = getInstanceActiveConnections();
         if (localConnections>0) {
-            JsonObject myConnections = new JsonObject();
+            SafeJsonObject myConnections = new SafeJsonObject();
             myConnections.putString(uuidFieldName, myUUID);
             myConnections.putNumber(numConnectionFieldName, localConnections);
-            eb.publish(queueActiveConnections, myConnections);
+            queueService.publishBackendConnections(queueActiveConnections, myConnections);
         }
     }
 
@@ -203,6 +179,22 @@ public class ConnectionsCounter {
                 schedulerId=0L;
             }
         }
+    }
+
+    public void publishZero() {
+        SafeJsonObject myConnections = new SafeJsonObject();
+        myConnections.putString(uuidFieldName, myUUID);
+        myConnections.putNumber(numConnectionFieldName, 0);
+        queueService.publishActiveConnections(queueActiveConnections, myConnections);
+    }
+
+    public void registerConnectionsCounter() {
+        queueService.registerConnectionsCounter(this, queueActiveConnections);
+    }
+
+    public void unregisterConnectionsCounter() {
+        publishZero();
+        queueService.unregisterConnectionsCounter(this, queueActiveConnections);
     }
 
 }
