@@ -14,9 +14,6 @@
  */
 package com.globo.galeb.verticles;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_OK;
-
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.HashMap;
@@ -30,13 +27,13 @@ import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.bus.ICallbackHealthcheck;
 import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.VertxQueueService;
 
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.eventbus.EventBus;
-import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
@@ -45,13 +42,13 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-public class HealthManagerVerticle extends Verticle implements IEventObserver {
+public class HealthManagerVerticle extends Verticle implements IEventObserver, ICallbackHealthcheck {
 
     private final Map<String, Set<String>> backendsMap = new HashMap<>();
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
     private Farm farm;
-    private Queue queue;
+    private IQueueService queueService;
 
     @Override
     public void start() {
@@ -61,34 +58,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
-        farm = new Farm(this);
-        queue = new Queue(vertx.eventBus(),container.logger());
-
-        final EventBus eb = vertx.eventBus();
-        eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message) {
-                String backend = message.body();
-                try {
-                    moveBackend(backend, true, eb);
-                } catch (UnsupportedEncodingException e) {
-                    log.error(e.getMessage());
-                }
-                log.debug(String.format("Backend %s OK", backend));
-            };
-        });
-        eb.registerHandler(QUEUE_HEALTHCHECK_FAIL, new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message) {
-                String backend = message.body();
-                try {
-                    moveBackend(backend, false, eb);
-                } catch (UnsupportedEncodingException e) {
-                    log.error(e.getMessage());
-                }
-                log.error(String.format("Backend %s FAIL", backend));
-            };
-        });
+        queueService = new VertxQueueService(vertx.eventBus(),container.logger());
+        queueService.registerHealthcheck(this);
+        farm = new Farm(this, queueService);
 
         vertx.setPeriodic(checkInterval, new Handler<Long>() {
             @Override
@@ -113,8 +85,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                                     @Override
                                     public void handle(HttpClientResponse cResp) {
                                         if (cResp!=null && cResp.statusCode()==HttpCode.Ok) {
-                                            eb.publish(QUEUE_HEALTHCHECK_OK, backend);
-                                            log.info(String.format("Backend %s OK. Enabling it", backend));
+                                            queueService.publishBackendOk(backend);
                                         }
                                     }
                                 });
@@ -175,7 +146,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
         }
     };
 
-    private void moveBackend(final String backend, final Boolean elegible, final EventBus eb) throws UnsupportedEncodingException {
+    @Override
+    public void moveBackend(String backend, boolean elegible) throws UnsupportedEncodingException {
 
         Set<String> virtualhosts = elegible ? badBackendsMap.get(backend) : backendsMap.get(backend);
 
@@ -199,10 +171,10 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver {
                         String uriAdd = "/backend";
 
                         backendJson.putBoolean(Backend.propertyElegibleFieldName, !elegible);
-                        queue.queueToDel(backendJson, uriDel);
+                        queueService.queueToDel(backendJson, uriDel);
 
                         backendJson.putBoolean(Backend.propertyElegibleFieldName, elegible);
-                        queue.queueToAdd(backendJson, uriAdd);
+                        queueService.queueToAdd(backendJson, uriAdd);
                     }
 
                 }

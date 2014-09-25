@@ -23,17 +23,17 @@ import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
 
 public class PutMatcherHandler implements Handler<HttpServerRequest> {
 
     private final Logger log;
-    private final Queue queue;
+    private final IQueueService queueService;
     private final String classId;
 
-    public PutMatcherHandler(String id, final Logger log, final Queue queue) {
+    public PutMatcherHandler(String id, final Logger log, final IQueueService queueService) {
         this.log = log;
-        this.queue = queue;
+        this.queueService = queueService;
         this.classId = id;
     }
 
@@ -70,7 +70,7 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.Ok) {
-                    queue.queueToChange(bodyJson, uri);
+                    queueService.queueToChange(bodyJson, uri);
                     statusCode = HttpCode.Accepted;
                 }
 

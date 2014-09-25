@@ -17,6 +17,8 @@ package com.globo.galeb.core;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
@@ -40,7 +42,8 @@ public class Virtualhost extends Entity {
     private final UniqueArrayList<Backend> backends;
     private final UniqueArrayList<Backend> badBackends;
     private final Vertx                    vertx;
-    private ILoadBalancePolicy loadbalancePolicy     = null;
+    private IQueueService                  queueService      = new VertxQueueService(null,null);
+    private ILoadBalancePolicy             loadbalancePolicy = null;
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
         super();
@@ -59,6 +62,10 @@ public class Virtualhost extends Entity {
         return getVirtualhostName();
     }
 
+    public void setQueue(final IQueueService queueService) {
+        this.queueService = queueService;
+    }
+
     private void updateModifiedTimestamp() {
         modifiedAt = System.currentTimeMillis();
     }
@@ -71,9 +78,9 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         if (backendOk) {
             setTransientState();
-            return backends.add(new Backend(backendJson, vertx));
+            return backends.add(new Backend(backendJson, vertx, queueService));
         } else {
-            return badBackends.add(new Backend(backendJson, vertx));
+            return badBackends.add(new Backend(backendJson, vertx, queueService));
         }
     }
 
@@ -89,9 +96,9 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         if (backendOk) {
             setTransientState();
-            return backends.remove(new Backend(backend, vertx));
+            return backends.remove(new Backend(backend, vertx, queueService));
         } else {
-            return badBackends.remove(new Backend(backend, vertx));
+            return badBackends.remove(new Backend(backend, vertx, queueService));
         }
     }
 
