@@ -14,11 +14,9 @@
  */
 package com.globo.galeb.core.bus;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_OK;
-import static com.globo.galeb.core.bus.Queue.ACTION.ADD;
-import static com.globo.galeb.core.bus.Queue.ACTION.DEL;
-import static com.globo.galeb.core.bus.Queue.ACTION.SET_VERSION;
+import static com.globo.galeb.core.bus.IQueueService.ACTION.ADD;
+import static com.globo.galeb.core.bus.IQueueService.ACTION.DEL;
+import static com.globo.galeb.core.bus.IQueueService.ACTION.SET_VERSION;
 
 import java.io.UnsupportedEncodingException;
 
@@ -32,40 +30,27 @@ import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.core.SafeJsonObject;
 
-public class Queue {
-
-    public enum ACTION {
-
-        ADD         ("route.add"),
-        DEL         ("route.del"),
-        SET_VERSION ("route.version");
-
-        private String queue;
-        private ACTION(final String queue) {
-            this.queue = queue;
-        }
-        @Override
-        public String toString() {
-            return queue;
-        }
-    }
+public class VertxQueueService implements IQueueService {
 
     public final EventBus eb;
     private final Logger log;
 
-    public Queue(final EventBus eb, final Logger log) {
+    public VertxQueueService(final EventBus eb, final Logger log) {
         this.eb=eb;
         this.log=log;
     }
 
+    @Override
     public void queueToAdd(SafeJsonObject json, final String uri) {
-        putMessageToQueue(json, ACTION.ADD, uri);
+        putMessageToQueue(json, IQueueService.ACTION.ADD, uri);
     }
 
+    @Override
     public void queueToDel(SafeJsonObject json, final String uri) {
-        putMessageToQueue(json, ACTION.DEL, uri);
+        putMessageToQueue(json, IQueueService.ACTION.DEL, uri);
     }
 
+    @Override
     public void queueToChange(SafeJsonObject json, final String uri) {
         // putMessageToQueue(json, ACTION.CHANGE, uri);
         String messageLog = String.format("%s: Change not implemented", this.toString());
@@ -76,7 +61,7 @@ public class Queue {
         }
     }
 
-    private void putMessageToQueue(SafeJsonObject json, ACTION action, final String uri) {
+    private void putMessageToQueue(SafeJsonObject json, IQueueService.ACTION action, final String uri) {
         Long version = 0L;
 
         try {
@@ -104,11 +89,11 @@ public class Queue {
         String message = messageBus.make().toString();
 
         publishAction(message, action);
-        publishAction(String.format("%d", version), ACTION.SET_VERSION);
+        publishAction(String.format("%d", version), IQueueService.ACTION.SET_VERSION);
 
     }
 
-    private void publishAction(String message, final ACTION action) {
+    private void publishAction(String message, final IQueueService.ACTION action) {
         if (eb!=null) {
             eb.publish(action.toString(), message);
         } else {
@@ -122,11 +107,12 @@ public class Queue {
         }
     }
 
+    @Override
     public void registerHealthcheck(final ICallbackHealthcheck callbackHealthcheck) {
         if (eb==null) {
             return;
         }
-        eb.registerHandler(QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
+        eb.registerHandler(IQueueService.QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
                 String backend = message.body();
@@ -138,7 +124,7 @@ public class Queue {
                 log.debug(String.format("Backend %s OK", backend));
             };
         });
-        eb.registerHandler(QUEUE_HEALTHCHECK_FAIL, new Handler<Message<String>>() {
+        eb.registerHandler(IQueueService.QUEUE_HEALTHCHECK_FAIL, new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
                 String backend = message.body();
@@ -153,23 +139,26 @@ public class Queue {
 
     }
 
+    @Override
     public void publishBackendOk(String backend) {
         if (eb==null) {
             return;
         }
-        eb.publish(QUEUE_HEALTHCHECK_OK, backend);
+        eb.publish(IQueueService.QUEUE_HEALTHCHECK_OK, backend);
         log.info(String.format("Backend %s OK. Enabling it", backend));
     }
 
+    @Override
     public void publishBackendFail(String backend) {
         if (eb==null) {
             return;
         }
-        eb.publish(QUEUE_HEALTHCHECK_FAIL, backend);
+        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend);
         log.info(String.format("Backend %s Fail. disabling it", backend));
     }
 
-    public void publishBackendConnections(String queueActiveConnections, JsonObject myConnections) {
+    @Override
+    public void publishBackendConnections(String queueActiveConnections, SafeJsonObject myConnections) {
         eb.publish(queueActiveConnections, myConnections);
     }
 
@@ -181,6 +170,7 @@ public class Queue {
             }
         };
     }
+    @Override
     public void registerConnectionsCounter(final ICallbackConnectionCounter connectionsCounter,
             String queueActiveConnections) {
         if (eb==null) {
@@ -192,14 +182,16 @@ public class Queue {
         }
     }
 
+    @Override
     public void publishActiveConnections(String queueActiveConnections,
-            JsonObject myConnections) {
+            SafeJsonObject myConnections) {
         if (eb==null) {
             return;
         }
         eb.publish(queueActiveConnections, myConnections);
     }
 
+    @Override
     public void unregisterConnectionsCounter(final ICallbackConnectionCounter connectionsCounter,
             String queueActiveConnections) {
         if (connectionsCounter.isRegistered() && eb!=null) {
@@ -208,7 +200,14 @@ public class Queue {
         }
     }
 
-    public void registerQueueAdd(final Verticle verticle, final ICallbackQueueAction callbackQueueAction) {
+    @Override
+    public void registerQueueAdd(final Object starter, final ICallbackQueueAction callbackQueueAction) {
+        final Verticle verticle;
+        if (starter instanceof Verticle) {
+            verticle = (Verticle)starter;
+        } else {
+            return;
+        }
         Handler<Message<String>> addHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -226,7 +225,14 @@ public class Queue {
         }
     }
 
-    public void registerQueueDel(final Verticle verticle, final ICallbackQueueAction callbackQueueAction) {
+    @Override
+    public void registerQueueDel(final Object starter, final ICallbackQueueAction callbackQueueAction) {
+        final Verticle verticle;
+        if (starter instanceof Verticle) {
+            verticle = (Verticle)starter;
+        } else {
+            return;
+        }
         Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
@@ -239,12 +245,13 @@ public class Queue {
         if (eb!=null) {
             eb.registerHandler(DEL.toString(),queueDelHandler);
         } else {
-            Logger log = verticle.getContainer().logger();
+            Logger log = ((Verticle) verticle).getContainer().logger();
             if (log!=null) log.warn("registerQueueDel is not possible: EventBus is null");
         }
     }
 
-    public void registerQueueVersion(final Verticle verticle, final ICallbackQueueAction callbackQueueAction) {
+    @Override
+    public void registerQueueVersion(final Object starter, final ICallbackQueueAction callbackQueueAction) {
         Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
