@@ -14,8 +14,6 @@
  */
 package com.globo.galeb.test.unit;
 
-import static com.globo.galeb.test.unit.assertj.custom.FarmAssert.assertThat;
-import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.assertThat;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -31,6 +29,7 @@ import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.java.platform.Container;
 import org.vertx.java.platform.Verticle;
 
+import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.SafeJsonObject;
@@ -96,7 +95,7 @@ public class FarmTest {
             farm.addToMap(message);
         }
 
-        assertThat(farm).hasVirtualhostsSize(10);
+        assertThat(farm.getVirtualhosts()).hasSize(10);
     }
 
     @Test
@@ -124,7 +123,7 @@ public class FarmTest {
             farm.addToMap(message);
         }
 
-        assertThat(farm).hasBackendsSize(10);
+        assertThat(farm.getBackends()).hasSize(10);
     }
 
     @Test
@@ -269,9 +268,10 @@ public class FarmTest {
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendAddAgain = farm.addToMap(messageBackend);
         Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
+        Backend backendExpected = new Backend(backendJson, vertx, queueService);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
-        assertThat(virtualhost).containsBackend(backendJson, true);
+        assertThat(virtualhost.getBackends(true).contains(backendExpected)).isTrue();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
         assertThat(isOkBackendAddAgain).as("isOkBackendRemove").isFalse();
@@ -299,9 +299,10 @@ public class FarmTest {
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
         Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
+        Backend backendNotExpected = new Backend(backendJson, vertx, queueService);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
-        assertThat(virtualhost).doesNotContainsBackend(backendJson, true);
+        assertThat(virtualhost.getBackends(true).contains(backendNotExpected)).isFalse();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isTrue();
@@ -346,9 +347,10 @@ public class FarmTest {
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
         Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
+        Backend backendNotExpected = new Backend(backendJson, vertx, queueService);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
-        assertThat(virtualhost).doesNotContainsBackend(backendJson, !"0".equals(statusStr));
+        assertThat(virtualhost.getBackends(!"0".equals(statusStr)).contains(backendNotExpected)).isFalse();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isFalse();
     }
