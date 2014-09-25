@@ -53,8 +53,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         final SafeJsonObject conf = new SafeJsonObject(container.config());
         final ICounter counter = new CounterWithStatsd(conf, vertx, log);
         server = new Server(vertx, container, counter);
-        farm = new Farm(this);
         queue = new Queue(vertx.eventBus(), log);
+        farm = new Farm(this, queue);
 
         startHttpServer(conf);
 

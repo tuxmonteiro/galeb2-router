@@ -17,6 +17,7 @@ package com.globo.galeb.core;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import com.globo.galeb.core.bus.Queue;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
@@ -40,7 +41,8 @@ public class Virtualhost extends Entity {
     private final UniqueArrayList<Backend> backends;
     private final UniqueArrayList<Backend> badBackends;
     private final Vertx                    vertx;
-    private ILoadBalancePolicy loadbalancePolicy     = null;
+    private Queue                          queue             = new Queue(null,null);
+    private ILoadBalancePolicy             loadbalancePolicy = null;
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
         super();
@@ -59,6 +61,10 @@ public class Virtualhost extends Entity {
         return getVirtualhostName();
     }
 
+    public void setQueue(final Queue queue) {
+        this.queue = queue;
+    }
+
     private void updateModifiedTimestamp() {
         modifiedAt = System.currentTimeMillis();
     }
@@ -71,9 +77,9 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         if (backendOk) {
             setTransientState();
-            return backends.add(new Backend(backendJson, vertx));
+            return backends.add(new Backend(backendJson, vertx, queue));
         } else {
-            return badBackends.add(new Backend(backendJson, vertx));
+            return badBackends.add(new Backend(backendJson, vertx, queue));
         }
     }
 
@@ -89,9 +95,9 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         if (backendOk) {
             setTransientState();
-            return backends.remove(new Backend(backend, vertx));
+            return backends.remove(new Backend(backend, vertx, queue));
         } else {
-            return badBackends.remove(new Backend(backend, vertx));
+            return badBackends.remove(new Backend(backend, vertx, queue));
         }
     }
 

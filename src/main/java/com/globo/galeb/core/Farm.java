@@ -14,43 +14,38 @@
  */
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.bus.Queue.ACTION.*;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.eventbus.EventBus;
-import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.ICallbackQueueAction;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
+import com.globo.galeb.core.bus.Queue;
 
-public class Farm extends Entity {
+public class Farm extends Entity implements ICallbackQueueAction {
 
     private final Map<String, Virtualhost> virtualhosts = new HashMap<>();
     private Long version = 0L;
     private final Verticle verticle;
     private final Logger log;
-    private final EventBus eb;
+    private final Queue queue;
 
-    public Farm(final Verticle verticle) {
+    public Farm(final Verticle verticle, final Queue queue) {
         this.id = "";
         this.verticle = verticle;
+        this.queue = queue;
         if (verticle!=null) {
             properties.mergeIn(verticle.getContainer().config());
-            this.eb = verticle.getVertx().eventBus();
             this.log = verticle.getContainer().logger();
-            register();
+            registerQueueAction();
         } else {
-            this.eb = null;
             this.log = null;
         }
 
@@ -60,7 +55,8 @@ public class Farm extends Entity {
         return version;
     }
 
-    public void setVersion(Long version) {
+    @Override
+    public void setVersion(long version) {
         this.version = version;
         String infoMessage = String.format("Version changed to %d", version);
         if (verticle!=null) {
@@ -123,72 +119,20 @@ public class Farm extends Entity {
         return virtualhosts;
     }
 
+    @Override
     public boolean addToMap(String message) {
         return MessageToMapBuilder.getInstance(message, this).add();
     }
 
+    @Override
     public boolean delFromMap(String message) {
         return MessageToMapBuilder.getInstance(message, this).del();
     }
 
-    public void registerQueueAdd() {
-        Handler<Message<String>> addHandler = new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message) {
-                addToMap(message.body());
-
-                if (verticle != null && verticle instanceof IEventObserver) {
-                    ((IEventObserver)verticle).postAddEvent(message.body());
-                }
-            }
-        };
-        if (eb!=null) {
-            eb.registerHandler(ADD.toString(), addHandler);
-        } else {
-            if (log!=null) log.warn("registerQueueAdd is not possible: EventBus is null");
-        }
-    }
-
-    public void registerQueueDel() {
-        Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message) {
-                delFromMap(message.body());
-                if (verticle != null && verticle instanceof IEventObserver) {
-                    ((IEventObserver)verticle).postDelEvent(message.body());
-                }
-            }
-        };
-        if (eb!=null) {
-            eb.registerHandler(DEL.toString(),queueDelHandler);
-        } else {
-            Logger log = verticle.getContainer().logger();
-            if (log!=null) log.warn("registerQueueDel is not possible: EventBus is null");
-        }
-    }
-
-    public void registerQueueVersion() {
-        Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message) {
-                try {
-                    setVersion(Long.parseLong(message.body()));
-                } catch (java.lang.NumberFormatException ignore) {
-                    // not change version
-                }
-            }
-        };
-        if (eb!=null) {
-            eb.registerHandler(SET_VERSION.toString(), queueVersionHandler);
-        } else {
-            if (log!=null) log.warn("registerQueueVersion is not possible: EventBus is null");
-        }
-    }
-
-    public void register() {
-        registerQueueAdd();
-        registerQueueDel();
-        registerQueueVersion();
+    public void registerQueueAction() {
+        queue.registerQueueAdd(verticle, this);
+        queue.registerQueueDel(verticle, this);
+        queue.registerQueueVersion(verticle, this);
     }
 
     public void clearAll() {

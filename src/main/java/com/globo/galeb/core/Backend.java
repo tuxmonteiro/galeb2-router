@@ -16,11 +16,10 @@ package com.globo.galeb.core;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
+import com.globo.galeb.core.bus.Queue;
 
 public class Backend extends Entity {
 
@@ -34,7 +33,7 @@ public class Backend extends Entity {
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
-    private final EventBus eb;
+    private final Queue queue;
     private final ConnectionsCounter connectionsCounter;
     private final String host;
     private final Integer port;
@@ -42,8 +41,8 @@ public class Backend extends Entity {
     private HttpClient client;
     private String virtualhostId = "";
 
-    public Long keepAliveMaxRequest  = null;
-    public Long keepAliveTimeOut     = null;
+    private Long keepAliveMaxRequest  = null;
+    private Long keepAliveTimeOut     = null;
 
     private Long keepAliveTimeMark;
     private Long requestCount;
@@ -72,14 +71,14 @@ public class Backend extends Entity {
         return this.toString().hashCode();
     }
 
-    public Backend(final String backendId, final Vertx vertx) {
-        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx);
+    public Backend(final String backendId, final Vertx vertx, final Queue queue) {
+        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx, queue);
     }
 
-    public Backend(JsonObject json, final Vertx vertx) {
+    public Backend(JsonObject json, final Vertx vertx, final Queue queue) {
         super();
         this.vertx = vertx;
-        this.eb = (vertx!=null) ? vertx.eventBus() : null;
+        this.queue = queue;
         this.client = null;
         this.id = json.getString(IJsonable.jsonIdFieldName, "127.0.0.1:80");
         this.virtualhostId = json.getString(IJsonable.jsonParentIdFieldName, "");
@@ -122,7 +121,7 @@ public class Backend extends Entity {
 
         this.keepAliveTimeMark = System.currentTimeMillis();
         this.requestCount = 0L;
-        this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx);
+        this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queue);
     }
 
     private void updateModifiedTimestamp() {
@@ -225,11 +224,11 @@ public class Backend extends Entity {
             client.exceptionHandler(new Handler<Throwable>() {
                 @Override
                 public void handle(Throwable e) {
-                    eb.publish(QUEUE_HEALTHCHECK_FAIL, id);
-                    connectionsCounter.initEventBus();
+                    queue.publishBackendFail(id);
+                    connectionsCounter.publishZero();
                 }
             });
-            connectionsCounter.registerEventBus();
+            connectionsCounter.registerConnectionsCounter();
         }
         connectionsCounter.addConnection(remoteIP, remotePort);
         return client;
@@ -249,7 +248,7 @@ public class Backend extends Entity {
                 client=null;
                 keepAliveMaxRequest  = null;
                 keepAliveTimeOut     = null;
-                connectionsCounter.unregisterEventBus();
+                connectionsCounter.unregisterConnectionsCounter();
             }
         }
         connectionsCounter.clearConnectionsMap();

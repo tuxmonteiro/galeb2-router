@@ -18,8 +18,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.bus.Queue;
 
-import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
@@ -27,14 +27,12 @@ import org.vertx.testtools.TestVerticle;
 
 public class BackendTest extends TestVerticle {
 
-    @Before
-    public void setUp() {
-    }
+    private Queue queue = new Queue(null,null);
 
     @Test
     public void equalsObject() {
-        Backend backend1 = new Backend("127.0.0.1:0", vertx);
-        Backend backend2 = new Backend("127.0.0.1:0", vertx);
+        Backend backend1 = new Backend("127.0.0.1:0", vertx, queue);
+        Backend backend2 = new Backend("127.0.0.1:0", vertx, queue);
 
         assertThat(backend1).isEqualTo(backend2);
 
@@ -43,8 +41,8 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void notEqualsObject() {
-        Backend backend1 = new Backend("127.0.0.1:0", vertx);
-        Backend backend2 = new Backend("127.0.0.2:0", vertx);
+        Backend backend1 = new Backend("127.0.0.1:0", vertx, queue);
+        Backend backend2 = new Backend("127.0.0.2:0", vertx, queue);
 
         assertThat(backend1).isNotEqualTo(backend2);
 
@@ -53,7 +51,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void isKeepAliveLimitMaxRequest() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
 
         backendTested.setKeepAliveMaxRequest(1L);
         boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
@@ -65,7 +63,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void isNotKeepAliveLimitMaxRequest() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
 
         backendTested.setKeepAliveMaxRequest(2L);
         boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
@@ -77,7 +75,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void isKeepAliveLimitTimeOut() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
 
         backendTested.setKeepAliveTimeOut(-1L);
         boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
@@ -89,7 +87,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void isNotKeepAliveLimitTimeOut() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
 
         backendTested.setKeepAliveTimeOut(86400000L);
         boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
@@ -101,7 +99,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void connectReturnNotNull() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx, queue);
 
         HttpClient httpClient = backendTested.connect("127.0.0.1", "0");
         assertThat(httpClient).isNotNull();
@@ -111,7 +109,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void connectSuccessful() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx, queue);
 
         backendTested.connect("127.0.0.1", "0");
 
@@ -122,7 +120,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void closeSuccessful() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx, queue);
 
         backendTested.connect("127.0.0.1", "0");
         backendTested.close();
@@ -134,7 +132,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void zeroActiveConnections() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx, queue);
 
         assertThat(backendTested.getSessionController().getActiveConnections()).isEqualTo(0);
 
@@ -143,7 +141,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesActiveConnections() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx, queue);
 
         for (int counter=0;counter < 1000; counter++) {
             backendTested.connect(String.format("%s", counter), "0");
@@ -156,7 +154,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesRequestsButOneActiveConnection() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = new Backend(new JsonObject(), vertx, queue);
 
         for (int counter=0;counter < 1000; counter++) {
             backendTested.connect("127.0.0.1", "0");
@@ -169,7 +167,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void zeroActiveConnectionsBecauseMaxRequestsExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
 
         backendTested.setKeepAliveMaxRequest(1000L);
         for (int counter=0;counter < 1000; counter++) {
@@ -188,7 +186,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesActiveConnectionsBecauseMaxRequestsNotExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
 
         backendTested.setKeepAliveMaxRequest(1001L);
         for (int counter=0;counter < 1000; counter++) {
@@ -207,7 +205,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void zeroActiveConnectionsBecauseTimeoutExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
         backendTested.setKeepAliveTimeOut(-1L);
 
         for (int counter=0;counter < 1000; counter++) {
@@ -225,7 +223,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesActiveConnectionsBecauseTimeoutNotExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
+        Backend backendTested = new Backend("127.0.0.1:0", vertx, queue);
         backendTested.setKeepAliveTimeOut(86400000L); // one day
 
         for (int counter=0;counter < 1000; counter++) {
