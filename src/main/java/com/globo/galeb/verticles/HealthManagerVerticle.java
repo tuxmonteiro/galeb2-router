@@ -29,8 +29,9 @@ import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.ICallbackHealthcheck;
 import com.globo.galeb.core.bus.IEventObserver;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.VertxQueueService;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpClient;
@@ -47,7 +48,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
     private Farm farm;
-    private Queue queue;
+    private IQueueService queueService;
 
     @Override
     public void start() {
@@ -57,9 +58,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
         final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
 
-        queue = new Queue(vertx.eventBus(),container.logger());
-        queue.registerHealthcheck(this);
-        farm = new Farm(this, queue);
+        queueService = new VertxQueueService(vertx.eventBus(),container.logger());
+        queueService.registerHealthcheck(this);
+        farm = new Farm(this, queueService);
 
         vertx.setPeriodic(checkInterval, new Handler<Long>() {
             @Override
@@ -84,7 +85,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                                     @Override
                                     public void handle(HttpClientResponse cResp) {
                                         if (cResp!=null && cResp.statusCode()==HttpCode.Ok) {
-                                            queue.publishBackendOk(backend);
+                                            queueService.publishBackendOk(backend);
                                         }
                                     }
                                 });
@@ -170,10 +171,10 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                         String uriAdd = "/backend";
 
                         backendJson.putBoolean(Backend.propertyElegibleFieldName, !elegible);
-                        queue.queueToDel(backendJson, uriDel);
+                        queueService.queueToDel(backendJson, uriDel);
 
                         backendJson.putBoolean(Backend.propertyElegibleFieldName, elegible);
-                        queue.queueToAdd(backendJson, uriAdd);
+                        queueService.queueToAdd(backendJson, uriAdd);
                     }
 
                 }

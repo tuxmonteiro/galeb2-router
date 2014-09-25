@@ -19,10 +19,6 @@ public class Constants {
     private Constants() {
     }
 
-    public static final String QUEUE_HEALTHCHECK_OK              = "healthcheck.ok";
-    public static final String QUEUE_HEALTHCHECK_FAIL            = "healthcheck.fail";
-    public static final String QUEUE_BACKEND_CONNECTIONS_PREFIX  = "conn_";
-
     public static final String CONF_ROOT_ROUTER                  = "router";
     public static final String CONF_ROOT_ROUTEMANAGER            = "routemanager";
     public static final String CONF_ROOT_HEALTHMANAGER           = "healthmanager";

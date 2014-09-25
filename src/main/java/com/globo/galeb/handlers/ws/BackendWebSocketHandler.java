@@ -14,8 +14,6 @@
  */
 package com.globo.galeb.handlers.ws;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-
 import java.util.LinkedList;
 import java.util.Queue;
 
@@ -26,6 +24,8 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.http.WebSocket;
 import org.vertx.java.core.logging.Logger;
+
+import com.globo.galeb.core.bus.IQueueService;
 
 public class BackendWebSocketHandler implements Handler<WebSocket> {
 
@@ -59,7 +59,7 @@ public class BackendWebSocketHandler implements Handler<WebSocket> {
             @Override
             public void handle(Throwable event) {
                 log.error(String.format("backend: %s, message: %s", backendId, event.getMessage()));
-                vertx.eventBus().publish(QUEUE_HEALTHCHECK_FAIL, backendId );
+                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId );
                 websocket.close();
             }
         });

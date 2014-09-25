@@ -17,7 +17,7 @@ package com.globo.galeb.test.unit.assertj.custom;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.VertxQueueService;
 
 import org.assertj.core.api.AbstractAssert;
 import org.vertx.java.core.json.JsonObject;
@@ -58,7 +58,7 @@ public class VirtualHostAssert extends AbstractAssert<VirtualHostAssert, Virtual
 
     public VirtualHostAssert containsBackend(JsonObject backend, boolean backendOk) {
         isNotNull();
-        if (!actual.getBackends(backendOk).contains(new Backend(backend, null, new Queue(null,null)))) {
+        if (!actual.getBackends(backendOk).contains(new Backend(backend, null, new VertxQueueService(null,null)))) {
             failWithMessage("%s not found at %s", backend.getString(IJsonable.jsonIdFieldName), actual.getVirtualhostName());
         }
         return this;
@@ -66,7 +66,7 @@ public class VirtualHostAssert extends AbstractAssert<VirtualHostAssert, Virtual
 
     public VirtualHostAssert doesNotContainsBackend(JsonObject backend, boolean backendOk) {
         isNotNull();
-        if (actual.getBackends(backendOk).contains(new Backend(backend, null, new Queue(null,null)))) {
+        if (actual.getBackends(backendOk).contains(new Backend(backend, null, new VertxQueueService(null,null)))) {
             failWithMessage("%s found at %s", backend.getString(IJsonable.jsonIdFieldName), actual.getVirtualhostName());
         }
         return this;

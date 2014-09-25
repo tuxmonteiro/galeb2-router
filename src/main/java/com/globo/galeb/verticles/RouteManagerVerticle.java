@@ -20,7 +20,8 @@ import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IEventObserver;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.handlers.rest.DeleteMatcherHandler;
 import com.globo.galeb.handlers.rest.GetMatcherHandler;
 import com.globo.galeb.handlers.rest.PostMatcherHandler;
@@ -43,7 +44,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private Server server;
     private String httpServerName = null;
     private Farm farm;
-    private Queue queue;
+    private IQueueService queueService;
 
     private final String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
@@ -53,8 +54,8 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         final SafeJsonObject conf = new SafeJsonObject(container.config());
         final ICounter counter = new CounterWithStatsd(conf, vertx, log);
         server = new Server(vertx, container, counter);
-        queue = new Queue(vertx.eventBus(), log);
-        farm = new Farm(this, queue);
+        queueService = new VertxQueueService(vertx.eventBus(), log);
+        farm = new Farm(this, queueService);
 
         startHttpServer(conf);
 
@@ -84,11 +85,11 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         routeMatcher.getWithRegEx(patternRegex, new GetMatcherHandler(routeManagerId, log, farm));
 
-        routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, queue));
+        routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, queueService));
 
-        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, queue));
+        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, queueService));
 
-        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, queue));
+        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, queueService));
 
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
 

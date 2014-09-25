@@ -35,8 +35,9 @@ import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
@@ -52,7 +53,7 @@ public class FarmTest {
     private String virtualhostId = "test.virtualhost.com";
     private SafeJsonObject backendJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00");
     private SafeJsonObject properties;
-    private Queue queue;
+    private IQueueService queueService;
 
     @Before
     public void setUp() throws Exception {
@@ -60,7 +61,7 @@ public class FarmTest {
         verticle = mock(Verticle.class);
         vertx = mock(Vertx.class);
         container = mock(Container.class);
-        queue = mock(Queue.class);
+        queueService = mock(VertxQueueService.class);
         properties = new SafeJsonObject();
         properties.putString(Virtualhost.loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
         logDelegate = mock(LogDelegate.class);
@@ -76,7 +77,7 @@ public class FarmTest {
         when(verticle.toString()).thenReturn(this.getClass().toString());
         when(verticle.getContainer().config()).thenReturn(new JsonObject());
 
-        farm = new Farm(verticle, queue);
+        farm = new Farm(verticle, queueService);
 
     }
 

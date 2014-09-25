@@ -14,14 +14,12 @@
  */
 package com.globo.galeb.handlers;
 
-import static com.globo.galeb.core.Constants.QUEUE_HEALTHCHECK_FAIL;
-
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.Virtualhost;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.exceptions.BadRequestException;
 import com.globo.galeb.metrics.ICounter;
 
@@ -54,7 +52,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private String counterKey = null;
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
     private final String httpHeaderConnection = HttpHeaders.CONNECTION.toString();
-    private final Queue queue;
+    private final IQueueService queueService;
 
     @Override
     public void handle(final HttpServerRequest sRequest) {
@@ -85,7 +83,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             sResponse.showErrorAndClose(new BadRequestException());
             return;
         }
-        virtualhost.setQueue(queue);
+        virtualhost.setQueue(queueService);
 
         final Long requestTimeoutTimer = vertx.setTimer(backendRequestTimeOut, new Handler<Long>() {
             @Override
@@ -171,7 +169,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             @Override
             public void handle(Throwable event) {
                 vertx.cancelTimer(requestTimeoutTimer);
-                vertx.eventBus().publish(QUEUE_HEALTHCHECK_FAIL, backend.toString() );
+                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend.toString() );
                 sResponse.setId(getCounterKey(headerHost, backendId))
                     .showErrorAndClose(event);
                 try {
@@ -196,14 +194,14 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             final Container container,
             final Farm farm,
             final ICounter counter,
-            final Queue queue) {
+            final IQueueService queueService) {
         this.vertx = vertx;
         this.container = container;
         this.farm = farm;
         this.conf = container.config();
         this.log = container.logger();
         this.counter = counter;
-        this.queue = queue;
+        this.queueService = queueService;
     }
 
     public String getHeaderHost() {

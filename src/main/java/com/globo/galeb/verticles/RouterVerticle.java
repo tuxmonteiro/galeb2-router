@@ -16,7 +16,8 @@ package com.globo.galeb.verticles;
 
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.Server;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.handlers.RouterRequestHandler;
 import com.globo.galeb.handlers.ws.FrontendWebSocketHandler;
 import com.globo.galeb.metrics.CounterWithStatsd;
@@ -37,13 +38,13 @@ public class RouterVerticle extends Verticle {
       final Logger log = container.logger();
       final JsonObject conf = container.config();
       final ICounter counter = new CounterWithStatsd(conf, vertx, log);
-      final Queue queue = new Queue(vertx.eventBus(), log);
-      final Farm farm = new Farm(this, queue);
+      final IQueueService queueService = new VertxQueueService(vertx.eventBus(), log);
+      final Farm farm = new Farm(this, queueService);
 
       final Server server = new Server(vertx, container, counter);
 
       final Handler<HttpServerRequest> handlerHttpServerRequest =
-              new RouterRequestHandler(vertx, container, farm, counter, queue);
+              new RouterRequestHandler(vertx, container, farm, counter, queueService);
 
       final Handler<ServerWebSocket> serverWebSocketHandler =
               new FrontendWebSocketHandler(vertx, container, farm);

@@ -1,7 +1,5 @@
 package com.globo.galeb.core;
 
-import static com.globo.galeb.core.Constants.QUEUE_BACKEND_CONNECTIONS_PREFIX;
-
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -13,7 +11,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.ICallbackConnectionCounter;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
 
 public class ConnectionsCounter implements ICallbackConnectionCounter {
 
@@ -21,7 +19,7 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     public static final String uuidFieldName           = "uuid";
 
     private final Vertx vertx;
-    private final Queue queue;
+    private final IQueueService queueService;
 
     private Long schedulerId = 0L;
     private Long schedulerDelay = 10000L;
@@ -39,10 +37,10 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     private boolean newConnection = true;
     private int activeConnections = 0;
 
-    public ConnectionsCounter(final String backendWithPort, final Vertx vertx, final Queue queue) {
+    public ConnectionsCounter(final String backendWithPort, final Vertx vertx, final IQueueService queueService) {
         this.vertx = vertx;
-        this.queue = queue;
-        this.queueActiveConnections = String.format("%s%s", QUEUE_BACKEND_CONNECTIONS_PREFIX, backendWithPort);
+        this.queueService = queueService;
+        this.queueActiveConnections = String.format("%s%s", IQueueService.QUEUE_BACKEND_CONNECTIONS_PREFIX, backendWithPort);
         this.myUUID = UUID.randomUUID().toString();
     }
 
@@ -143,10 +141,10 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     private void notifyNumConnections() {
         Integer localConnections = getInstanceActiveConnections();
         if (localConnections>0) {
-            JsonObject myConnections = new JsonObject();
+            SafeJsonObject myConnections = new SafeJsonObject();
             myConnections.putString(uuidFieldName, myUUID);
             myConnections.putNumber(numConnectionFieldName, localConnections);
-            queue.publishBackendConnections(queueActiveConnections, myConnections);
+            queueService.publishBackendConnections(queueActiveConnections, myConnections);
         }
     }
 
@@ -184,19 +182,19 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     }
 
     public void publishZero() {
-        JsonObject myConnections = new JsonObject();
+        SafeJsonObject myConnections = new SafeJsonObject();
         myConnections.putString(uuidFieldName, myUUID);
         myConnections.putNumber(numConnectionFieldName, 0);
-        queue.publishActiveConnections(queueActiveConnections, myConnections);
+        queueService.publishActiveConnections(queueActiveConnections, myConnections);
     }
 
     public void registerConnectionsCounter() {
-        queue.registerConnectionsCounter(this, queueActiveConnections);
+        queueService.registerConnectionsCounter(this, queueActiveConnections);
     }
 
     public void unregisterConnectionsCounter() {
         publishZero();
-        queue.unregisterConnectionsCounter(this, queueActiveConnections);
+        queueService.unregisterConnectionsCounter(this, queueActiveConnections);
     }
 
 }

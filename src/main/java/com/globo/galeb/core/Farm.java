@@ -26,8 +26,8 @@ import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.core.bus.ICallbackQueueAction;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
-import com.globo.galeb.core.bus.Queue;
 
 public class Farm extends Entity implements ICallbackQueueAction {
 
@@ -35,12 +35,12 @@ public class Farm extends Entity implements ICallbackQueueAction {
     private Long version = 0L;
     private final Verticle verticle;
     private final Logger log;
-    private final Queue queue;
+    private final IQueueService queueService;
 
-    public Farm(final Verticle verticle, final Queue queue) {
+    public Farm(final Verticle verticle, final IQueueService queueService) {
         this.id = "";
         this.verticle = verticle;
-        this.queue = queue;
+        this.queueService = queueService;
         if (verticle!=null) {
             properties.mergeIn(verticle.getContainer().config());
             this.log = verticle.getContainer().logger();
@@ -130,9 +130,9 @@ public class Farm extends Entity implements ICallbackQueueAction {
     }
 
     public void registerQueueAction() {
-        queue.registerQueueAdd(verticle, this);
-        queue.registerQueueDel(verticle, this);
-        queue.registerQueueVersion(verticle, this);
+        queueService.registerQueueAdd(verticle, this);
+        queueService.registerQueueDel(verticle, this);
+        queueService.registerQueueVersion(verticle, this);
     }
 
     public void clearAll() {

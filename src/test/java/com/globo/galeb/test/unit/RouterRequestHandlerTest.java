@@ -18,7 +18,8 @@ import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;
 
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.handlers.RouterRequestHandler;
 import com.globo.galeb.metrics.CounterConsoleOut;
 import com.globo.galeb.metrics.ICounter;
@@ -55,15 +56,15 @@ public class RouterRequestHandlerTest {
         logDelegate = mock(LogDelegate.class);
         logger = new FakeLogger(logDelegate);
         ICounter counter = new CounterConsoleOut();
-        Queue queue = new Queue(null, null);
-        farm = new Farm(null, queue);
+        IQueueService queueService = new VertxQueueService(null, null);
+        farm = new Farm(null, queueService);
 
         when(verticle.getVertx()).thenReturn(vertx);
         when(verticle.getVertx().eventBus()).thenReturn(null);
         when(verticle.getContainer()).thenReturn(container);
         when(verticle.getContainer().logger()).thenReturn(logger);
 
-        routerRequestHandler = new RouterRequestHandler(vertx, container, farm, counter, queue);
+        routerRequestHandler = new RouterRequestHandler(vertx, container, farm, counter, queueService);
     }
 
     @Test

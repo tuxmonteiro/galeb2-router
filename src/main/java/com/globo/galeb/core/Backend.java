@@ -19,7 +19,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.bus.Queue;
+import com.globo.galeb.core.bus.IQueueService;
 
 public class Backend extends Entity {
 
@@ -33,7 +33,7 @@ public class Backend extends Entity {
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
-    private final Queue queue;
+    private final IQueueService queueService;
     private final ConnectionsCounter connectionsCounter;
     private final String host;
     private final Integer port;
@@ -71,14 +71,14 @@ public class Backend extends Entity {
         return this.toString().hashCode();
     }
 
-    public Backend(final String backendId, final Vertx vertx, final Queue queue) {
-        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx, queue);
+    public Backend(final String backendId, final Vertx vertx, final IQueueService queueService) {
+        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx, queueService);
     }
 
-    public Backend(JsonObject json, final Vertx vertx, final Queue queue) {
+    public Backend(JsonObject json, final Vertx vertx, final IQueueService queueService) {
         super();
         this.vertx = vertx;
-        this.queue = queue;
+        this.queueService = queueService;
         this.client = null;
         this.id = json.getString(IJsonable.jsonIdFieldName, "127.0.0.1:80");
         this.virtualhostId = json.getString(IJsonable.jsonParentIdFieldName, "");
@@ -121,7 +121,7 @@ public class Backend extends Entity {
 
         this.keepAliveTimeMark = System.currentTimeMillis();
         this.requestCount = 0L;
-        this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queue);
+        this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
     }
 
     private void updateModifiedTimestamp() {
@@ -224,7 +224,7 @@ public class Backend extends Entity {
             client.exceptionHandler(new Handler<Throwable>() {
                 @Override
                 public void handle(Throwable e) {
-                    queue.publishBackendFail(id);
+                    queueService.publishBackendFail(id);
                     connectionsCounter.publishZero();
                 }
             });

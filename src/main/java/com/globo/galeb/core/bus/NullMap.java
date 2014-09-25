@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.core.bus;
 
-public class NullMap extends MessageToMap<Object> {
+public class NullMap extends MessageToMap<IEventObserver> {
 
     public NullMap() {
         super();
