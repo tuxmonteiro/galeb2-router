@@ -35,7 +35,7 @@ public class FarmMap extends MessageToMap<Farm> {
         boolean isOk = false;
         Farm farm = map.get("farm");
 
-        JsonArray virtualhosts = entity.getArray("virtualhosts");
+        JsonArray virtualhosts = entity.getArray("virtualhosts", new JsonArray());
         List<Virtualhost> virtualhostsList = (List<Virtualhost>) virtualhosts.toList();
         for (Virtualhost virtualhostObj: virtualhostsList) {
             JsonObject virtualhostJson = virtualhostObj.toJson();
@@ -48,8 +48,11 @@ public class FarmMap extends MessageToMap<Farm> {
                           .setVerticleId(verticleId);
             virtualhostMap.add();
 
-            JsonArray backends = virtualhostJson.getObject(Virtualhost.backendsFieldName)
+            JsonArray backends = virtualhostJson.getObject(Virtualhost.backendsFieldName, new JsonObject())
                                                 .getArray(Virtualhost.backendsElegibleFieldName);
+            if (backends==null) {
+                continue;
+            }
             List<Backend> backendsList = (List<Backend>) backends.toList();
             for (Backend backendObj: backendsList) {
                 JsonObject backendJson = backendObj.toJson();
