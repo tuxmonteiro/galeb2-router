@@ -33,10 +33,11 @@ public class Backend extends Entity {
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
-    private final IQueueService queueService;
     private final ConnectionsCounter connectionsCounter;
     private final String host;
     private final Integer port;
+
+    private IQueueService queueService;
 
     private HttpClient client;
     private String virtualhostId = "";
@@ -78,7 +79,6 @@ public class Backend extends Entity {
     public Backend(JsonObject json, final Vertx vertx, final IQueueService queueService) {
         super();
         this.vertx = vertx;
-        this.queueService = queueService;
         this.client = null;
         this.id = json.getString(IJsonable.jsonIdFieldName, "127.0.0.1:80");
         this.virtualhostId = json.getString(IJsonable.jsonParentIdFieldName, "");
@@ -126,6 +126,10 @@ public class Backend extends Entity {
 
     private void updateModifiedTimestamp() {
         modifiedAt = System.currentTimeMillis();
+    }
+
+    public void setQueueService(IQueueService queueService) {
+        this.queueService = queueService;
     }
 
     public String getHost() {
@@ -224,8 +228,10 @@ public class Backend extends Entity {
             client.exceptionHandler(new Handler<Throwable>() {
                 @Override
                 public void handle(Throwable e) {
-                    queueService.publishBackendFail(id);
-                    connectionsCounter.publishZero();
+                    if (queueService!=null) {
+                        queueService.publishBackendFail(id);
+                        connectionsCounter.publishZero();
+                    }
                 }
             });
             connectionsCounter.registerConnectionsCounter();

@@ -63,7 +63,15 @@ public class Virtualhost extends Entity {
     }
 
     public void setQueue(final IQueueService queueService) {
-        this.queueService = queueService;
+        if (this.queueService==null) {
+            this.queueService = queueService;
+            for(Backend backend: backends) {
+                backend.setQueueService(queueService);
+            }
+            for(Backend badbackend: badBackends) {
+                badbackend.setQueueService(queueService);
+            }
+        }
     }
 
     private void updateModifiedTimestamp() {
@@ -76,12 +84,10 @@ public class Virtualhost extends Entity {
 
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         updateModifiedTimestamp();
-        if (backendOk) {
-            setTransientState();
-            return backends.add(new Backend(backendJson, vertx, queueService));
-        } else {
-            return badBackends.add(new Backend(backendJson, vertx, queueService));
-        }
+        Backend backend = new Backend(backendJson, vertx, queueService);
+        backend.setQueueService(queueService);
+        setTransientState();
+        return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
 
     public UniqueArrayList<Backend> getBackends(boolean backendOk) {
