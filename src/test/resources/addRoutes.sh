@@ -15,7 +15,7 @@
 
 ROUTE=$1
 if [ "x$ROUTE" == "x" ]; then
-  ROUTE='127.0.0.1:9090'
+  ROUTE='127.0.0.1:9000'
 fi
 
 VHOST=$2
