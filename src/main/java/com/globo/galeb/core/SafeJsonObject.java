@@ -66,8 +66,6 @@ public class SafeJsonObject extends JsonObject {
         try {
             Json.decodeValue(jsonStr, Map.class);
         } catch (DecodeException e) {
-            System.err.println(String.format("Bad JSON: %s", jsonStr));
-            e.printStackTrace();
             return false;
         }
         return true;
