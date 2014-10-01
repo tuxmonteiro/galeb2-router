@@ -53,7 +53,11 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
             public void handle(Buffer body) {
                 String bodyStr = body.toString();
                 String id = "";
-                SafeJsonObject bodyJson = new SafeJsonObject(body.toString());
+                if ("".equals(bodyStr)) {
+                    log.error("DELETE: body is null");
+                    return;
+                }
+                SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
                 if (req.params()!=null) {
                     id = req.params().contains("param1") ? req.params().get("param1") : "";
                 }
