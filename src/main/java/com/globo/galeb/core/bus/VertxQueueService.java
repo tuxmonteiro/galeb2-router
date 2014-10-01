@@ -170,6 +170,7 @@ public class VertxQueueService implements IQueueService {
             }
         };
     }
+
     @Override
     public void registerConnectionsCounter(final ICallbackConnectionCounter connectionsCounter,
             String queueActiveConnections) {
@@ -200,17 +201,37 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    private void logEventBusNull() {
+        String logMessage = "registerQueueAdd is not possible: EventBus is null";
+        if (log!=null)  {
+            log.warn(logMessage);
+        } else {
+            System.err.println(logMessage);
+        }
+    }
+
+    private void logQueueRegistered(String starter, String queue) {
+        String message = String.format("[%s] %s registered", starter, queue);
+        if (log!=null) {
+            log.info(message);
+        } else {
+            System.err.println(message);
+        }
+    }
+
     @Override
     public void registerQueueAdd(final Object starter, final ICallbackQueueAction callbackQueueAction) {
         final Verticle verticle;
         if (starter instanceof Verticle) {
             verticle = (Verticle)starter;
         } else {
+            log.error("Starter is not instanceof Verticle");
             return;
         }
         Handler<Message<String>> addHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
+                log.debug(String.format("Received %s at %s queue", message.body(), ADD.toString()));
                 callbackQueueAction.addToMap(message.body());
 
                 if (verticle != null && verticle instanceof IEventObserver) {
@@ -220,8 +241,9 @@ public class VertxQueueService implements IQueueService {
         };
         if (eb!=null) {
             eb.registerHandler(ADD.toString(), addHandler);
+            logQueueRegistered(starter.toString(), ADD.toString());
         } else {
-            if (log!=null) log.warn("registerQueueAdd is not possible: EventBus is null");
+            logEventBusNull();
         }
     }
 
@@ -231,11 +253,13 @@ public class VertxQueueService implements IQueueService {
         if (starter instanceof Verticle) {
             verticle = (Verticle)starter;
         } else {
+            log.error("Starter is not instanceof Verticle");
             return;
         }
         Handler<Message<String>> queueDelHandler =  new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
+                log.debug(String.format("Received %s at %s queue", message.body(), DEL.toString()));
                 callbackQueueAction.delFromMap(message.body());
                 if (verticle != null && verticle instanceof IEventObserver) {
                     ((IEventObserver)verticle).postDelEvent(message.body());
@@ -244,9 +268,9 @@ public class VertxQueueService implements IQueueService {
         };
         if (eb!=null) {
             eb.registerHandler(DEL.toString(),queueDelHandler);
+            logQueueRegistered(starter.toString(), DEL.toString());
         } else {
-            Logger log = ((Verticle) verticle).getContainer().logger();
-            if (log!=null) log.warn("registerQueueDel is not possible: EventBus is null");
+            logEventBusNull();
         }
     }
 
@@ -255,6 +279,7 @@ public class VertxQueueService implements IQueueService {
         Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
+                log.debug(String.format("Received %s at %s queue", message.body(), SET_VERSION.toString()));
                 try {
                     callbackQueueAction.setVersion(Long.parseLong(message.body()));
                 } catch (java.lang.NumberFormatException ignore) {
@@ -264,8 +289,9 @@ public class VertxQueueService implements IQueueService {
         };
         if (eb!=null) {
             eb.registerHandler(SET_VERSION.toString(), queueVersionHandler);
+            logQueueRegistered(starter.toString(), SET_VERSION.toString());
         } else {
-            if (log!=null) log.warn("registerQueueVersion is not possible: EventBus is null");
+            logEventBusNull();
         }
     }
 

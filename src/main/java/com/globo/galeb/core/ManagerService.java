@@ -140,7 +140,9 @@ public class ManagerService {
 
         SafeJsonObject json = new SafeJsonObject(message);
         if ("{}".equals(json.encode())) {
-            if (registerLog) log.error(String.format("Json decode error: %s", message));
+            if (registerLog) {
+                log.error(String.format("Json decode error: %s", message));
+            }
             return HttpCode.BadRequest;
         }
 
