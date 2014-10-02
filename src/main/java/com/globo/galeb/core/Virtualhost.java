@@ -18,7 +18,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
@@ -42,7 +41,7 @@ public class Virtualhost extends Entity {
     private final UniqueArrayList<Backend> backends;
     private final UniqueArrayList<Backend> badBackends;
     private final Vertx                    vertx;
-    private IQueueService                  queueService      = new VertxQueueService(null,null);
+    private IQueueService                  queueService      = null;
     private ILoadBalancePolicy             loadbalancePolicy = null;
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
@@ -84,7 +83,7 @@ public class Virtualhost extends Entity {
 
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         updateModifiedTimestamp();
-        Backend backend = new Backend(backendJson, vertx, queueService);
+        Backend backend = new Backend(backendJson, vertx);
         backend.setQueueService(queueService);
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
@@ -102,9 +101,9 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         if (backendOk) {
             setTransientState();
-            return backends.remove(new Backend(backend, vertx, queueService));
+            return backends.remove(new Backend(backend, vertx));
         } else {
-            return badBackends.remove(new Backend(backend, vertx, queueService));
+            return badBackends.remove(new Backend(backend, vertx));
         }
     }
 

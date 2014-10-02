@@ -268,7 +268,7 @@ public class FarmTest {
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendAddAgain = farm.addToMap(messageBackend);
         Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
-        Backend backendExpected = new Backend(backendJson, vertx, queueService);
+        Backend backendExpected = new Backend(backendJson, vertx);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(true).contains(backendExpected)).isTrue();
@@ -299,7 +299,7 @@ public class FarmTest {
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
         Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
-        Backend backendNotExpected = new Backend(backendJson, vertx, queueService);
+        Backend backendNotExpected = new Backend(backendJson, vertx);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(true).contains(backendNotExpected)).isFalse();
@@ -347,7 +347,7 @@ public class FarmTest {
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
         Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
-        Backend backendNotExpected = new Backend(backendJson, vertx, queueService);
+        Backend backendNotExpected = new Backend(backendJson, vertx);
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(!"0".equals(statusStr)).contains(backendNotExpected)).isFalse();

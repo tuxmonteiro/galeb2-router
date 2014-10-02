@@ -15,20 +15,18 @@
 package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.vertx.testtools.VertxAssert.testComplete;
+import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.impl.LeastConnPolicy;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
@@ -36,12 +34,6 @@ public class LeastConnPolicyTest extends TestVerticle {
 
     private Virtualhost virtualhost;
     private int numBackends = 10;
-    private Vertx vertx;
-
-    @Before
-    public void setUp() {
-        vertx = mock(DefaultVertx.class);
-    }
 
     @Test
     public void leastConnection() {
@@ -55,6 +47,7 @@ public class LeastConnPolicyTest extends TestVerticle {
 
         for (int x=0; x<numBackends; x++) {
             virtualhost.addBackend(String.format("0:%s", x), true);
+            virtualhost.setQueue(mock(IQueueService.class));
             Backend backend = virtualhost.getBackends(true).get(x);
             for (int c = 1; c <= x+1; c++) {
                 backend.connect("0", String.format("%s", c));

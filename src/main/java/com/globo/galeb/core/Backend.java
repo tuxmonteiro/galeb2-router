@@ -33,14 +33,14 @@ public class Backend extends Entity {
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
-    private final ConnectionsCounter connectionsCounter;
     private final String host;
     private final Integer port;
 
-    private IQueueService queueService;
+    private ConnectionsCounter connectionsCounter = null;
+    private IQueueService      queueService       = null;
 
-    private HttpClient client;
-    private String virtualhostId = "";
+    private HttpClient client        = null;
+    private String     virtualhostId = "";
 
     private Long keepAliveMaxRequest  = null;
     private Long keepAliveTimeOut     = null;
@@ -72,11 +72,11 @@ public class Backend extends Entity {
         return this.toString().hashCode();
     }
 
-    public Backend(final String backendId, final Vertx vertx, final IQueueService queueService) {
-        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx, queueService);
+    public Backend(final String backendId, final Vertx vertx) {
+        this(new JsonObject().putString(IJsonable.jsonIdFieldName, backendId), vertx);
     }
 
-    public Backend(JsonObject json, final Vertx vertx, final IQueueService queueService) {
+    public Backend(JsonObject json, final Vertx vertx) {
         super();
         this.vertx = vertx;
         this.client = null;
@@ -121,7 +121,6 @@ public class Backend extends Entity {
 
         this.keepAliveTimeMark = System.currentTimeMillis();
         this.requestCount = 0L;
-        this.connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
     }
 
     private void updateModifiedTimestamp() {
@@ -182,7 +181,6 @@ public class Backend extends Entity {
 
     public Backend setKeepAliveTimeOut(Long keepAliveTimeOut) {
         properties.putNumber(propertyKeepAliveTimeOutFieldName, keepAliveTimeOut);
-        this.connectionsCounter.setConnectionMapTimeout(getKeepAliveTimeOut());
         updateModifiedTimestamp();
         return this;
     }
@@ -215,7 +213,10 @@ public class Backend extends Entity {
 
     // Lazy initialization
     public HttpClient connect(String remoteIP, String remotePort) {
-        if (client==null && vertx!=null) {
+        if (client==null) {
+            connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
+            connectionsCounter.setConnectionMapTimeout(getKeepAliveTimeOut());
+
             client = vertx.createHttpClient()
                 .setKeepAlive(isKeepalive())
                 .setTCPKeepAlive(isKeepalive())
@@ -254,10 +255,13 @@ public class Backend extends Entity {
                 client=null;
                 keepAliveMaxRequest  = null;
                 keepAliveTimeOut     = null;
-                connectionsCounter.unregisterConnectionsCounter();
             }
         }
-        connectionsCounter.clearConnectionsMap();
+        if (connectionsCounter!=null) {
+            connectionsCounter.unregisterConnectionsCounter();
+            connectionsCounter.clearConnectionsMap();
+            connectionsCounter = null;
+        }
     }
 
     public boolean isClosed() {
