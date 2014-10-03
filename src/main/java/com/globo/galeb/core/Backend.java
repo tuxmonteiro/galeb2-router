@@ -282,7 +282,10 @@ public class Backend extends Entity {
     public JsonObject toJson() {
         prepareJson();
         idObj.putString(Entity.jsonParentIdFieldName, virtualhostId);
-        idObj.putNumber(propertyActiveConnectionsFieldName, getSessionController().getActiveConnections());
+        ConnectionsCounter connectionsCounter = getSessionController();
+        if (connectionsCounter!=null) {
+            idObj.putNumber(propertyActiveConnectionsFieldName, getSessionController().getActiveConnections());
+        }
         return super.toJson();
     }
 
