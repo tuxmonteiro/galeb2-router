@@ -25,10 +25,11 @@ import org.vertx.java.core.logging.Logger;
 
 public class ServerResponse {
 
-    private final HttpServerResponse resp;
+    private final HttpServerRequest req;
     private final Logger log;
     private final ICounter counter;
     private final boolean enableAccessLog;
+    private final HttpServerResponse resp;
     private String message = "";
     private String id = "";
     private String headerHost = "";
@@ -50,6 +51,7 @@ public class ServerResponse {
         this.log = log;
         this.counter = counter;
         this.enableAccessLog = enableAccessLog;
+        this.req = req;
         this.resp = req.response();
     }
 
@@ -144,7 +146,7 @@ public class ServerResponse {
             int codeFamily = code.intValue()/100;
             // TODO: Dependency Injection
             String httpLogMessage = new NcsaLogExtendedFormatter()
-                                        .setRequestData(resp, message)
+                                        .setRequestData(req, message)
                                         .getFormatedLog();
             switch (codeFamily) {
                 case 5: // SERVER_ERROR
