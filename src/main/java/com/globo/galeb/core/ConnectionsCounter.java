@@ -153,7 +153,7 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
 
     private void notifyNumConnections() {
         Integer localConnections = getInstanceActiveConnections();
-        if (localConnections>0) {
+        if (localConnections>0 && queueService!=null) {
             SafeJsonObject myConnections = new SafeJsonObject();
             myConnections.putString(uuidFieldName, myUUID);
             myConnections.putNumber(numConnectionFieldName, localConnections);
@@ -195,19 +195,25 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     }
 
     public void publishZero() {
-        SafeJsonObject myConnections = new SafeJsonObject();
-        myConnections.putString(uuidFieldName, myUUID);
-        myConnections.putNumber(numConnectionFieldName, 0);
-        queueService.publishActiveConnections(queueActiveConnections, myConnections);
+        if (queueService!=null) {
+            SafeJsonObject myConnections = new SafeJsonObject();
+            myConnections.putString(uuidFieldName, myUUID);
+            myConnections.putNumber(numConnectionFieldName, 0);
+            queueService.publishActiveConnections(queueActiveConnections, myConnections);
+        }
     }
 
     public void registerConnectionsCounter() {
-        queueService.registerConnectionsCounter(this, queueActiveConnections);
+        if (queueService!=null) {
+            queueService.registerConnectionsCounter(this, queueActiveConnections);
+        }
     }
 
     public void unregisterConnectionsCounter() {
-        publishZero();
-        queueService.unregisterConnectionsCounter(this, queueActiveConnections);
+        if (queueService!=null) {
+            publishZero();
+            queueService.unregisterConnectionsCounter(this, queueActiveConnections);
+        }
     }
 
 }

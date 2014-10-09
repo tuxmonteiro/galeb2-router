@@ -56,6 +56,7 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend("127.0.0.1:0", vertx);
 
         backendTested.setKeepAliveMaxRequest(1L);
+        backendTested.connect();
         boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
 
         assertThat(isKeepAliveLimitExceeded).isTrue();
@@ -80,6 +81,7 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend("127.0.0.1:0", vertx);
 
         backendTested.setKeepAliveTimeOut(-1L);
+        backendTested.connect();
         boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
 
         assertThat(isKeepAliveLimitExceeded).isTrue();
