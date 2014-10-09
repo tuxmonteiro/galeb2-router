@@ -19,6 +19,11 @@ public class Constants {
     private Constants() {
     }
 
+    // Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults)
+    public static final boolean tcpNoDelay           = true;
+    public static final int     tcpSendBufferSize    = 8 * 1024;
+    public static final int     tcpReceiveBufferSize = 32 * 1024;
+
     public static final String CONF_ROOT_ROUTER                  = "router";
     public static final String CONF_ROOT_ROUTEMANAGER            = "routemanager";
     public static final String CONF_ROOT_HEALTHMANAGER           = "healthmanager";
