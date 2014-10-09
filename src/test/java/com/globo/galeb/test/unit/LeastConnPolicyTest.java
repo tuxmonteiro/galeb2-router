@@ -20,6 +20,7 @@ import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
@@ -50,19 +51,20 @@ public class LeastConnPolicyTest extends TestVerticle {
             virtualhost.setQueue(mock(IQueueService.class));
             Backend backend = virtualhost.getBackends(true).get(x);
             for (int c = 1; c <= x+1; c++) {
-                backend.connect("0", String.format("%s", c));
+                backend.setRemoteUser(new RemoteUser("0",c));
+                backend.connect();
             }
         }
 
         for (int c=1 ; c<=1000; c++) {
 
             Backend backendWithLeastConn = virtualhost.getChoice(new RequestData());
-            int numConnectionsInBackendWithLeastConn = backendWithLeastConn.getSessionController().getActiveConnections();
+            int numConnectionsInBackendWithLeastConn = backendWithLeastConn.getActiveConnections();
 
             UniqueArrayList<Backend> backends = virtualhost.getBackends(true);
             for (Backend backendSample: backends) {
 
-                int numConnectionsInBackendSample = backendSample.getSessionController().getActiveConnections();
+                int numConnectionsInBackendSample = backendSample.getActiveConnections();
                 if (backendSample!=backendWithLeastConn) {
                     assertThat(numConnectionsInBackendWithLeastConn).isEqualTo(1);
                     assertThat(numConnectionsInBackendWithLeastConn)

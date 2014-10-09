@@ -23,7 +23,7 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.http.HttpClientResponse;
-import org.vertx.java.core.http.HttpServerRequest;
+import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.streams.Pump;
 
@@ -31,7 +31,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     private final Vertx vertx;
     private final Long requestTimeoutTimer;
-    private final HttpServerRequest sRequest;
+    private final HttpServerResponse httpServerResponse;
     private final ServerResponse sResponse;
     private final Backend backend;
     private final ICounter counter;
@@ -40,7 +40,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private String headerHost = "UNDEF";
     private Long initialRequestTime = null;
     private boolean connectionKeepalive = true;
-    private boolean backendForceKeepAlive = true;
+//    private boolean backendForceKeepAlive = true;
 
     @Override
     public void handle(final HttpClientResponse cResponse) {
@@ -53,11 +53,11 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         sResponse.setStatusCode(statusCode);
         sResponse.setHeaders(cResponse.headers());
         if (!connectionKeepalive) {
-            sRequest.response().headers().set("Connection", "close");
+            httpServerResponse.headers().set("Connection", "close");
         }
 
         // Pump cResponse => sResponse
-        Pump.createPump(cResponse, sRequest.response()).start();
+        Pump.createPump(cResponse, httpServerResponse).start();
 
         cResponse.endHandler(new VoidHandler() {
             @Override
@@ -74,16 +74,19 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     .end();
 
                 if (connectionKeepalive) {
-                    if (backend.isKeepAliveLimit()) {
-                        backend.close();
+                    if (backend.checkKeepAliveLimit()) {
                         sResponse.closeResponse();
                     }
                 } else {
-                    if (!backendForceKeepAlive) {
-                        backend.close();
-                    }
                     sResponse.closeResponse();
                 }
+
+//                else {
+//                    if (!backendForceKeepAlive) {
+//                        backend.close();
+//                    }
+//                    sResponse.closeResponse();
+//                }
             }
         });
 
@@ -127,15 +130,15 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         this.connectionKeepalive = connectionKeepalive;
         return this;
     }
+//
+//    public boolean isBackendForceKeepAlive() {
+//        return backendForceKeepAlive;
+//    }
 
-    public boolean isBackendForceKeepAlive() {
-        return backendForceKeepAlive;
-    }
-
-    public RouterResponseHandler setBackendForceKeepAlive(boolean backendForceKeepAlive) {
-        this.backendForceKeepAlive = backendForceKeepAlive;
-        return this;
-    }
+//    public RouterResponseHandler setBackendForceKeepAlive(boolean backendForceKeepAlive) {
+//        this.backendForceKeepAlive = backendForceKeepAlive;
+//        return this;
+//    }
 
     private String getKey() {
         return String.format("%s.%s",
@@ -147,27 +150,36 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             final Vertx vertx,
             final Logger log,
             final Long requestTimeoutTimer,
-            final HttpServerRequest sRequest,
+            final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend) {
-        this(vertx, log, requestTimeoutTimer, sRequest, sResponse, backend, null);
+        this(vertx, log, requestTimeoutTimer, httpServerResponse, sResponse, backend, null);
     }
 
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,
             final Long requestTimeoutTimer,
-            final HttpServerRequest sRequest,
+            final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend,
             final ICounter counter) {
         this.vertx = vertx;
         this.requestTimeoutTimer = requestTimeoutTimer;
-        this.sRequest = sRequest;
+        this.httpServerResponse = httpServerResponse;
         this.sResponse = sResponse;
         this.backend = backend;
         this.log = log;
         this.counter = counter;
+
+        this.httpServerResponse.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                String message = String.format("[%s] %s", this, event.getMessage());
+                log.error(message);
+            }
+        });
+
     }
 
 }

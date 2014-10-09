@@ -19,7 +19,7 @@ import static org.vertx.testtools.VertxAssert.testComplete;
 import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.ConnectionsCounter;
+import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.bus.IQueueService;
 
 import org.junit.Test;
@@ -104,7 +104,8 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        HttpClient httpClient = backendTested.connect("127.0.0.1", "0");
+        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+        HttpClient httpClient = backendTested.connect();
         assertThat(httpClient).isNotNull();
 
         testComplete();
@@ -115,7 +116,8 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.connect("127.0.0.1", "0");
+        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+        backendTested.connect();
 
         assertThat(backendTested.isClosed()).isFalse();
 
@@ -127,7 +129,8 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.connect("127.0.0.1", "0");
+        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+        backendTested.connect();
         backendTested.close();
 
         assertThat(backendTested.isClosed()).isTrue();
@@ -141,10 +144,11 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
+            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
+            backendTested.connect();
         }
 
-        assertThat(backendTested.getSessionController().getActiveConnections()).isEqualTo(1000);
+        assertThat(backendTested.getActiveConnections()).isEqualTo(1000);
 
         testComplete();
     }
@@ -155,10 +159,11 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect("127.0.0.1", "0");
+            backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+            backendTested.connect();
         }
 
-        assertThat(backendTested.getSessionController().getActiveConnections()).isEqualTo(1);
+        assertThat(backendTested.getActiveConnections()).isEqualTo(1);
 
         testComplete();
     }
@@ -170,7 +175,8 @@ public class BackendTest extends TestVerticle {
 
         backendTested.setKeepAliveMaxRequest(1000L);
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
+            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
+            backendTested.connect();
             boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
             if (isKeepAliveLimitExceeded) {
                 backendTested.close();
@@ -178,11 +184,7 @@ public class BackendTest extends TestVerticle {
             }
         }
 
-        ConnectionsCounter connectionsCounter = backendTested.getSessionController();
-        if (connectionsCounter!=null) {
-            assertThat(connectionsCounter.getActiveConnections()).isEqualTo(0);
-        }
-
+        assertThat(backendTested.getActiveConnections()).isEqualTo(0);
         testComplete();
     }
 
@@ -193,7 +195,8 @@ public class BackendTest extends TestVerticle {
 
         backendTested.setKeepAliveMaxRequest(1001L);
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
+            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
+            backendTested.connect();
             boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
             if (isKeepAliveLimitExceeded) {
                 backendTested.close();
@@ -201,7 +204,7 @@ public class BackendTest extends TestVerticle {
             }
         }
 
-        assertThat(backendTested.getSessionController().getActiveConnections()).isNotEqualTo(0);
+        assertThat(backendTested.getActiveConnections()).isNotEqualTo(0);
 
         testComplete();
     }
@@ -213,17 +216,15 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
+            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
+            backendTested.connect();
             if (backendTested.isKeepAliveLimit()) {
                 backendTested.close();
                 break;
             }
         }
 
-        ConnectionsCounter connectionsCounter = backendTested.getSessionController();
-        if (connectionsCounter!=null) {
-            assertThat(connectionsCounter.getActiveConnections()).isEqualTo(0);
-        }
+        assertThat(backendTested.getActiveConnections()).isEqualTo(0);
 
         testComplete();
     }
@@ -235,14 +236,15 @@ public class BackendTest extends TestVerticle {
         backendTested.setKeepAliveTimeOut(86400000L); // one day
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
+            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
+            backendTested.connect();
             if (backendTested.isKeepAliveLimit()) {
                 backendTested.close();
                 break;
             }
         }
 
-        assertThat(backendTested.getSessionController().getActiveConnections()).isNotEqualTo(0);
+        assertThat(backendTested.getActiveConnections()).isNotEqualTo(0);
 
         testComplete();
     }

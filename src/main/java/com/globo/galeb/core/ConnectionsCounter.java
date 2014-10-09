@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2014 Globo.com - ATeam
+ * All rights reserved.
+ *
+ * This source is subject to the Apache License, Version 2.0.
+ * Please see the LICENSE file for more information.
+ *
+ * Authors: See AUTHORS file
+ *
+ * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ */
 package com.globo.galeb.core;
 
 import java.util.HashMap;
@@ -63,19 +77,23 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
-    public boolean addConnection(String connectionId) {
-        newConnection = connections.put(connectionId, System.currentTimeMillis()) == null;
+    public boolean addConnection(RemoteUser remoteUser) {
+        if (remoteUser==null) {
+            return false;
+        }
+        String remoteUserId = remoteUser.toString();
+        newConnection = connections.put(remoteUserId, System.currentTimeMillis()) == null;
         activeScheduler();
         return newConnection;
     }
 
-    public boolean addConnection(String host, String port) {
-        String connectionId = String.format("%s:%s", host, port);
-        return addConnection(connectionId);
+    public boolean addConnection(String host, Integer port) {
+        RemoteUser remoteUser = new RemoteUser(host, port);
+        return addConnection(remoteUser);
     }
 
-    public boolean removeConnection(String connectionId) {
-        return connections.remove(connectionId) != null;
+    public boolean removeConnection(String remoteUserId) {
+        return connections.remove(remoteUserId) != null;
     }
 
     public void clearConnectionsMap() {
@@ -93,13 +111,8 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         return connections.size();
     }
 
-    public boolean isNewConenction(String remoteId) {
+    public boolean isNewConnection() {
         return newConnection;
-    }
-
-    public boolean isNewConnection(String remoteIP, String remotePort) {
-        String remoteId = String.format("%s:%s", remoteIP, remotePort);
-        return isNewConenction(remoteId);
     }
 
     public Long getSchedulerDelay() {

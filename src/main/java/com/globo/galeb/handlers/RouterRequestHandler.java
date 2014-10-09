@@ -16,6 +16,7 @@ package com.globo.galeb.handlers;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.Virtualhost;
@@ -34,19 +35,16 @@ import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpVersion;
-import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.streams.Pump;
-import org.vertx.java.platform.Container;
 
 public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     private final Vertx vertx;
-    private final JsonObject conf;
-    private final Logger log;
-    private final Container container;
     private final Farm farm;
     private final ICounter counter;
+    private final Logger log;
+
     private String headerHost = "";
     private String backendId = "";
     private String counterKey = null;
@@ -54,27 +52,26 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private final String httpHeaderConnection = HttpHeaders.CONNECTION.toString();
     private final IQueueService queueService;
 
+    private Long requestTimeOut = 60000L;
+    private Boolean enableChunked = true;
+    private Boolean enableAccessLog = false;
+
     @Override
     public void handle(final HttpServerRequest sRequest) {
 
         if (sRequest.headers().contains(httpHeaderHost)) {
             this.headerHost = sRequest.headers().get(httpHeaderHost).split(":")[0];
+        } else {
+            log.warn("HTTP Header Host UNDEF");
+            return;
         }
 
         log.debug(String.format("Received request for host %s '%s %s'",
                 sRequest.headers().get(httpHeaderHost), sRequest.method(), sRequest.absoluteURI().toString()));
 
-        final Long keepAliveTimeOut = conf.getLong("keepAliveTimeOut", 60000L);
-        final Long keepAliveMaxRequest = conf.getLong("maxKeepAliveRequests", 10000L);
-        final Integer backendRequestTimeOut = conf.getInteger("backendRequestTimeOut", 60000);
-        final Integer backendConnectionTimeOut = conf.getInteger("backendConnectionTimeOut", 60000);
-        final Boolean backendForceKeepAlive = conf.getBoolean("backendForceKeepAlive", true);
-        final Integer backendMaxPoolSize = conf.getInteger("backendMaxPoolSize",10);
-        final boolean enableChunked = conf.getBoolean("enableChunked", true);
-        final boolean enableAccessLog = conf.getBoolean("enableAccessLog", false);
         final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
 
-        sRequest.response().setChunked(true);
+        sRequest.response().setChunked(enableChunked);
 
         final Virtualhost virtualhost = farm.getVirtualhost(headerHost);
 
@@ -85,7 +82,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         }
         virtualhost.setQueue(queueService);
 
-        final Long requestTimeoutTimer = vertx.setTimer(backendRequestTimeOut, new Handler<Long>() {
+        final Long requestTimeoutTimer = vertx.setTimer(requestTimeOut, new Handler<Long>() {
             @Override
             public void handle(Long event) {
                 sResponse.setHeaderHost(headerHost)
@@ -103,37 +100,51 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
-        final Backend backend = virtualhost.getChoice(new RequestData(sRequest))
-                .setKeepAlive(connectionKeepalive||backendForceKeepAlive)
-                .setKeepAliveTimeOut(keepAliveTimeOut)
-                .setKeepAliveMaxRequest(keepAliveMaxRequest)
-                .setConnectionTimeout(backendConnectionTimeOut)
-                .setMaxPoolSize(backendMaxPoolSize);
+        final Backend backend = virtualhost.getChoice(new RequestData(sRequest));
+
+//        if (backendConnectionTimeOut!=null) {
+//            backend.setConnectTimeout(backendConnectionTimeOut);
+//        }
+//        if (backendMaxPoolSize!=null) {
+//            backend.setMaxPoolSize(backendMaxPoolSize);
+//        }
+//        if (backendPipeliging!=null) {
+//            backend.setPipelining(backendPipeliging);
+//        }
+//        if (backendReceiveBufferSize!=null) {
+//            backend.setReceiveBufferSize(backendReceiveBufferSize);
+//        }
+//        if (getSendBufferSize()!=null) {
+//            backend.setSendBufferSize(getSendBufferSize());
+//        }
+//        if (isUsePooledBuffers()!=null) {
+//            backend.setUsePooledBuffers(isUsePooledBuffers());
+//        }
+//
+//                .setKeepAlive(connectionKeepalive||backendForceKeepAlive)
+//                .setKeepAliveTimeOut(keepAliveTimeOut)
+//                .setKeepAliveMaxRequest(keepAliveMaxRequest)
+//                .setConnectionTimeout(backendConnectionTimeOut)
+//                .setMaxPoolSize(backendMaxPoolSize);
 
         this.backendId = backend.toString();
 
         Long initialRequestTime = System.currentTimeMillis();
         final Handler<HttpClientResponse> handlerHttpClientResponse =
                 new RouterResponseHandler(vertx,
-                                          container.logger(),
+                                          log,
                                           requestTimeoutTimer,
-                                          sRequest,
+                                          sRequest.response(),
                                           sResponse,
                                           backend,
                                           counter)
                         .setConnectionKeepalive(connectionKeepalive)
-                        .setBackendForceKeepAlive(backendForceKeepAlive)
                         .setHeaderHost(headerHost)
                         .setInitialRequestTime(initialRequestTime);
 
-        String remoteIP = sRequest.remoteAddress().getAddress().getHostAddress();
-        String remotePort = String.format("%d", sRequest.remoteAddress().getPort());
-
-        final HttpClient httpClient = backend.connect(remoteIP, remotePort);
-
-        if (httpClient!=null && headerHost!=null && backend.getSessionController().isNewConnection(remoteIP, remotePort)) {
-            counter.sendActiveSessions(getCounterKey(headerHost, backendId),1L);
-        }
+        RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
+        backend.setRemoteUser(remoteUser);
+        final HttpClient httpClient = backend.connect();
 
         final HttpClientRequest cRequest = httpClient!=null ?
                 httpClient.request(sRequest.method(), sRequest.uri(), handlerHttpClientResponse) : null;
@@ -145,12 +156,12 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         cRequest.setChunked(enableChunked);
 
-        updateHeadersXFF(sRequest.headers(), remoteIP);
+        updateHeadersXFF(sRequest.headers(), remoteUser);
 
         cRequest.headers().set(sRequest.headers());
-        if (backendForceKeepAlive) {
-            cRequest.headers().set(httpHeaderConnection, "keep-alive");
-        }
+//        if (backendForceKeepAlive) {
+//            cRequest.headers().set(httpHeaderConnection, "keep-alive");
+//        }
 
         if (enableChunked) {
             // Pump sRequest => cRequest
@@ -191,17 +202,15 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     public RouterRequestHandler(
             final Vertx vertx,
-            final Container container,
             final Farm farm,
             final ICounter counter,
-            final IQueueService queueService) {
+            final IQueueService queueService,
+            final Logger log) {
         this.vertx = vertx;
-        this.container = container;
         this.farm = farm;
-        this.conf = container.config();
-        this.log = container.logger();
         this.counter = counter;
         this.queueService = queueService;
+        this.log = log;
     }
 
     public String getHeaderHost() {
@@ -235,13 +244,15 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         }
     }
 
-    private void updateHeadersXFF(final MultiMap headers, String remote) {
+    private void updateHeadersXFF(final MultiMap headers, RemoteUser remoteUser) {
 
         final String httpHeaderXRealIp         = "X-Real-IP";
         final String httpHeaderXForwardedFor   = "X-Forwarded-For";
         final String httpHeaderforwardedFor    = "Forwarded-For";
         final String httpHeaderXForwardedHost  = "X-Forwarded-Host";
         final String httpHeaderXForwardedProto = "X-Forwarded-Proto";
+
+        String remote = remoteUser.getRemoteIP();
 
         if (!headers.contains(httpHeaderXRealIp)) {
             headers.set(httpHeaderXRealIp, remote);
@@ -277,6 +288,21 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         return headers.contains(httpHeaderConnection) ?
                 !"close".equalsIgnoreCase(headers.get(httpHeaderConnection)) :
                 httpVersion.equals(HttpVersion.HTTP_1_1);
+    }
+
+    public RouterRequestHandler setEnableChunked(Boolean enableChunked) {
+        this.enableChunked = enableChunked;
+        return this;
+    }
+
+    public RouterRequestHandler setEnableAccessLog(Boolean enableAccessLog) {
+        this.enableAccessLog = enableAccessLog;
+        return this;
+    }
+
+    public RouterRequestHandler setRequestTimeOut(Long requestTimeOut) {
+        this.requestTimeOut = requestTimeOut;
+        return this;
     }
 
 }

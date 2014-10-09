@@ -64,7 +64,7 @@ public class RouterRequestHandlerTest {
         when(verticle.getContainer()).thenReturn(container);
         when(verticle.getContainer().logger()).thenReturn(logger);
 
-        routerRequestHandler = new RouterRequestHandler(vertx, container, farm, counter, queueService);
+        routerRequestHandler = new RouterRequestHandler(vertx, farm, counter, queueService, logger);
     }
 
     @Test

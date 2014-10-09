@@ -29,12 +29,12 @@ public class LeastConnectionsFinder {
 
     public LeastConnectionsFinder(final Collection<Backend> backends) {
         for (Backend backend : backends) {
-            mapBackends.put(backend, backend.getSessionController().getActiveConnections());
+            mapBackends.put(backend, backend.getActiveConnections());
         }
     }
 
     public void add(final Backend backend) {
-        mapBackends.put(backend, backend.getSessionController().getActiveConnections());
+        mapBackends.put(backend, backend.getActiveConnections());
     }
 
     public void addAll(final Collection<Backend> backends) {
