@@ -14,16 +14,6 @@
  */
 package com.globo.galeb.handlers;
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.RemoteUser;
-import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.ServerResponse;
-import com.globo.galeb.core.Virtualhost;
-import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.exceptions.BadRequestException;
-import com.globo.galeb.metrics.ICounter;
-
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
@@ -37,6 +27,16 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpVersion;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.streams.Pump;
+
+import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.RemoteUser;
+import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.ServerResponse;
+import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.exceptions.BadRequestException;
+import com.globo.galeb.metrics.ICounter;
 
 public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
@@ -55,6 +55,10 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private Long requestTimeOut = 60000L;
     private Boolean enableChunked = true;
     private Boolean enableAccessLog = false;
+
+    private RemoteUser lastRemoteUser = null;
+    private String lastHeaderHost = "";
+    private Backend lastBackend = null;
 
     @Override
     public void handle(final HttpServerRequest sRequest) {
@@ -98,36 +102,30 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             return;
         }
 
-        final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
+        RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
+        final HttpClient httpClient;
+        final Backend backend;
 
-        final Backend backend = virtualhost.getChoice(new RequestData(sRequest));
+        if (lastBackend!=null && remoteUser.equals(lastRemoteUser) && headerHost.equals(lastHeaderHost)) {
 
-//        if (backendConnectionTimeOut!=null) {
-//            backend.setConnectTimeout(backendConnectionTimeOut);
-//        }
-//        if (backendMaxPoolSize!=null) {
-//            backend.setMaxPoolSize(backendMaxPoolSize);
-//        }
-//        if (backendPipeliging!=null) {
-//            backend.setPipelining(backendPipeliging);
-//        }
-//        if (backendReceiveBufferSize!=null) {
-//            backend.setReceiveBufferSize(backendReceiveBufferSize);
-//        }
-//        if (getSendBufferSize()!=null) {
-//            backend.setSendBufferSize(getSendBufferSize());
-//        }
-//        if (isUsePooledBuffers()!=null) {
-//            backend.setUsePooledBuffers(isUsePooledBuffers());
-//        }
-//
-//                .setKeepAlive(connectionKeepalive||backendForceKeepAlive)
-//                .setKeepAliveTimeOut(keepAliveTimeOut)
-//                .setKeepAliveMaxRequest(keepAliveMaxRequest)
-//                .setConnectionTimeout(backendConnectionTimeOut)
-//                .setMaxPoolSize(backendMaxPoolSize);
-
+        backend = lastBackend;
+        httpClient = backend.connect();
         this.backendId = backend.toString();
+
+        } else {
+
+            lastRemoteUser = remoteUser;
+            lastHeaderHost = headerHost;
+
+	        backend = virtualhost.getChoice(new RequestData(sRequest));
+	        this.backendId = backend.toString();
+	        lastBackend = backend;
+
+	        backend.setRemoteUser(remoteUser);
+	        httpClient = backend.connect();
+        }
+
+        final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
         Long initialRequestTime = System.currentTimeMillis();
         final Handler<HttpClientResponse> handlerHttpClientResponse =
@@ -141,10 +139,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                         .setConnectionKeepalive(connectionKeepalive)
                         .setHeaderHost(headerHost)
                         .setInitialRequestTime(initialRequestTime);
-
-        RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
-        backend.setRemoteUser(remoteUser);
-        final HttpClient httpClient = backend.connect();
 
         final HttpClientRequest cRequest = httpClient!=null ?
                 httpClient.request(sRequest.method(), sRequest.uri(), handlerHttpClientResponse) : null;
