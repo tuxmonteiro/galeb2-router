@@ -108,9 +108,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         if (lastBackend!=null && remoteUser.equals(lastRemoteUser) && headerHost.equals(lastHeaderHost)) {
 
-        backend = lastBackend;
-        httpClient = backend.connect();
-        this.backendId = backend.toString();
+            backend = lastBackend;
+            httpClient = backend.connect();
+            this.backendId = backend.toString();
 
         } else {
 
