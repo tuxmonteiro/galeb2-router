@@ -52,7 +52,19 @@ public class Server {
         this.vertx = vertx;
         this.conf = container.config();
         this.log = container.logger();
-        this.httpServer = vertx.createHttpServer().setTCPKeepAlive(this.conf.getBoolean("serverTCPKeepAlive",true));
+        this.httpServer = vertx.createHttpServer();
+        if (this.conf.containsField("serverTCPKeepAlive")) {
+            this.httpServer.setTCPKeepAlive(this.conf.getBoolean("serverTCPKeepAlive",true));
+        }
+        if (this.conf.containsField("serverReceiveBufferSize")) {
+            this.httpServer.setReceiveBufferSize(this.conf.getInteger("serverReceiveBufferSize"));
+        }
+        if (this.conf.containsField("serverSendBufferSize")) {
+            this.httpServer.setSendBufferSize(this.conf.getInteger("serverSendBufferSize"));
+        }
+        if (this.conf.containsField("serverAcceptBacklog")) {
+            this.httpServer.setAcceptBacklog(this.conf.getInteger("serverAcceptBacklog"));
+        }
     }
 
     public Server start(final Object caller) {
