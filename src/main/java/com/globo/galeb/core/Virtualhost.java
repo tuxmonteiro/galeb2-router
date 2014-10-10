@@ -238,4 +238,14 @@ public class Virtualhost extends Entity {
         maxPoolSize = this.staticConf.getInteger(Backend.propertyMaxPoolSizeFieldName, maxPoolSize);
         return this;
     }
+
+    public Boolean isChunked() {
+        // TODO
+        return true;
+    }
+
+    public Boolean hasAccessLog() {
+        // TODO Auto-generated method stub
+        return false;
+    }
 }
