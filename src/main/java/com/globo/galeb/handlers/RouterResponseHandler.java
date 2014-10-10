@@ -73,11 +73,11 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     .setId(getKey())
                     .end();
 
-                if (connectionKeepalive) {
-                    if (backend.checkKeepAliveLimit()) {
-                        sResponse.closeResponse();
-                    }
-                } else {
+                if (!connectionKeepalive) {
+//                    if (backend.checkKeepAliveLimit()) {
+//                        sResponse.closeResponse();
+//                    }
+//                } else {
                     sResponse.closeResponse();
                 }
 

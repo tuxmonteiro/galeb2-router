@@ -33,31 +33,6 @@ public class Backend extends Entity {
     public static String propertySendBufferSizeFieldName      = "sendBufferSize";
     public static String propertyUsePooledBuffersFieldName    = "usePooledBuffers";
 
-//
-//    final Long keepAliveTimeOut = conf.getLong("keepAliveTimeOut", 60000L);
-//    final Long keepAliveMaxRequest = conf.getLong("maxKeepAliveRequests", 10000L);
-//    final Integer backendRequestTimeOut = conf.getInteger("backendRequestTimeOut", 60000);
-//    final Integer backendConnectionTimeOut = conf.getInteger("backendConnectionTimeOut", 60000);
-//    final Boolean backendForceKeepAlive = conf.getBoolean("backendForceKeepAlive", true);
-//    final Integer backendMaxPoolSize = conf.getInteger("backendMaxPoolSize",10);
-//    final Boolean backendPipeliging = conf.getBoolean("backendPipeliging");
-//    final Integer backendReceiveBufferSize = conf.getInteger("backendReceiveBufferSize");
-//    final Integer backendSendBufferSize = conf.getInteger("backendSendBufferSize");
-
-
-//    if (isPipeliging()!=null) {
-//        client.setPipelining(isPipeliging());
-//    }
-//    if (getReceiveBufferSize()!=null) {
-//        client.setReceiveBufferSize(getReceiveBufferSize());
-//    }
-//    if (getSendBufferSize()!=null) {
-//        client.setSendBufferSize(getSendBufferSize());
-//    }
-//    if (isUsePooledBuffers()!=null) {
-//        client.setUsePooledBuffers(isUsePooledBuffers());
-//    }
-
     public static String propertyElegibleFieldName            = "_elegible";
     public static String propertyActiveConnectionsFieldName   = "_activeConnections";
 
@@ -81,7 +56,6 @@ public class Backend extends Entity {
     private Boolean defaultPipelining          = false;
 
     private RemoteUser remoteUser              = null;
-    private int     maxPoolSize                = 1;
 
     @Override
     public String toString() {
@@ -248,7 +222,7 @@ public class Backend extends Entity {
     public HttpClient connect() {
         if (backendSession==null) {
             backendSession = new BackendSession(vertx, virtualhostId, id);
-            backendSession.setMaxPoolSize(maxPoolSize);
+            backendSession.setMaxPoolSize(getMaxPoolSize());
         }
         backendSession.setBackendProperties(new SafeJsonObject(properties));
         backendSession.setRemoteUser(remoteUser);
@@ -264,12 +238,12 @@ public class Backend extends Entity {
         backendSession = null;
     }
 
-    public boolean checkKeepAliveLimit() {
-        if (backendSession==null) {
-            return false;
-        }
-        return backendSession.checkKeepAliveLimit();
-    }
+//    public boolean checkKeepAliveLimit() {
+//        if (backendSession==null) {
+//            return false;
+//        }
+//        return backendSession.checkKeepAliveLimit();
+//    }
 
     public Integer getActiveConnections() {
         if (backendSession==null) {
@@ -283,12 +257,12 @@ public class Backend extends Entity {
         }
     }
 
-    public boolean isKeepAliveLimit() {
-        if (backendSession==null) {
-            return false;
-        }
-        return backendSession.isKeepAliveLimit();
-    }
+//    public boolean isKeepAliveLimit() {
+//        if (backendSession==null) {
+//            return false;
+//        }
+//        return backendSession.isKeepAliveLimit();
+//    }
 
     public boolean isClosed() {
         if (backendSession==null) {
@@ -299,8 +273,6 @@ public class Backend extends Entity {
 
     @Override
     public JsonObject toJson() {
-        properties.putNumber(propertyMaxPoolSizeFieldName, maxPoolSize);
-
         prepareJson();
         idObj.putString(Entity.jsonParentIdFieldName, virtualhostId);
 

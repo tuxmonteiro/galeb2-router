@@ -128,14 +128,14 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         return this;
     }
 
-    public Long getConnectionMapTimeout() {
-        return connectionMapTimeout;
-    }
-
-    public ConnectionsCounter setConnectionMapTimeout(Long connectionMapTimeout) {
-        this.connectionMapTimeout = connectionMapTimeout;
-        return this;
-    }
+//    public Long getConnectionMapTimeout() {
+//        return connectionMapTimeout;
+//    }
+//
+//    public ConnectionsCounter setConnectionMapTimeout(Long connectionMapTimeout) {
+//        this.connectionMapTimeout = connectionMapTimeout;
+//        return this;
+//    }
 
     private void expireLocalConnections() {
         Long timeout = System.currentTimeMillis() - connectionMapTimeout;

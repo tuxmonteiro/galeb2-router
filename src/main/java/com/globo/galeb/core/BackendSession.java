@@ -34,11 +34,11 @@ public class BackendSession {
     private SafeJsonObject backendProperties = new SafeJsonObject();
 
     private ICounter   counter              = null;
-    private Long       keepAliveMaxRequest  = Long.MAX_VALUE;
-    private Long       keepAliveTimeOut     = Long.MAX_VALUE;
+//    private Long       keepAliveMaxRequest  = Long.MAX_VALUE;
+//    private Long       keepAliveTimeOut     = Long.MAX_VALUE;
 
-    private Long       keepAliveTimeMark    = System.currentTimeMillis();;
-    private Long       requestCount         = 0L;
+//    private Long       keepAliveTimeMark    = System.currentTimeMillis();;
+//    private Long       requestCount         = 0L;
     private RemoteUser remoteUser           = null;
     private Boolean    keepAlive            = true;
     private String     counterKey           = null;
@@ -61,21 +61,21 @@ public class BackendSession {
     }
 
 
-    public boolean isKeepAliveLimit() {
-        boolean limitedExceed = false;
-        Long now = System.currentTimeMillis();
-        if (requestCount<=keepAliveMaxRequest) {
-            requestCount++;
-        }
-        if ((requestCount>=keepAliveMaxRequest) || (requestCount==Long.MAX_VALUE) ||
-                (now-keepAliveTimeMark)>keepAliveTimeOut) {
-            requestCount = 0L;
-            limitedExceed = true;
-        }
-        keepAliveTimeMark = now;
-
-        return limitedExceed;
-    }
+//    public boolean isKeepAliveLimit() {
+//        boolean limitedExceed = false;
+//        Long now = System.currentTimeMillis();
+//        if (requestCount<=keepAliveMaxRequest) {
+//            requestCount++;
+//        }
+//        if ((requestCount>=keepAliveMaxRequest) || (requestCount==Long.MAX_VALUE) ||
+//                (now-keepAliveTimeMark)>keepAliveTimeOut) {
+//            requestCount = 0L;
+//            limitedExceed = true;
+//        }
+//        keepAliveTimeMark = now;
+//
+//        return limitedExceed;
+//    }
 
     // Lazy initialization
     public HttpClient connect() {
@@ -99,7 +99,7 @@ public class BackendSession {
 
         if (client==null) {
             connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
-            connectionsCounter.setConnectionMapTimeout(keepAliveTimeOut);
+//            connectionsCounter.setConnectionMapTimeout(keepAliveTimeOut);
 
             client = vertx.createHttpClient();
             if (keepAlive!=null) {
@@ -133,8 +133,8 @@ public class BackendSession {
     }
 
     private void processProperties() {
-        keepAliveMaxRequest = backendProperties.getLong(Backend.propertyKeepaliveMaxRequestFieldName, Long.MAX_VALUE);
-        keepAliveTimeOut    = backendProperties.getLong(Backend.propertyKeepAliveTimeOutFieldName, Long.MAX_VALUE);
+//        keepAliveMaxRequest = backendProperties.getLong(Backend.propertyKeepaliveMaxRequestFieldName, Long.MAX_VALUE);
+//        keepAliveTimeOut    = backendProperties.getLong(Backend.propertyKeepAliveTimeOutFieldName, Long.MAX_VALUE);
         keepAlive           = backendProperties.getBoolean(Backend.propertyKeepAliveFieldName, true);
     }
 
@@ -150,8 +150,8 @@ public class BackendSession {
                 // Already closed. Ignore exception.
             } finally {
                 client=null;
-                keepAliveMaxRequest  = null;
-                keepAliveTimeOut     = null;
+//                keepAliveMaxRequest  = null;
+//                keepAliveTimeOut     = null;
             }
         }
         if (connectionsCounter!=null) {
@@ -178,21 +178,21 @@ public class BackendSession {
         this.queueService = queueService;
     }
 
-    public void setKeepAliveMaxRequest(Long keepAliveMaxRequest) {
-        this.keepAliveMaxRequest = keepAliveMaxRequest;
-    }
+//    public void setKeepAliveMaxRequest(Long keepAliveMaxRequest) {
+//        this.keepAliveMaxRequest = keepAliveMaxRequest;
+//    }
+//
+//    public void setKeepAliveTimeOut(Long keepAliveTimeOut) {
+//        this.keepAliveTimeOut = keepAliveTimeOut;
+//    }
 
-    public void setKeepAliveTimeOut(Long keepAliveTimeOut) {
-        this.keepAliveTimeOut = keepAliveTimeOut;
-    }
-
-    public boolean checkKeepAliveLimit() {
-        if (isKeepAliveLimit()) {
-            close();
-            return true;
-        }
-        return false;
-    }
+//    public boolean checkKeepAliveLimit() {
+//        if (isKeepAliveLimit()) {
+//            close();
+//            return true;
+//        }
+//        return false;
+//    }
 
     private String getCounterKey(String aVirtualhost, String aBackend) {
         if (counter==null) {

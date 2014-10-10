@@ -35,7 +35,9 @@ import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.exceptions.BadRequestException;
+import com.globo.galeb.exceptions.GatewayTimeoutException;
+import com.globo.galeb.exceptions.NotFoundException;
+import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.metrics.ICounter;
 
 public class RouterRequestHandler implements Handler<HttpServerRequest> {
@@ -45,15 +47,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private final ICounter counter;
     private final Logger log;
 
-    private String headerHost = "";
-    private String backendId = "";
-    private String counterKey = null;
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
     private final String httpHeaderConnection = HttpHeaders.CONNECTION.toString();
     private final IQueueService queueService;
-
-    private Boolean enableChunked = true;
-    private Boolean enableAccessLog = false;
 
     private RemoteUser lastRemoteUser = null;
     private String lastHeaderHost = "";
@@ -62,8 +58,12 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     @Override
     public void handle(final HttpServerRequest sRequest) {
 
+        String headerHost = "UNDEF";
+        @SuppressWarnings(value = { "unused" })
+        String backendId = "UNDEF";
+
         if (sRequest.headers().contains(httpHeaderHost)) {
-            this.headerHost = sRequest.headers().get(httpHeaderHost).split(":")[0];
+            headerHost = sRequest.headers().get(httpHeaderHost).split(":")[0];
         } else {
             log.warn("HTTP Header Host UNDEF");
             return;
@@ -72,33 +72,37 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         log.debug(String.format("Received request for host %s '%s %s'",
                 sRequest.headers().get(httpHeaderHost), sRequest.method(), sRequest.absoluteURI().toString()));
 
-        final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
-
-        sRequest.response().setChunked(enableChunked);
-
         final Virtualhost virtualhost = farm.getVirtualhost(headerHost);
 
         if (virtualhost==null) {
             log.warn("Host UNDEF");
-            sResponse.showErrorAndClose(new BadRequestException());
+            new ServerResponse(sRequest, log, counter, false).showErrorAndClose(new NotFoundException());
             return;
         }
         virtualhost.setQueue(queueService);
         Long requestTimeOut = virtualhost.getRequestTimeOut();
+        Boolean enableChunked = virtualhost.isChunked();
+        Boolean enableAccessLog = virtualhost.hasAccessLog();
 
+        final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
+        sRequest.response().setChunked(enableChunked);
+
+        @SuppressWarnings(value = { "all" })
         final Long requestTimeoutTimer = vertx.setTimer(requestTimeOut, new Handler<Long>() {
+            final String headerHost = this.headerHost;
+            final String backendId = this.backendId;
             @Override
             public void handle(Long event) {
                 sResponse.setHeaderHost(headerHost)
-                    .setId(getCounterKey(headerHost, backendId))
-                    .showErrorAndClose(new java.util.concurrent.TimeoutException());
+                    .setId(String.format("%s.%s", headerHost, backendId))
+                    .showErrorAndClose(new GatewayTimeoutException());
             }
         });
 
         if (!virtualhost.hasBackends()) {
             vertx.cancelTimer(requestTimeoutTimer);
             log.warn(String.format("Host %s without backends", headerHost));
-            sResponse.showErrorAndClose(new BadRequestException());
+            sResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
 
@@ -110,24 +114,23 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
             backend = lastBackend;
             httpClient = backend.connect();
-            this.backendId = backend.toString();
+            backendId = backend.toString();
 
         } else {
 
             lastRemoteUser = remoteUser;
             lastHeaderHost = headerHost;
 
-	        backend = virtualhost.getChoice(new RequestData(sRequest));
-	        this.backendId = backend.toString();
-	        lastBackend = backend;
+            backend = virtualhost.getChoice(new RequestData(sRequest));
+            backendId = backend.toString();
+            lastBackend = backend;
 
-	        backend.setRemoteUser(remoteUser);
-	        httpClient = backend.connect();
+            backend.setRemoteUser(remoteUser);
+            httpClient = backend.connect();
         }
 
         final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
-        Long initialRequestTime = System.currentTimeMillis();
         final Handler<HttpClientResponse> handlerHttpClientResponse =
                 new RouterResponseHandler(vertx,
                                           log,
@@ -138,13 +141,13 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                                           counter)
                         .setConnectionKeepalive(connectionKeepalive)
                         .setHeaderHost(headerHost)
-                        .setInitialRequestTime(initialRequestTime);
+                        .setInitialRequestTime(System.currentTimeMillis());
 
         final HttpClientRequest cRequest = httpClient!=null ?
                 httpClient.request(sRequest.method(), sRequest.uri(), handlerHttpClientResponse) : null;
 
         if (cRequest==null) {
-            sResponse.showErrorAndClose(new BadRequestException());
+            sResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
 
@@ -153,9 +156,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         updateHeadersXFF(sRequest.headers(), remoteUser);
 
         cRequest.headers().set(sRequest.headers());
-//        if (backendForceKeepAlive) {
-//            cRequest.headers().set(httpHeaderConnection, "keep-alive");
-//        }
+        cRequest.headers().set(httpHeaderConnection, "keep-alive");
 
         if (enableChunked) {
             // Pump sRequest => cRequest
@@ -171,18 +172,17 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         }
 
         cRequest.exceptionHandler(new Handler<Throwable>() {
+            @SuppressWarnings(value = { "all" })
+            final String headerHost = this.headerHost;
+            @SuppressWarnings(value = { "all" })
+            final String backendId = this.backendId;
+
             @Override
             public void handle(Throwable event) {
                 vertx.cancelTimer(requestTimeoutTimer);
-                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend.toString() );
-                sResponse.setId(getCounterKey(headerHost, backendId))
+                queueService.notifyBackendFail(backend.toString());
+                sResponse.setId(String.format("%s.%s", headerHost, backendId))
                     .showErrorAndClose(event);
-                try {
-                    backend.close();
-                } catch (RuntimeException e) {
-                    // Ignore double backend close
-                    return;
-                }
             }
          });
 
@@ -207,37 +207,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         this.log = log;
     }
 
-    public String getHeaderHost() {
-        return headerHost;
-    }
-
-    public void setHeaderHost(String headerHost) {
-        this.headerHost = headerHost;
-    }
-
-    public String getBackendId() {
-        return backendId;
-    }
-
-    public void setBackendId(String backendId) {
-        this.backendId = backendId;
-    }
-
-    public String getCounterKey(String aVirtualhost, String aBackend) {
-        if (counterKey==null || "".equals(counterKey)) {
-            String strDefault = "UNDEF";
-            String result = String.format("%s.%s",
-                    counter.cleanupString(aVirtualhost, strDefault),
-                    counter.cleanupString(aBackend, strDefault));
-            if (!"".equals(aVirtualhost) && !"".equals(aBackend)) {
-                counterKey = result;
-            }
-            return result;
-        } else {
-            return counterKey;
-        }
-    }
-
     private void updateHeadersXFF(final MultiMap headers, RemoteUser remoteUser) {
 
         final String httpHeaderXRealIp         = "X-Real-IP";
@@ -247,6 +216,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         final String httpHeaderXForwardedProto = "X-Forwarded-Proto";
 
         String remote = remoteUser.getRemoteIP();
+        String headerHost = headers.get(httpHeaderHost).split(":")[0];
 
         if (!headers.contains(httpHeaderXRealIp)) {
             headers.set(httpHeaderXRealIp, remote);
@@ -270,7 +240,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         headers.set(httpHeaderforwardedFor, xff);
 
         if (!headers.contains(httpHeaderXForwardedHost)) {
-            headers.set(httpHeaderXForwardedHost, this.headerHost);
+            headers.set(httpHeaderXForwardedHost, headerHost);
         }
 
         if (!headers.contains(httpHeaderXForwardedProto)) {
@@ -282,16 +252,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         return headers.contains(httpHeaderConnection) ?
                 !"close".equalsIgnoreCase(headers.get(httpHeaderConnection)) :
                 httpVersion.equals(HttpVersion.HTTP_1_1);
-    }
-
-    public RouterRequestHandler setEnableChunked(Boolean enableChunked) {
-        this.enableChunked = enableChunked;
-        return this;
-    }
-
-    public RouterRequestHandler setEnableAccessLog(Boolean enableAccessLog) {
-        this.enableAccessLog = enableAccessLog;
-        return this;
     }
 
 }
