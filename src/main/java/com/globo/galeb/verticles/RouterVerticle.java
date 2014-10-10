@@ -41,15 +41,10 @@ public class RouterVerticle extends Verticle {
       final IQueueService queueService = new VertxQueueService(vertx.eventBus(), log);
       final Farm farm = new Farm(this, queueService);
 
-      final boolean enableChunked = conf.getBoolean("enableChunked", true);
-      final boolean enableAccessLog = conf.getBoolean("enableAccessLog", false);
-
       final Server server = new Server(vertx, container, counter);
 
       final Handler<HttpServerRequest> handlerHttpServerRequest =
-              new RouterRequestHandler(vertx, farm, counter, queueService, log)
-                      .setEnableChunked(enableChunked)
-                      .setEnableAccessLog(enableAccessLog);
+              new RouterRequestHandler(vertx, farm, counter, queueService, log);
 
       final Handler<ServerWebSocket> serverWebSocketHandler =
               new FrontendWebSocketHandler(vertx, container, farm);
