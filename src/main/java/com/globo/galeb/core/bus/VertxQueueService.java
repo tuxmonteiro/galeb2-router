@@ -318,4 +318,13 @@ public class VertxQueueService implements IQueueService {
             logEventBusNull();
         }
     }
+
+    @Override
+    public void notifyBackendFail(String backendId) {
+        if (eb!=null) {
+            eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId);
+        } else {
+            logEventBusNull();
+        }
+    }
 }

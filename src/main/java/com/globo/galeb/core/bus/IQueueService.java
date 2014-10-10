@@ -78,4 +78,6 @@ public interface IQueueService {
 
     public void updateSharedData();
 
+    public void notifyBackendFail(String backendId);
+
 }
