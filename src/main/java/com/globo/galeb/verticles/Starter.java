@@ -26,7 +26,7 @@ public class Starter extends Verticle{
         final SafeJsonObject conf = new SafeJsonObject(container.config());
         final SafeJsonObject confRouter = new SafeJsonObject(conf.getObject(CONF_ROOT_ROUTER, new SafeJsonObject("{}")));
         final SafeJsonObject confRouteManager = new SafeJsonObject(conf.getObject(CONF_ROOT_ROUTEMANAGER, new SafeJsonObject("{}")));
-        confRouteManager.putObject(CONF_STARTER_CONF, conf);
+        confRouter.putObject(CONF_STARTER_CONF, conf);
         final SafeJsonObject confHealthManager = new SafeJsonObject(conf.getObject(CONF_ROOT_HEALTHMANAGER, new SafeJsonObject("{}")));
         final SafeJsonObject confStatsd;
         if (conf.containsField(CONF_ROOT_STATSD)) {

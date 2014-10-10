@@ -25,7 +25,8 @@ public interface IQueueService {
     public enum ACTION {
         ADD         ("route.add"),
         DEL         ("route.del"),
-        SET_VERSION ("route.version");
+        SET_VERSION ("route.version"),
+        SHARED_DATA ("route.shareddata");
 
         private String queue;
         private ACTION(final String queue) {
@@ -71,5 +72,10 @@ public interface IQueueService {
 
     public void registerQueueVersion(Object starter,
             ICallbackQueueAction callbackQueueAction);
+
+    public void registerUpdateSharedData(Object starter,
+            ICallbackSharedData callbackSharedData);
+
+    public void updateSharedData();
 
 }

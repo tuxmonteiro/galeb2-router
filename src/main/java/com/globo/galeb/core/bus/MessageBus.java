@@ -26,7 +26,6 @@ public class MessageBus {
     private String entityStr  = "{}";
     private String parentId   = "";
     private String uriStr     = "";
-    private String properties = "{}";
     private String messageBus = "{}";
 
     public MessageBus() {
@@ -58,10 +57,6 @@ public class MessageBus {
 
     public String getEntityId() {
         return getEntity().getString(IJsonable.jsonIdFieldName, "");
-    }
-
-    public SafeJsonObject getEntityProperties() {
-        return new SafeJsonObject(getEntity().getString(IJsonable.jsonPropertiesFieldName, "{}"));
     }
 
     public MessageBus setEntity(String entityStr) {
@@ -99,11 +94,7 @@ public class MessageBus {
         messageBus = new SafeJsonObject()
                             .putString(uriFieldName, uriStr)
                             .putString(parentIdFieldName, parentId)
-                            .putString(entityFieldName,
-                                    getEntity()
-                                        .putObject(IJsonable.jsonPropertiesFieldName,
-                                                new SafeJsonObject(properties))
-                                        .encode())
+                            .putString(entityFieldName, getEntity().encode())
                             .encode();
         return this;
     }

@@ -34,6 +34,7 @@ public class Virtualhost extends Entity {
 
     // Modifiable
     public static final String loadBalancePolicyFieldName = "loadBalancePolicy";
+    public static final String requestTimeOutFieldName    = "requestTimeOut";
 
     //
     public static final String transientStateFieldName    = "_transientState";
@@ -43,6 +44,9 @@ public class Virtualhost extends Entity {
     private final Vertx                    vertx;
     private IQueueService                  queueService      = null;
     private ILoadBalancePolicy             loadbalancePolicy = null;
+    private Long                           requestTimeOut    = 60000L;
+    private int                            maxPoolSize       = 1;
+
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
         super();
@@ -50,6 +54,7 @@ public class Virtualhost extends Entity {
         this.backends = new UniqueArrayList<Backend>();
         this.badBackends = new UniqueArrayList<Backend>();
         this.vertx = vertx;
+
         properties.mergeIn(json.getObject(IJsonable.jsonPropertiesFieldName, new JsonObject()));
         if (!properties.containsField(loadBalancePolicyFieldName)) {
             getLoadBalancePolicy();
@@ -85,6 +90,7 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         Backend backend = new Backend(backendJson, vertx);
         backend.setQueueService(queueService);
+        backend.setMaxPoolSize(maxPoolSize);
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
@@ -183,6 +189,9 @@ public class Virtualhost extends Entity {
 
     @Override
     public JsonObject toJson() {
+        properties.putNumber(requestTimeOutFieldName, requestTimeOut);
+        properties.putNumber(Backend.propertyMaxPoolSizeFieldName, maxPoolSize);
+
         prepareJson();
 
         JsonArray backendsElegiblesJson = new JsonArray();
@@ -216,5 +225,17 @@ public class Virtualhost extends Entity {
 
     private void unSetTransientState() {
         idObj.putBoolean(transientStateFieldName, false);
+    }
+
+    public Long getRequestTimeOut() {
+        return this.requestTimeOut;
+    }
+
+    @Override
+    public Virtualhost setStaticConf(String staticConf) {
+        super.setStaticConf(staticConf);
+        requestTimeOut = this.staticConf.getLong(requestTimeOutFieldName, requestTimeOut);
+        maxPoolSize = this.staticConf.getInteger(Backend.propertyMaxPoolSizeFieldName, maxPoolSize);
+        return this;
     }
 }

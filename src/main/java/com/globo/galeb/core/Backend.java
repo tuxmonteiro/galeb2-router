@@ -81,6 +81,7 @@ public class Backend extends Entity {
     private Boolean defaultPipelining          = false;
 
     private RemoteUser remoteUser              = null;
+    private int     maxPoolSize                = 1;
 
     @Override
     public String toString() {
@@ -246,7 +247,8 @@ public class Backend extends Entity {
 
     public HttpClient connect() {
         if (backendSession==null) {
-            this.backendSession = new BackendSession(vertx, virtualhostId, id);
+            backendSession = new BackendSession(vertx, virtualhostId, id);
+            backendSession.setMaxPoolSize(maxPoolSize);
         }
         backendSession.setBackendProperties(new SafeJsonObject(properties));
         backendSession.setRemoteUser(remoteUser);
@@ -258,6 +260,8 @@ public class Backend extends Entity {
             return;
         }
         backendSession.close();
+        remoteUser = null;
+        backendSession = null;
     }
 
     public boolean checkKeepAliveLimit() {
@@ -295,13 +299,18 @@ public class Backend extends Entity {
 
     @Override
     public JsonObject toJson() {
+        properties.putNumber(propertyMaxPoolSizeFieldName, maxPoolSize);
+
         prepareJson();
         idObj.putString(Entity.jsonParentIdFieldName, virtualhostId);
-        ConnectionsCounter connectionsCounter = backendSession.getSessionController();
+
+        ConnectionsCounter connectionsCounter = null;
+        if (backendSession!=null) {
+            connectionsCounter = backendSession.getSessionController();
+        }
         if (connectionsCounter!=null) {
             idObj.putNumber(propertyActiveConnectionsFieldName, connectionsCounter.getActiveConnections());
         }
         return super.toJson();
     }
-
 }

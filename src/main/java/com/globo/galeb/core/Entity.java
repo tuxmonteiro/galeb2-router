@@ -14,10 +14,12 @@
  */
 package com.globo.galeb.core;
 
+import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 
 public abstract class Entity implements IJsonable {
 
+    protected JsonObject           staticConf    = new JsonObject();
     protected String               id            = "";
     protected final Long           createdAt     = System.currentTimeMillis();
     protected Long                 modifiedAt    = System.currentTimeMillis();
@@ -39,6 +41,15 @@ public abstract class Entity implements IJsonable {
         idObj.putNumber(IJsonable.jsonCreatedAtFieldName, createdAt);
         idObj.putNumber(IJsonable.jsonModifiedAtFieldName, modifiedAt);
         idObj.putObject(IJsonable.jsonPropertiesFieldName, properties);
+        return this;
+    }
+
+    public Entity setStaticConf(String staticConf) {
+        if (!"".equals(staticConf)) {
+            try {
+                this.staticConf = new JsonObject(staticConf);
+            } catch (DecodeException ignore) {}
+        }
         return this;
     }
 

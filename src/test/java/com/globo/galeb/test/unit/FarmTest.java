@@ -16,18 +16,12 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.vertx.testtools.VertxAssert.testComplete;
 
 import java.io.UnsupportedEncodingException;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.logging.impl.LogDelegate;
-import org.vertx.java.platform.Container;
-import org.vertx.java.platform.Verticle;
+import org.vertx.testtools.TestVerticle;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
@@ -36,52 +30,17 @@ import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.bus.VertxQueueService;
-import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
-import com.globo.galeb.test.unit.util.FakeLogger;
 
-public class FarmTest {
+public class FarmTest extends TestVerticle {
 
-    private Farm farm;
-    private Verticle verticle;
-    private Vertx vertx;
-    private Container container;
-    private Logger logger;
-    private LogDelegate logDelegate;
     private SafeJsonObject virtualhostJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "test.virtualhost.com");
     private String virtualhostId = "test.virtualhost.com";
     private SafeJsonObject backendJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00");
-    private SafeJsonObject properties;
-    private IQueueService queueService;
-
-    @Before
-    public void setUp() throws Exception {
-
-        verticle = mock(Verticle.class);
-        vertx = mock(Vertx.class);
-        container = mock(Container.class);
-        queueService = mock(VertxQueueService.class);
-        properties = new SafeJsonObject();
-        properties.putString(Virtualhost.loadBalancePolicyFieldName, DefaultLoadBalancePolicy.class.getSimpleName());
-        logDelegate = mock(LogDelegate.class);
-        logger = new FakeLogger(logDelegate);
-        ((FakeLogger)logger).setQuiet(false);
-        ((FakeLogger)logger).setTestId("");
-
-        when(verticle.getVertx()).thenReturn(vertx);
-        when(verticle.getVertx().eventBus()).thenReturn(null);
-        when(verticle.getContainer()).thenReturn(container);
-        when(verticle.getContainer().logger()).thenReturn(logger);
-        when(verticle.getContainer().config()).thenReturn(new SafeJsonObject());
-        when(verticle.toString()).thenReturn(this.getClass().toString());
-        when(verticle.getContainer().config()).thenReturn(new JsonObject());
-
-        farm = new Farm(verticle, queueService);
-
-    }
+    private IQueueService queueService = mock(IQueueService.class);
 
     @Test
     public void insert10NewVirtualhost() {
+        Farm farm = new Farm(this, queueService);
 
         for (int x=0; x<10;x++) {
             SafeJsonObject virtualhostJson =
@@ -96,10 +55,12 @@ public class FarmTest {
         }
 
         assertThat(farm.getVirtualhosts()).hasSize(10);
+        testComplete();
     }
 
     @Test
     public void insert10NewBackends() {
+        Farm farm = new Farm(this, queueService);
 
         String message = "";
         SafeJsonObject virtualhostJson =
@@ -124,11 +85,12 @@ public class FarmTest {
         }
 
         assertThat(farm.getBackends()).hasSize(10);
+        testComplete();
     }
 
     @Test
     public void insertNewVirtualhostToRouteMap() {
-        ((FakeLogger)logger).setTestId("insertNewVirtualhostToRouteMap");
+        Farm farm = new Farm(this, queueService);
 
         String uriStr = "/virtualhost";
         String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
@@ -142,11 +104,12 @@ public class FarmTest {
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
         assertThat(isOk).isTrue();
+        testComplete();
     }
 
     @Test
     public void insertDuplicatedVirtualhostToRouteMap() {
-        ((FakeLogger)logger).setTestId("insertDuplicatedVirtualhostToRouteMap");
+        Farm farm = new Farm(this, queueService);
 
         String uriStr = "/virtualhost";
         String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
@@ -161,11 +124,12 @@ public class FarmTest {
 
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
         assertThat(isOk).isFalse();
+        testComplete();
     }
 
     @Test
     public void removeExistingVirtualhostFromRouteMap() {
-        ((FakeLogger)logger).setTestId("removeExistingVirtualhostFromRouteMap");
+        Farm farm = new Farm(this, queueService);
 
         String messageAdd = new MessageBus()
                                 .setEntity(virtualhostJson)
@@ -185,11 +149,12 @@ public class FarmTest {
         assertThat(isOkAdd).isTrue();
         assertThat(isOkDel).isTrue();
         assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
+        testComplete();
     }
 
     @Test
     public void removeAbsentVirtualhostFromRouteMap() {
-        ((FakeLogger)logger).setTestId("removeAbsentVirtualhostFromRouteMap");
+        Farm farm = new Farm(this, queueService);
 
         String uriStr = String.format("/virtualhost/%s", virtualhostJson);
         String message = new MessageBus()
@@ -202,11 +167,12 @@ public class FarmTest {
 
         assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
         assertThat(isOk).isFalse();
+        testComplete();
     }
 
     @Test
     public void insertNewBackendToExistingVirtualhostSet() {
-        ((FakeLogger)logger).setTestId("insertNewBackendToExistingVirtualhostSet");
+        Farm farm = new Farm(this, queueService);
 
         String messageVirtualhost = new MessageBus()
                                         .setEntity(virtualhostJson)
@@ -226,12 +192,12 @@ public class FarmTest {
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackend).as("isOkBackend").isTrue();
         assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
-
+        testComplete();
     }
 
     @Test
     public void insertNewBackendToAbsentVirtualhostSet() {
-        ((FakeLogger)logger).setTestId("insertNewBackendToAbsentVirtualhostSet");
+        Farm farm = new Farm(this, queueService);
 
         String messageBackend = new MessageBus()
                                     .setParentId(virtualhostId)
@@ -244,11 +210,12 @@ public class FarmTest {
 
         assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
         assertThat(isOk).isFalse();
+        testComplete();
     }
 
     @Test
     public void insertDuplicatedBackendToExistingVirtualhostSet() {
-        ((FakeLogger)logger).setTestId("insertDuplicatedBackendToExistingVirtualhostSet");
+        Farm farm = new Farm(this, queueService);
 
         String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
@@ -275,11 +242,12 @@ public class FarmTest {
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
         assertThat(isOkBackendAddAgain).as("isOkBackendRemove").isFalse();
+        testComplete();
     }
 
     @Test
     public void removeExistingBackendFromExistingVirtualhostSet() throws UnsupportedEncodingException {
-        ((FakeLogger)logger).setTestId("removeExistingBackendFromExistingVirtualhostSet");
+        Farm farm = new Farm(this, queueService);
 
         String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
@@ -306,11 +274,12 @@ public class FarmTest {
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isTrue();
+        testComplete();
     }
 
     @Test
     public void removeBackendFromAbsentVirtualhostSet() throws UnsupportedEncodingException {
-        ((FakeLogger)logger).setTestId("removeBackendFromAbsentVirtualhostSet");
+        Farm farm = new Farm(this, queueService);
 
         String messageBackend = new MessageBus()
                                         .setParentId(virtualhostId)
@@ -323,11 +292,12 @@ public class FarmTest {
 
         assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
         assertThat(isOk).isFalse();
+        testComplete();
     }
 
     @Test
     public void removeAbsentBackendFromVirtualhostSet() throws UnsupportedEncodingException {
-        ((FakeLogger)logger).setTestId("removeAbsentBackendFromVirtualhostSet");
+        Farm farm = new Farm(this, queueService);
 
         String statusStr = "";
         String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
@@ -353,5 +323,6 @@ public class FarmTest {
         assertThat(virtualhost.getBackends(!"0".equals(statusStr)).contains(backendNotExpected)).isFalse();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isFalse();
+        testComplete();
     }
 }

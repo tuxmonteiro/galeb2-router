@@ -35,6 +35,7 @@ public class BackendMap extends MessageToMap<Virtualhost> {
             log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticleId, parentId));
             return false;
         } else {
+
             boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
 
             final Virtualhost vhost = map.get(parentId);

@@ -52,7 +52,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private final String httpHeaderConnection = HttpHeaders.CONNECTION.toString();
     private final IQueueService queueService;
 
-    private Long requestTimeOut = 60000L;
     private Boolean enableChunked = true;
     private Boolean enableAccessLog = false;
 
@@ -85,6 +84,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             return;
         }
         virtualhost.setQueue(queueService);
+        Long requestTimeOut = virtualhost.getRequestTimeOut();
 
         final Long requestTimeoutTimer = vertx.setTimer(requestTimeOut, new Handler<Long>() {
             @Override
@@ -291,11 +291,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     public RouterRequestHandler setEnableAccessLog(Boolean enableAccessLog) {
         this.enableAccessLog = enableAccessLog;
-        return this;
-    }
-
-    public RouterRequestHandler setRequestTimeOut(Long requestTimeOut) {
-        this.requestTimeOut = requestTimeOut;
         return this;
     }
 

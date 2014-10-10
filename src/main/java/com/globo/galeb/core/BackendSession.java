@@ -42,6 +42,7 @@ public class BackendSession {
     private RemoteUser remoteUser           = null;
     private Boolean    keepAlive            = true;
     private String     counterKey           = null;
+    private int        maxPoolSize          = 1;
 
     public BackendSession(final Vertx vertx, String serverHost, String backendId) {
         this.vertx = vertx;
@@ -104,6 +105,7 @@ public class BackendSession {
             if (keepAlive!=null) {
                 client.setKeepAlive(keepAlive);
                 client.setTCPKeepAlive(keepAlive);
+                client.setMaxPoolSize(maxPoolSize);
             }
 
             if (!"".equals(host) || port!=-1) {
@@ -212,6 +214,10 @@ public class BackendSession {
 
     public void setRemoteUser(RemoteUser remoteUser) {
         this.remoteUser = remoteUser;
+    }
+
+    public void setMaxPoolSize(int maxPoolSize) {
+        this.maxPoolSize = maxPoolSize;
     }
 
 }

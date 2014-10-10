@@ -43,15 +43,13 @@ public class RouterVerticle extends Verticle {
 
       final boolean enableChunked = conf.getBoolean("enableChunked", true);
       final boolean enableAccessLog = conf.getBoolean("enableAccessLog", false);
-      final Long requestTimeOut = conf.getLong("requestTimeOut", 60000L);
 
       final Server server = new Server(vertx, container, counter);
 
       final Handler<HttpServerRequest> handlerHttpServerRequest =
               new RouterRequestHandler(vertx, farm, counter, queueService, log)
                       .setEnableChunked(enableChunked)
-                      .setEnableAccessLog(enableAccessLog)
-                      .setRequestTimeOut(requestTimeOut);
+                      .setEnableAccessLog(enableAccessLog);
 
       final Handler<ServerWebSocket> serverWebSocketHandler =
               new FrontendWebSocketHandler(vertx, container, farm);

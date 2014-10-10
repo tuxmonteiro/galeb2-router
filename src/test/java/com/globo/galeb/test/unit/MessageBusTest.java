@@ -51,12 +51,8 @@ public class MessageBusTest {
     public void checkMessage() {
         ((FakeLogger)logger).setTestId("validateBuildMessage");
         String uriStr = "/test";
-        JsonObject properties = new JsonObject();
         JsonObject virtualhostJson = new JsonObject(virtualhostStr);
         JsonObject backendJson = new JsonObject(backendStr);
-
-        virtualhostJson.putObject(IJsonable.jsonPropertiesFieldName, properties);
-        backendJson.putObject(IJsonable.jsonPropertiesFieldName, properties);
 
         String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
 
