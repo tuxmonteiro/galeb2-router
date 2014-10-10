@@ -14,6 +14,7 @@ public class HttpCode {
     public static final int MethotNotAllowed    = HttpResponseStatus.METHOD_NOT_ALLOWED.code(); // 405
     public static final int InternalServerError = HttpResponseStatus.INTERNAL_SERVER_ERROR.code(); // 500
     public static final int BadGateway          = HttpResponseStatus.BAD_GATEWAY.code(); // 502
+    public static final int ServiceUnavailable  = HttpResponseStatus.SERVICE_UNAVAILABLE.code(); // 503
     public static final int GatewayTimeout      = HttpResponseStatus.GATEWAY_TIMEOUT.code(); // 504
 
     private HttpCode() {
