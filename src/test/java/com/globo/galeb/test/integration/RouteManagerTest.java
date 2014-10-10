@@ -15,6 +15,7 @@
 package com.globo.galeb.test.integration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
@@ -90,7 +91,9 @@ public class RouteManagerTest extends UtilTestVerticle {
         JsonObject getExpectedJson = new JsonObject()
             .putString(IJsonable.jsonIdFieldName, "test.localdomain")
             .putObject(IJsonable.jsonPropertiesFieldName,
-                    new JsonObject().putString(Virtualhost.loadBalancePolicyFieldName, new DefaultLoadBalancePolicy().toString()))
+                    new JsonObject().putString(Virtualhost.loadBalancePolicyFieldName, new DefaultLoadBalancePolicy().toString())
+                        .putNumber(Virtualhost.requestTimeOutFieldName, 1000)
+                        .putNumber(Backend.propertyMaxPoolSizeFieldName, 1))
             .putObject(Virtualhost.backendsFieldName, new JsonObject()
                     .putArray(Virtualhost.backendsElegibleFieldName, new JsonArray())
                     .putArray(Virtualhost.backendsFailedFieldName, new JsonArray()));
