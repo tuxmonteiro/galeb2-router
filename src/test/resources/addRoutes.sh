@@ -43,7 +43,7 @@ fi
 
 LOADBALANCE=$5
 if [ "x$LOADBALANCE" == "x" ]; then
-  LOADBALANCE="RandomPolicy"
+  LOADBALANCE="HashPolicy"
 fi
 
 curl -XPOST "http://$ROUTE/virtualhost" -d '
