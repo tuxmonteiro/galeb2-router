@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.core;
 
-import com.globo.galeb.exceptions.BadRequestException;
+import com.globo.galeb.exceptions.AbstractHttpException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
 
@@ -35,12 +35,10 @@ public class ServerResponse {
     private String headerHost = "";
 
     private int exceptionToHttpCode(final Throwable e) {
-        if (e instanceof java.util.concurrent.TimeoutException) {
-            return HttpCode.GatewayTimeout;
-        } else if (e instanceof BadRequestException) {
-            return HttpCode.BadRequest;
+        if (e instanceof AbstractHttpException) {
+            return ((AbstractHttpException)e).getHttpCode();
         } else {
-            return HttpCode.BadGateway;
+            return HttpCode.ServiceUnavailable;
         }
     }
 
