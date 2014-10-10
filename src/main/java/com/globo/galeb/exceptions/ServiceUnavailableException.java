@@ -16,12 +16,12 @@ package com.globo.galeb.exceptions;
 
 import com.globo.galeb.core.HttpCode;
 
-public class BadRequestException extends AbstractHttpException {
+public class ServiceUnavailableException extends AbstractHttpException {
 
-    private static final long serialVersionUID = 4297206544278009367L;
+    private static final long serialVersionUID = 4297206544278009366L;
 
-    public BadRequestException() {
-        super(HttpCode.BadRequest);
+    public ServiceUnavailableException() {
+        super(HttpCode.ServiceUnavailable);
     }
 
 }

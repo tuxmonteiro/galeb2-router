@@ -16,12 +16,12 @@ package com.globo.galeb.exceptions;
 
 import com.globo.galeb.core.HttpCode;
 
-public class BadRequestException extends AbstractHttpException {
+public class GatewayTimeoutException extends AbstractHttpException {
 
-    private static final long serialVersionUID = 4297206544278009367L;
+    private static final long serialVersionUID = 4297206544278009365L;
 
-    public BadRequestException() {
-        super(HttpCode.BadRequest);
+    public GatewayTimeoutException() {
+        super(HttpCode.GatewayTimeout);
     }
 
 }
