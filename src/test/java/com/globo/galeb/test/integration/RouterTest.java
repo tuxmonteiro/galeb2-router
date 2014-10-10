@@ -40,7 +40,7 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterWhenEmpty() {
-        newGet().onPort(9000).addHeader(httpHeaderHost, "www.unknownhost1.com").expectCode(HttpCode.BadRequest).expectBodySize(0).run();
+        newGet().onPort(9000).addHeader(httpHeaderHost, "www.unknownhost1.com").expectCode(HttpCode.NotFound).expectBodySize(0).run();
     }
 
     @Test
@@ -54,7 +54,7 @@ public class RouterTest extends UtilTestVerticle {
 
         Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.BadRequest).expectBodySize(0).after(action1);
+        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.ServiceUnavailable).expectBodySize(0).after(action1);
         action1.run();
 
     }
@@ -70,7 +70,7 @@ public class RouterTest extends UtilTestVerticle {
 
         Action action1 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.BadRequest).expectBodySize(0).after(action1);
+        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.NotFound).expectBodySize(0).after(action1);
         action1.run();
 
     }
@@ -92,7 +92,7 @@ public class RouterTest extends UtilTestVerticle {
 
         Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.BadGateway).expectBodySize(0).after(action2);
+        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.ServiceUnavailable).expectBodySize(0).after(action2);
 
         action1.run();
 
