@@ -32,7 +32,6 @@ public class MessageBusTest {
     private LogDelegate logDelegate;
     private Logger logger;
     private String virtualhostStr;
-    private String virtualhostId;
     private String backendStr;
 
     @Before
@@ -42,23 +41,18 @@ public class MessageBusTest {
         ((FakeLogger)logger).setQuiet(false);
         ((FakeLogger)logger).setTestId("");
 
-        virtualhostId = "test.virtualhost.com";
-        virtualhostStr = new JsonObject().putString(IJsonable.jsonIdFieldName, virtualhostId).encode();
-        backendStr = new JsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00").encode();
+        virtualhostStr = new JsonObject().putString(IJsonable.ID_FIELDNAME, "test.virtualhost.com").encode();
+        backendStr = new JsonObject().putString(IJsonable.ID_FIELDNAME, "0.0.0.0:00").encode();
     }
 
     @Test
     public void checkMessage() {
         ((FakeLogger)logger).setTestId("validateBuildMessage");
         String uriStr = "/test";
-        JsonObject properties = new JsonObject();
         JsonObject virtualhostJson = new JsonObject(virtualhostStr);
         JsonObject backendJson = new JsonObject(backendStr);
 
-        virtualhostJson.putObject(IJsonable.jsonPropertiesFieldName, properties);
-        backendJson.putObject(IJsonable.jsonPropertiesFieldName, properties);
-
-        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
 
 
         String messageWithParentId = new MessageBus()
@@ -71,13 +65,13 @@ public class MessageBusTest {
         JsonObject messageJsonOrig = new JsonObject(messageWithParentId);
         JsonObject messageJson = new JsonObject();
 
-        messageJson.putString(MessageBus.uriFieldName, uriStr);
-        messageJson.putString(MessageBus.parentIdFieldName, virtualhostId);
-        messageJson.putString(MessageBus.entityFieldName, backendStr);
+        messageJson.putString(MessageBus.URI_FIELDNAME, uriStr);
+        messageJson.putString(MessageBus.PARENT_ID_FIELDNAME, virtualhostId);
+        messageJson.putString(MessageBus.ENTITY_FIELDNAME, backendStr);
 
-        assertThat(messageJsonOrig.getString(MessageBus.uriFieldName)).isEqualTo(uriStr);
-        assertThat(messageJsonOrig.getString(MessageBus.parentIdFieldName)).isEqualTo(virtualhostId);
-        assertThat(messageJsonOrig.getString(MessageBus.entityFieldName)).isEqualTo(backendJson.encode());
+        assertThat(messageJsonOrig.getString(MessageBus.URI_FIELDNAME)).isEqualTo(uriStr);
+        assertThat(messageJsonOrig.getString(MessageBus.PARENT_ID_FIELDNAME)).isEqualTo(virtualhostId);
+        assertThat(messageJsonOrig.getString(MessageBus.ENTITY_FIELDNAME)).isEqualTo(backendJson.encode());
 
     }
 

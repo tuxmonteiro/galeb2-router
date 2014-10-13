@@ -32,7 +32,8 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
         }
 
         if (!map.containsKey(entityId)) {
-            map.put(entityId, new Virtualhost(entity, vertx));
+
+            map.put(entityId, new Virtualhost(entity, vertx).setStaticConf(staticConf));
 
             log.info(String.format("[%s] %s added", verticleId, entityId));
             isOk = true;

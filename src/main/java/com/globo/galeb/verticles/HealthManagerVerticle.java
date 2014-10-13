@@ -49,59 +49,66 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
     private Farm farm;
     private IQueueService queueService;
+    private JsonObject conf;
+    private Logger log;
+    private String uriHealthCheck;
+
+    private class CheckBadBackendTaskHandler implements Handler<Long> {
+
+        @Override
+        public void handle(Long schedulerId) {
+            log.info("Checking bad backends...");
+            if (badBackendsMap!=null) {
+                Iterator<String> it = badBackendsMap.keySet().iterator();
+                while (it.hasNext()) {
+                    final String backend = it.next();
+                    String[] hostWithPort = backend.split(":");
+                    String host = hostWithPort[0];
+                    Integer port = Integer.parseInt(hostWithPort[1]);
+                    try {
+                        HttpClient client = vertx.createHttpClient()
+                            .setHost(host)
+                            .setPort(port)
+                            .exceptionHandler(new Handler<Throwable>() {
+                                @Override
+                                public void handle(Throwable event) {}
+                            });
+                        HttpClientRequest cReq = client.get(uriHealthCheck, new Handler<HttpClientResponse>() {
+                                @Override
+                                public void handle(HttpClientResponse cResp) {
+                                    if (cResp!=null && cResp.statusCode()==HttpCode.OK) {
+                                        queueService.publishBackendOk(backend);
+                                    }
+                                }
+                            });
+                        cReq.headers().set(httpHeaderHost, (String) badBackendsMap.get(backend).toArray()[0]);
+                        cReq.exceptionHandler(new Handler<Throwable>() {
+                            @Override
+                            public void handle(Throwable event) {}
+                        });
+                        cReq.end();
+                    } catch (RuntimeException e) {
+                        log.error(e.getMessage());
+                    }
+                }
+            }
+
+        }
+
+    }
 
     @Override
     public void start() {
-        final Logger log = container.logger();
-
-        final JsonObject conf = container.config();
-        final Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
-        final String uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
+        log = container.logger();
+        conf = container.config();
+        uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
+        Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
 
         queueService = new VertxQueueService(vertx.eventBus(),container.logger());
         queueService.registerHealthcheck(this);
         farm = new Farm(this, queueService);
 
-        vertx.setPeriodic(checkInterval, new Handler<Long>() {
-            @Override
-            public void handle(Long timerID) {
-                log.info("Checking bad backends...");
-                if (badBackendsMap!=null) {
-                    Iterator<String> it = badBackendsMap.keySet().iterator();
-                    while (it.hasNext()) {
-                        final String backend = it.next();
-                        String[] hostWithPort = backend.split(":");
-                        String host = hostWithPort[0];
-                        Integer port = Integer.parseInt(hostWithPort[1]);
-                        try {
-                            HttpClient client = vertx.createHttpClient()
-                                .setHost(host)
-                                .setPort(port)
-                                .exceptionHandler(new Handler<Throwable>() {
-                                    @Override
-                                    public void handle(Throwable event) {}
-                                });
-                            HttpClientRequest cReq = client.get(uriHealthCheck, new Handler<HttpClientResponse>() {
-                                    @Override
-                                    public void handle(HttpClientResponse cResp) {
-                                        if (cResp!=null && cResp.statusCode()==HttpCode.Ok) {
-                                            queueService.publishBackendOk(backend);
-                                        }
-                                    }
-                                });
-                            cReq.headers().set(httpHeaderHost, (String) badBackendsMap.get(backend).toArray()[0]);
-                            cReq.exceptionHandler(new Handler<Throwable>() {
-                                @Override
-                                public void handle(Throwable event) {}
-                            });
-                            cReq.end();
-                        } catch (RuntimeException e) {
-                            log.error(e.getMessage());
-                        }
-                    }
-                }
-            }
-        });
+        vertx.setPeriodic(checkInterval, new CheckBadBackendTaskHandler());
         log.info(String.format("Instance %s started", this.toString()));
     }
 
@@ -113,7 +120,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
 
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyElegibleFieldName, true);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
             final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
@@ -131,7 +138,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
 
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyElegibleFieldName, true);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
             final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
@@ -170,10 +177,10 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                         String uriDel = String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8"));
                         String uriAdd = "/backend";
 
-                        backendJson.putBoolean(Backend.propertyElegibleFieldName, !elegible);
+                        backendJson.putBoolean(Backend.ELEGIBLE_FIELDNAME, !elegible);
                         queueService.queueToDel(backendJson, uriDel);
 
-                        backendJson.putBoolean(Backend.propertyElegibleFieldName, elegible);
+                        backendJson.putBoolean(Backend.ELEGIBLE_FIELDNAME, elegible);
                         queueService.queueToAdd(backendJson, uriAdd);
                     }
 

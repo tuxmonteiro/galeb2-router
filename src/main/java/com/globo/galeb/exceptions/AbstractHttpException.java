@@ -14,15 +14,18 @@
  */
 package com.globo.galeb.exceptions;
 
-public class RouterException extends RuntimeException {
+public abstract class AbstractHttpException extends RuntimeException {
 
-    private static final long serialVersionUID = -2881325143281920669L;
+    private static final long serialVersionUID = 8815494516177855852L;
 
-    public RouterException(String message) {
-        super(message);
+    private final int httpCode;
+
+    public AbstractHttpException(int httpCode) {
+        this.httpCode = httpCode;
     }
 
-    public RouterException() {
-        super();
+    public int getHttpCode() {
+        return httpCode;
     }
 }
+

@@ -35,7 +35,8 @@ public class BackendMap extends MessageToMap<Virtualhost> {
             log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticleId, parentId));
             return false;
         } else {
-            boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
+
+            boolean status = entity.getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
 
             final Virtualhost vhost = map.get(parentId);
             if (vhost.addBackend(entity, status)) {
@@ -61,7 +62,7 @@ public class BackendMap extends MessageToMap<Virtualhost> {
                 log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
                 return false;
             }
-            boolean status = entity.getBoolean(Backend.propertyElegibleFieldName, true);
+            boolean status = entity.getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
 
             if ("".equals(entityId)) {
                 log.warn(String.format("[%s] Backend UNDEF", verticleId));

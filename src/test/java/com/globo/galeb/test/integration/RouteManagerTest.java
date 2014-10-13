@@ -15,6 +15,7 @@
 package com.globo.galeb.test.integration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
@@ -35,21 +36,21 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyGetUnknownURI() {
         // Test GET unknown URI
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9090).atUri("/unknownuri").expectCode(HttpCode.NotFound).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
+        newGet().onPort(9090).atUri("/unknownuri").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
     }
 
     @Test
     public void testWhenEmptyGetVHost() {
         // Test GET /virtualhost
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9090).atUri("/virtualhost").expectCode(HttpCode.NotFound).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
+        newGet().onPort(9090).atUri("/virtualhost").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
     }
 
     @Test
     public void testWhenEmptyGetVHostId() {
         // Test GET /virtualhost/id
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9090).atUri("/virtualhost/1234").expectCode(HttpCode.NotFound).expectBodyJson("{\"status_message\": \"Not Found\"}").run();;
+        newGet().onPort(9090).atUri("/virtualhost/1234").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();;
     }
 
     @Ignore // TODO: Ignore "properties"
@@ -75,12 +76,12 @@ public class RouteManagerTest extends UtilTestVerticle {
     // Test POST /virtualhost
     @Test
     public void testWhenEmptyPostVHost() {
-        int expectedStatusCode = HttpCode.Ok;
+        int expectedStatusCode = HttpCode.OK;
         String expectedStatusMessage = HttpResponseStatus.valueOf(expectedStatusCode).reasonPhrase();
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(IJsonable.jsonIdFieldName, vhostId);
+                                    .putString(IJsonable.ID_FIELDNAME, vhostId);
 
         JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
 
@@ -88,12 +89,14 @@ public class RouteManagerTest extends UtilTestVerticle {
         Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
         JsonObject getExpectedJson = new JsonObject()
-            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
-            .putObject(IJsonable.jsonPropertiesFieldName,
-                    new JsonObject().putString(Virtualhost.loadBalancePolicyFieldName, new DefaultLoadBalancePolicy().toString()))
-            .putObject(Virtualhost.backendsFieldName, new JsonObject()
-                    .putArray(Virtualhost.backendsElegibleFieldName, new JsonArray())
-                    .putArray(Virtualhost.backendsFailedFieldName, new JsonArray()));
+            .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
+            .putObject(IJsonable.PROPERTIES_FIELDNAME,
+                    new JsonObject().putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, new DefaultLoadBalancePolicy().toString())
+                        .putNumber(Virtualhost.REQUEST_TIMEOUT_FIELDNAME, 1000)
+                        .putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, 1))
+            .putObject(Virtualhost.BACKENDS_FIELDNAME, new JsonObject()
+                    .putArray(Virtualhost.BACKENDS_ELIGIBLE_FIELDNAME, new JsonArray())
+                    .putArray(Virtualhost.BACKENDS_FAILED_FIELDNAME, new JsonArray()));
 
         newGet().onPort(9090).atUri("/virtualhost/test.localdomain").expectBodyJson(getExpectedJson).after(action1);
 

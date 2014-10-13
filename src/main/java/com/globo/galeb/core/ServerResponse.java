@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.core;
 
-import com.globo.galeb.exceptions.BadRequestException;
+import com.globo.galeb.exceptions.AbstractHttpException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
 
@@ -25,6 +25,8 @@ import org.vertx.java.core.logging.Logger;
 
 public class ServerResponse {
 
+    private static final String UNDEF = "UNDEF";
+
     private final HttpServerRequest req;
     private final Logger log;
     private final ICounter counter;
@@ -33,14 +35,13 @@ public class ServerResponse {
     private String message = "";
     private String id = "";
     private String headerHost = "";
+    private String backendId = "";
 
     private int exceptionToHttpCode(final Throwable e) {
-        if (e instanceof java.util.concurrent.TimeoutException) {
-            return HttpCode.GatewayTimeout;
-        } else if (e instanceof BadRequestException) {
-            return HttpCode.BadRequest;
+        if (e instanceof AbstractHttpException) {
+            return ((AbstractHttpException)e).getHttpCode();
         } else {
-            return HttpCode.BadGateway;
+            return HttpCode.SERVICE_UNAVAILABLE;
         }
     }
 
@@ -60,6 +61,11 @@ public class ServerResponse {
         return this;
     }
 
+    public ServerResponse setBackendId(String backendId) {
+        this.backendId = backendId;
+        return this;
+    }
+
     public ServerResponse setHeaderHost(String headerHost) {
         this.headerHost = headerHost;
         return this;
@@ -71,10 +77,8 @@ public class ServerResponse {
     }
 
     public ServerResponse setStatusCode(Integer code) {
-
         resp.setStatusCode(code);
-        String message = HttpCode.getMessage(code);
-        resp.setStatusMessage(message);
+        resp.setStatusMessage(HttpCode.getMessage(code));
         return this;
     }
 
@@ -90,15 +94,15 @@ public class ServerResponse {
 
         end();
 
-        String message = String.format("FAIL with HttpStatus %d%s: %s",
+        String logMessage = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
-                !"".equals(headerHost) ? " (virtualhost: "+headerHost+")" : "",
+                !"".equals(headerHost) ? String.format(" (virtualhost: %s)", headerHost) : "",
                 HttpCode.getMessage(statusCode, false));
 
-        if (statusCode>=HttpCode.InternalServerError) {
-            log.error(message);
+        if (statusCode>=HttpCode.INTERNAL_SERVER_ERROR) {
+            log.error(logMessage);
         } else {
-            log.warn(message);
+            log.warn(logMessage);
         }
 
         closeResponse();
@@ -121,52 +125,51 @@ public class ServerResponse {
             } else {
                 resp.end();
             }
-        } catch (RuntimeException e) {
-            if (e instanceof java.lang.IllegalStateException) {
-                // Response has already been written ? Ignore.
-                log.debug(e.getMessage());
-            } else {
-                log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e.getMessage()));
-            }
+
+        } catch (java.lang.IllegalStateException e) {
+            // Response has already been written ? Ignore.
+            log.debug(e.getMessage());
+
+        } catch (RuntimeException e2) {
+            log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e2.getMessage()));
             return;
+
         }
+
     }
 
     public void end() {
         logRequest(enableAccessLog);
-        sendRequestCount(id, resp.getStatusCode());
+        sendRequestCount(resp.getStatusCode());
         realEnd(message);
     }
 
     public void logRequest(boolean enable) {
 
         if (enableAccessLog) {
+
             Integer code = resp.getStatusCode();
-            String message = "";
-            int codeFamily = code.intValue()/100;
-            // TODO: Dependency Injection
             String httpLogMessage = new NcsaLogExtendedFormatter()
-                                        .setRequestData(req, message)
+                                        .setRequestData(req)
                                         .getFormatedLog();
-            switch (codeFamily) {
-                case 5: // SERVER_ERROR
-                    log.error(httpLogMessage);
-                    break;
-                case 0: // OTHER,
-                case 1: // INFORMATIONAL
-                case 2: // SUCCESSFUL
-                case 3: // REDIRECTION
-                case 4: // CLIENT_ERROR
-                default:
-                    log.info(httpLogMessage);
-                    break;
+
+            if (HttpCode.isServerError(code.intValue())) {
+                log.error(httpLogMessage);
+            } else {
+                log.info(httpLogMessage);
             }
+
         }
     }
 
-    public void sendRequestCount(String id, int code) {
-        if (counter!=null && !"".equals(id)) {
-            counter.httpCode(id, code);
+    public void sendRequestCount(int code) {
+        if (counter!=null) {
+            if (!"".equals(headerHost) && !UNDEF.equals(headerHost) &&
+                    !"".equals(backendId) && !UNDEF.equals(backendId)) {
+                counter.httpCode(headerHost, backendId, code);
+            } else if (!"".equals(id) && !UNDEF.equals(id)) {
+                counter.httpCode(id, code);
+            }
         }
     }
 

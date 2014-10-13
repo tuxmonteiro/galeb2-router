@@ -55,7 +55,7 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
                 String uri = req.uri();
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
-                if (statusCode==HttpCode.Ok) {
+                if (statusCode==HttpCode.OK) {
                     SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
                     queueService.queueToAdd(bodyJson, uri);
                 }

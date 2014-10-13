@@ -30,7 +30,6 @@ import org.junit.Test;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.CaseInsensitiveMultiMap;
-//import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpVersion;
 import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.java.platform.Container;
@@ -39,7 +38,6 @@ import org.vertx.java.platform.Verticle;
 public class RouterRequestHandlerTest {
 
     private RouterRequestHandler routerRequestHandler;
-//    private HttpServerRequest httpServerRequest;
     private Verticle verticle;
     private Vertx vertx;
     private Container container;
@@ -49,7 +47,6 @@ public class RouterRequestHandlerTest {
 
     @Before
     public void setUp() {
-//        httpServerRequest = mock(HttpServerRequest.class);
         verticle = mock(Verticle.class);
         vertx = mock(Vertx.class);
         container = mock(Container.class);
@@ -64,7 +61,7 @@ public class RouterRequestHandlerTest {
         when(verticle.getContainer()).thenReturn(container);
         when(verticle.getContainer().logger()).thenReturn(logger);
 
-        routerRequestHandler = new RouterRequestHandler(vertx, container, farm, counter, queueService);
+        routerRequestHandler = new RouterRequestHandler(vertx, farm, counter, queueService, logger);
     }
 
     @Test

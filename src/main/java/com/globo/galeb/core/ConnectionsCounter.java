@@ -1,3 +1,17 @@
+/*
+ * Copyright (c) 2014 Globo.com - ATeam
+ * All rights reserved.
+ *
+ * This source is subject to the Apache License, Version 2.0.
+ * Please see the LICENSE file for more information.
+ *
+ * Authors: See AUTHORS file
+ *
+ * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
+ * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
+ * PARTICULAR PURPOSE.
+ */
 package com.globo.galeb.core;
 
 import java.util.HashMap;
@@ -15,8 +29,8 @@ import com.globo.galeb.core.bus.IQueueService;
 
 public class ConnectionsCounter implements ICallbackConnectionCounter {
 
-    public static final String numConnectionFieldName  = "numConnections";
-    public static final String uuidFieldName           = "uuid";
+    public static final String NUM_CONNECTIONS_FIELDNAME  = "numConnections";
+    public static final String UUID_FIELDNAME             = "uuid";
 
     private final Vertx vertx;
     private final IQueueService queueService;
@@ -56,26 +70,30 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
 
     @Override
     public void callbackGlobalConnectionsInfo(JsonObject message) {
-        String uuid = message.getString(uuidFieldName);
+        String uuid = message.getString(UUID_FIELDNAME);
         if (uuid != myUUID) {
-            int numConnections = message.getInteger(numConnectionFieldName);
+            int numConnections = message.getInteger(NUM_CONNECTIONS_FIELDNAME);
             globalConnections.put(uuid, numConnections);
         }
     }
 
-    public boolean addConnection(String connectionId) {
-        newConnection = connections.put(connectionId, System.currentTimeMillis()) == null;
+    public boolean addConnection(RemoteUser remoteUser) {
+        if (remoteUser==null) {
+            return false;
+        }
+        String remoteUserId = remoteUser.toString();
+        newConnection = connections.put(remoteUserId, System.currentTimeMillis()) == null;
         activeScheduler();
         return newConnection;
     }
 
-    public boolean addConnection(String host, String port) {
-        String connectionId = String.format("%s:%s", host, port);
-        return addConnection(connectionId);
+    public boolean addConnection(String host, Integer port) {
+        RemoteUser remoteUser = new RemoteUser(host, port);
+        return addConnection(remoteUser);
     }
 
-    public boolean removeConnection(String connectionId) {
-        return connections.remove(connectionId) != null;
+    public boolean removeConnection(String remoteUserId) {
+        return connections.remove(remoteUserId) != null;
     }
 
     public void clearConnectionsMap() {
@@ -93,13 +111,8 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         return connections.size();
     }
 
-    public boolean isNewConenction(String remoteId) {
+    public boolean isNewConnection() {
         return newConnection;
-    }
-
-    public boolean isNewConnection(String remoteIP, String remotePort) {
-        String remoteId = String.format("%s:%s", remoteIP, remotePort);
-        return isNewConenction(remoteId);
     }
 
     public Long getSchedulerDelay() {
@@ -112,15 +125,6 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
             cancelScheduler();
             activeScheduler();
         }
-        return this;
-    }
-
-    public Long getConnectionMapTimeout() {
-        return connectionMapTimeout;
-    }
-
-    public ConnectionsCounter setConnectionMapTimeout(Long connectionMapTimeout) {
-        this.connectionMapTimeout = connectionMapTimeout;
         return this;
     }
 
@@ -140,10 +144,10 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
 
     private void notifyNumConnections() {
         Integer localConnections = getInstanceActiveConnections();
-        if (localConnections>0) {
+        if (localConnections>0 && queueService!=null) {
             SafeJsonObject myConnections = new SafeJsonObject();
-            myConnections.putString(uuidFieldName, myUUID);
-            myConnections.putNumber(numConnectionFieldName, localConnections);
+            myConnections.putString(UUID_FIELDNAME, myUUID);
+            myConnections.putNumber(NUM_CONNECTIONS_FIELDNAME, localConnections);
             queueService.publishBackendConnections(queueActiveConnections, myConnections);
         }
     }
@@ -182,19 +186,25 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     }
 
     public void publishZero() {
-        SafeJsonObject myConnections = new SafeJsonObject();
-        myConnections.putString(uuidFieldName, myUUID);
-        myConnections.putNumber(numConnectionFieldName, 0);
-        queueService.publishActiveConnections(queueActiveConnections, myConnections);
+        if (queueService!=null) {
+            SafeJsonObject myConnections = new SafeJsonObject();
+            myConnections.putString(UUID_FIELDNAME, myUUID);
+            myConnections.putNumber(NUM_CONNECTIONS_FIELDNAME, 0);
+            queueService.publishActiveConnections(queueActiveConnections, myConnections);
+        }
     }
 
     public void registerConnectionsCounter() {
-        queueService.registerConnectionsCounter(this, queueActiveConnections);
+        if (queueService!=null) {
+            queueService.registerConnectionsCounter(this, queueActiveConnections);
+        }
     }
 
     public void unregisterConnectionsCounter() {
-        publishZero();
-        queueService.unregisterConnectionsCounter(this, queueActiveConnections);
+        if (queueService!=null) {
+            publishZero();
+            queueService.unregisterConnectionsCounter(this, queueActiveConnections);
+        }
     }
 
 }

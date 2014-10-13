@@ -14,9 +14,7 @@
  */
 package com.globo.galeb.core.bus;
 
-import static com.globo.galeb.core.bus.IQueueService.ACTION.ADD;
-import static com.globo.galeb.core.bus.IQueueService.ACTION.DEL;
-import static com.globo.galeb.core.bus.IQueueService.ACTION.SET_VERSION;
+import static com.globo.galeb.core.bus.IQueueService.ACTION.*;
 
 import java.io.UnsupportedEncodingException;
 
@@ -32,7 +30,7 @@ import com.globo.galeb.core.SafeJsonObject;
 
 public class VertxQueueService implements IQueueService {
 
-    public final EventBus eb;
+    private final EventBus eb;
     private final Logger log;
 
     public VertxQueueService(final EventBus eb, final Logger log) {
@@ -74,9 +72,10 @@ public class VertxQueueService implements IQueueService {
             }
             return;
         }
+
         json.removeField("version");
 
-        String parentId = json.getString(MessageBus.parentIdFieldName, "");
+        String parentId = json.getString(MessageBus.PARENT_ID_FIELDNAME, "");
 
         MessageBus messageBus = new MessageBus()
                                     .setUri(uri)
@@ -149,12 +148,12 @@ public class VertxQueueService implements IQueueService {
     }
 
     @Override
-    public void publishBackendFail(String backend) {
+    public void publishBackendFail(String backendId) {
         if (eb==null) {
             return;
         }
-        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend);
-        log.info(String.format("Backend %s Fail. disabling it", backend));
+        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId);
+        log.info(String.format("Backend %s Fail. disabling it", backendId));
     }
 
     @Override
@@ -290,6 +289,32 @@ public class VertxQueueService implements IQueueService {
         if (eb!=null) {
             eb.registerHandler(SET_VERSION.toString(), queueVersionHandler);
             logQueueRegistered(starter.toString(), SET_VERSION.toString());
+        } else {
+            logEventBusNull();
+        }
+    }
+
+    @Override
+    public void registerUpdateSharedData(final Object starter,
+            final ICallbackSharedData callbackSharedData) {
+        Handler<Message<String>> queueUpdateSharedData = new Handler<Message<String>>() {
+            @Override
+            public void handle(Message<String> ignore) {
+                callbackSharedData.updateSharedData();
+            }
+        };
+        if (eb!=null) {
+            eb.registerLocalHandler(SHARED_DATA.toString(), queueUpdateSharedData);
+            logQueueRegistered(starter.toString(), SHARED_DATA.toString());
+        } else {
+            logEventBusNull();
+        }
+    }
+
+    @Override
+    public void updateSharedData() {
+        if (eb!=null) {
+            eb.publish(SHARED_DATA.toString(), "update");
         } else {
             logEventBusNull();
         }

@@ -57,7 +57,7 @@ public class VirtualHostAssert extends AbstractAssert<VirtualHostAssert, Virtual
     public VirtualHostAssert containsBackend(JsonObject backend, boolean backendOk) {
         isNotNull();
         if (!actual.getBackends(backendOk).contains(new Backend(backend, null))) {
-            failWithMessage("%s not found at %s", backend.getString(IJsonable.jsonIdFieldName), actual.getVirtualhostName());
+            failWithMessage("%s not found at %s", backend.getString(IJsonable.ID_FIELDNAME), actual.getVirtualhostName());
         }
         return this;
     }
@@ -65,7 +65,7 @@ public class VirtualHostAssert extends AbstractAssert<VirtualHostAssert, Virtual
     public VirtualHostAssert doesNotContainsBackend(JsonObject backend, boolean backendOk) {
         isNotNull();
         if (actual.getBackends(backendOk).contains(new Backend(backend, null))) {
-            failWithMessage("%s found at %s", backend.getString(IJsonable.jsonIdFieldName), actual.getVirtualhostName());
+            failWithMessage("%s found at %s", backend.getString(IJsonable.ID_FIELDNAME), actual.getVirtualhostName());
         }
         return this;
     }

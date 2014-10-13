@@ -23,7 +23,7 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.http.HttpClientResponse;
-import org.vertx.java.core.http.HttpServerRequest;
+import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.streams.Pump;
 
@@ -31,16 +31,15 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     private final Vertx vertx;
     private final Long requestTimeoutTimer;
-    private final HttpServerRequest sRequest;
+    private final HttpServerResponse httpServerResponse;
     private final ServerResponse sResponse;
-    private final Backend backend;
+    private final String backendId;
     private final ICounter counter;
     private final Logger log;
 
     private String headerHost = "UNDEF";
     private Long initialRequestTime = null;
     private boolean connectionKeepalive = true;
-    private boolean backendForceKeepAlive = true;
 
     @Override
     public void handle(final HttpClientResponse cResponse) {
@@ -53,35 +52,26 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         sResponse.setStatusCode(statusCode);
         sResponse.setHeaders(cResponse.headers());
         if (!connectionKeepalive) {
-            sRequest.response().headers().set("Connection", "close");
+            httpServerResponse.headers().set("Connection", "close");
         }
 
         // Pump cResponse => sResponse
-        Pump.createPump(cResponse, sRequest.response()).start();
+        Pump.createPump(cResponse, httpServerResponse).start();
 
         cResponse.endHandler(new VoidHandler() {
             @Override
             public void handle() {
 
-                if (headerHost!=null) {
-                    if (initialRequestTime!=null) {
-                        counter.requestTime(getKey(), initialRequestTime);
-                    }
+                if (!"UNDEF".equals(headerHost) && initialRequestTime!=null) {
+                    counter.requestTime(headerHost, backendId, initialRequestTime);
                 }
 
                 sResponse.setStatusCode(statusCode)
-                    .setId(getKey())
+                    .setHeaderHost(headerHost)
+                    .setBackendId(backendId)
                     .end();
 
-                if (connectionKeepalive) {
-                    if (backend.isKeepAliveLimit()) {
-                        backend.close();
-                        sResponse.closeResponse();
-                    }
-                } else {
-                    if (!backendForceKeepAlive) {
-                        backend.close();
-                    }
+                if (!connectionKeepalive) {
                     sResponse.closeResponse();
                 }
             }
@@ -90,19 +80,13 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         cResponse.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
-                log.error(String.format("host+backend: %s, message: %s", getKey(), event.getMessage()));
-                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend.toString() );
-                sResponse.setHeaderHost(getHeaderHost())
-                    .setId(getKey())
+                log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
+                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId );
+                sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
-                backend.close();
             }
         });
 
-    }
-
-    public String getHeaderHost() {
-        return headerHost;
     }
 
     public RouterResponseHandler setHeaderHost(String headerHost) {
@@ -128,46 +112,40 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         return this;
     }
 
-    public boolean isBackendForceKeepAlive() {
-        return backendForceKeepAlive;
-    }
-
-    public RouterResponseHandler setBackendForceKeepAlive(boolean backendForceKeepAlive) {
-        this.backendForceKeepAlive = backendForceKeepAlive;
-        return this;
-    }
-
-    private String getKey() {
-        return String.format("%s.%s",
-                headerHost!=null?headerHost.replaceAll("[^\\w]", "_"):"UNDEF",
-                backend!=null?backend.toString().replaceAll("[^\\w]", "_"):"UNDEF");
-    }
-
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,
             final Long requestTimeoutTimer,
-            final HttpServerRequest sRequest,
+            final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend) {
-        this(vertx, log, requestTimeoutTimer, sRequest, sResponse, backend, null);
+        this(vertx, log, requestTimeoutTimer, httpServerResponse, sResponse, backend, null);
     }
 
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,
             final Long requestTimeoutTimer,
-            final HttpServerRequest sRequest,
+            final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend,
             final ICounter counter) {
         this.vertx = vertx;
         this.requestTimeoutTimer = requestTimeoutTimer;
-        this.sRequest = sRequest;
+        this.httpServerResponse = httpServerResponse;
         this.sResponse = sResponse;
-        this.backend = backend;
+        this.backendId = backend.toString();
         this.log = log;
         this.counter = counter;
+
+        this.httpServerResponse.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                String message = String.format("[%s] %s", this, event.getMessage());
+                log.error(message);
+            }
+        });
+
     }
 
 }

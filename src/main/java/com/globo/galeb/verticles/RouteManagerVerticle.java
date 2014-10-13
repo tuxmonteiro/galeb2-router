@@ -40,13 +40,13 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
     private static String routeManagerId = "route_manager";
 
-    public Logger log;
+    private Logger log;
     private Server server;
     private String httpServerName = null;
     private Farm farm;
     private IQueueService queueService;
 
-    private final String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
+    private static final String URI_PATTERN_REGEX = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
     @Override
     public void start() {
@@ -77,19 +77,17 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         return;
     };
 
-    private void startHttpServer(final SafeJsonObject serverConf) throws RuntimeException {
-        final Logger log = this.getContainer().logger();
-        final Server server = this.server;
+    private void startHttpServer(final SafeJsonObject serverConf) {
 
         RouteMatcher routeMatcher = new RouteMatcher();
 
-        routeMatcher.getWithRegEx(patternRegex, new GetMatcherHandler(routeManagerId, log, farm));
+        routeMatcher.getWithRegEx(URI_PATTERN_REGEX, new GetMatcherHandler(routeManagerId, log, farm));
 
         routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, queueService));
 
-        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, queueService));
+        routeMatcher.deleteWithRegEx(URI_PATTERN_REGEX, new DeleteMatcherHandler(routeManagerId, log, queueService));
 
-        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, queueService));
+        routeMatcher.putWithRegEx(URI_PATTERN_REGEX, new PutMatcherHandler(routeManagerId, log, queueService));
 
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
 
@@ -102,7 +100,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                     Server.setHttpServerName(httpServerName);
                 }
 
-                int statusCode = HttpCode.BadRequest;
+                int statusCode = HttpCode.BAD_REQUEST;
                 serverResponse.setStatusCode(statusCode)
                     .setMessage(HttpCode.getMessage(statusCode, true))
                     .setId(routeManagerId)

@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 
@@ -34,7 +35,6 @@ import org.vertx.java.platform.Container;
 public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
     private final Vertx vertx;
-//    private final JsonObject conf;
     private final Logger log;
     private Farm farm;
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
@@ -44,7 +44,6 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
             final Container container,
             final Farm farm) {
         this.vertx = vertx;
-//        this.conf = container.config();
         this.farm = farm;
         this.log = container.logger();
     }
@@ -93,10 +92,9 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
         String backendId = backend.toString();
         log.info(backend);
 
-        String remoteIP = serverWebSocket.remoteAddress().getAddress().getHostAddress();
-        String remotePort = String.format("%d", serverWebSocket.remoteAddress().getPort());
+        RemoteUser remoteUser = new RemoteUser(serverWebSocket.remoteAddress());
 
-        final HttpClient httpClient = backend.connect(remoteIP, remotePort);
+        final HttpClient httpClient = backend.setRemoteUser(remoteUser).connect();
         final BackendWebSocketHandler backendWebSocketHandler =
                 new BackendWebSocketHandler(vertx, log, backendId, serverWebSocket);
 

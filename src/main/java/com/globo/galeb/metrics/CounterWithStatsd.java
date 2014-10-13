@@ -30,6 +30,10 @@ import org.vertx.java.core.logging.Logger;
 public class CounterWithStatsd implements ICounter {
     private final StatsdClient statsdClient;
 
+    private String cleanupString(String aString, String strDefault) {
+        return !"".equals(aString)?aString.replaceAll("[^\\w]", "_"):strDefault;
+    }
+
     public CounterWithStatsd(final JsonObject conf, final Vertx vertx, final Logger log) {
         if (conf.getBoolean(CONF_STATSD_ENABLE, false)) {
             String statsdHost = conf.getString(CONF_STATSD_HOST,"127.0.0.1");
@@ -48,6 +52,11 @@ public class CounterWithStatsd implements ICounter {
             statsdClient.send(TypeStatsdMessage.TIME,
                     String.format("%s.httpCode%d:%d", key, code, 1));
         }
+    }
+
+    @Override
+    public void httpCode(String virtualhostId, String backendId, Integer code) {
+        httpCode(cleanupString(virtualhostId, backendId), code);
     }
 
     @Override
@@ -88,6 +97,12 @@ public class CounterWithStatsd implements ICounter {
     }
 
     @Override
+    public void requestTime(String virtualhostId, String backendId,
+            Long initialRequestTime) {
+        requestTime(cleanupString(virtualhostId, backendId), initialRequestTime);
+    }
+
+    @Override
     public void sendActiveSessions(String key, Long initialRequestTime) {
         if (statsdClient!=null && key!=null && !("".equals(key))) {
             statsdClient.send(TypeStatsdMessage.COUNT, String.format("%s.active:%d", key, 1));
@@ -95,8 +110,7 @@ public class CounterWithStatsd implements ICounter {
     }
 
     @Override
-    public String cleanupString(String aString, String strDefault) {
-        return !"".equals(aString)?aString.replaceAll("[^\\w]", "_"):strDefault;
+    public void sendActiveSessions(String virtualhostId, String backendId, Long initialRequestTime) {
+        sendActiveSessions(cleanupString(virtualhostId, backendId), initialRequestTime);
     }
-
 }

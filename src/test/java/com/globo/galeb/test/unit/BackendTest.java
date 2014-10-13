@@ -19,7 +19,7 @@ import static org.vertx.testtools.VertxAssert.testComplete;
 import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.ConnectionsCounter;
+import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.bus.IQueueService;
 
 import org.junit.Test;
@@ -52,59 +52,12 @@ public class BackendTest extends TestVerticle {
     }
 
     @Test
-    public void isKeepAliveLimitMaxRequest() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-
-        backendTested.setKeepAliveMaxRequest(1L);
-        boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
-
-        assertThat(isKeepAliveLimitExceeded).isTrue();
-
-        testComplete();
-    }
-
-    @Test
-    public void isNotKeepAliveLimitMaxRequest() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-
-        backendTested.setKeepAliveMaxRequest(2L);
-        boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
-
-        assertThat(isKeepAliveLimitExceeded).isFalse();
-
-        testComplete();
-    }
-
-    @Test
-    public void isKeepAliveLimitTimeOut() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-
-        backendTested.setKeepAliveTimeOut(-1L);
-        boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
-
-        assertThat(isKeepAliveLimitExceeded).isTrue();
-
-        testComplete();
-    }
-
-    @Test
-    public void isNotKeepAliveLimitTimeOut() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-
-        backendTested.setKeepAliveTimeOut(86400000L);
-        boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
-
-        assertThat(isKeepAliveLimitExceeded).isFalse();
-
-        testComplete();
-    }
-
-    @Test
     public void connectReturnNotNull() {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        HttpClient httpClient = backendTested.connect("127.0.0.1", "0");
+        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+        HttpClient httpClient = backendTested.connect();
         assertThat(httpClient).isNotNull();
 
         testComplete();
@@ -115,7 +68,8 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.connect("127.0.0.1", "0");
+        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+        backendTested.connect();
 
         assertThat(backendTested.isClosed()).isFalse();
 
@@ -127,7 +81,8 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.connect("127.0.0.1", "0");
+        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+        backendTested.connect();
         backendTested.close();
 
         assertThat(backendTested.isClosed()).isTrue();
@@ -141,10 +96,11 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
+            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
+            backendTested.connect();
         }
 
-        assertThat(backendTested.getSessionController().getActiveConnections()).isEqualTo(1000);
+        assertThat(backendTested.getActiveConnections()).isEqualTo(1000);
 
         testComplete();
     }
@@ -155,94 +111,11 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect("127.0.0.1", "0");
+            backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
+            backendTested.connect();
         }
 
-        assertThat(backendTested.getSessionController().getActiveConnections()).isEqualTo(1);
-
-        testComplete();
-    }
-
-    @Test
-    public void zeroActiveConnectionsBecauseMaxRequestsExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-        backendTested.setQueueService(queueService);
-
-        backendTested.setKeepAliveMaxRequest(1000L);
-        for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
-            boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
-            if (isKeepAliveLimitExceeded) {
-                backendTested.close();
-                break;
-            }
-        }
-
-        ConnectionsCounter connectionsCounter = backendTested.getSessionController();
-        if (connectionsCounter!=null) {
-            assertThat(connectionsCounter.getActiveConnections()).isEqualTo(0);
-        }
-
-        testComplete();
-    }
-
-    @Test
-    public void multiplesActiveConnectionsBecauseMaxRequestsNotExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-        backendTested.setQueueService(queueService);
-
-        backendTested.setKeepAliveMaxRequest(1001L);
-        for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
-            boolean isKeepAliveLimitExceeded = backendTested.isKeepAliveLimit();
-            if (isKeepAliveLimitExceeded) {
-                backendTested.close();
-                break;
-            }
-        }
-
-        assertThat(backendTested.getSessionController().getActiveConnections()).isNotEqualTo(0);
-
-        testComplete();
-    }
-
-    @Test
-    public void zeroActiveConnectionsBecauseTimeoutExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-        backendTested.setKeepAliveTimeOut(-1L);
-        backendTested.setQueueService(queueService);
-
-        for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
-            if (backendTested.isKeepAliveLimit()) {
-                backendTested.close();
-                break;
-            }
-        }
-
-        ConnectionsCounter connectionsCounter = backendTested.getSessionController();
-        if (connectionsCounter!=null) {
-            assertThat(connectionsCounter.getActiveConnections()).isEqualTo(0);
-        }
-
-        testComplete();
-    }
-
-    @Test
-    public void multiplesActiveConnectionsBecauseTimeoutNotExceeded() {
-        Backend backendTested = new Backend("127.0.0.1:0", vertx);
-        backendTested.setQueueService(queueService);
-        backendTested.setKeepAliveTimeOut(86400000L); // one day
-
-        for (int counter=0;counter < 1000; counter++) {
-            backendTested.connect(String.format("%s", counter), "0");
-            if (backendTested.isKeepAliveLimit()) {
-                backendTested.close();
-                break;
-            }
-        }
-
-        assertThat(backendTested.getSessionController().getActiveConnections()).isNotEqualTo(0);
+        assertThat(backendTested.getActiveConnections()).isEqualTo(1);
 
         testComplete();
     }

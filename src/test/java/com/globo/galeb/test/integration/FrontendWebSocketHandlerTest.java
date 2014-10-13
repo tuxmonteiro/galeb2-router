@@ -115,8 +115,8 @@ public class FrontendWebSocketHandlerTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
-        JsonObject backend = new JsonObject().putString(IJsonable.jsonIdFieldName, "127.0.0.1:8888");
-        JsonObject vhostJson = new JsonObject().putString(IJsonable.jsonIdFieldName, "test.localdomain")
+        JsonObject backend = new JsonObject().putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+        JsonObject vhostJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "test.localdomain")
                 .putArray("backends", new JsonArray().addObject(backend));
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 

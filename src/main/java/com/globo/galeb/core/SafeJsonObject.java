@@ -22,7 +22,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.json.impl.Json;
 
-public class SafeJsonObject extends JsonObject {
+public class SafeJsonObject extends JsonObject implements Cloneable {
 
     private static final long serialVersionUID = 528808294183451684L;
 
@@ -42,11 +42,11 @@ public class SafeJsonObject extends JsonObject {
     }
 
     public SafeJsonObject(JsonObject json) {
-        super(json.encode());
+        this(json.encode());
     }
 
     public SafeJsonObject(SafeJsonObject json) {
-        super(json.encode());
+        this(json.encode());
     }
 
     @Override
@@ -83,6 +83,10 @@ public class SafeJsonObject extends JsonObject {
 
     @Override
     public SafeJsonObject clone() {
+        try {
+            super.clone();
+        } catch (CloneNotSupportedException ignore) {}
+
         return new SafeJsonObject(this.encode());
     }
 

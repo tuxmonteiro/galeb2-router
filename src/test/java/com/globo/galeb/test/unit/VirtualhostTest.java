@@ -46,10 +46,10 @@ public class VirtualhostTest {
         requestData = new RequestData();
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(Virtualhost.loadBalancePolicyFieldName, RandomPolicy.class.getSimpleName());
+            .putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, RandomPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(IJsonable.jsonIdFieldName, virtualhostName)
-            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.ID_FIELDNAME, virtualhostName)
+            .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         backend = "0.0.0.0:0";

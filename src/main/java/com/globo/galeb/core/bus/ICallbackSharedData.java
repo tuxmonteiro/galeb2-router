@@ -12,22 +12,10 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
  * PARTICULAR PURPOSE.
  */
-package com.globo.galeb.loadbalance;
+package com.globo.galeb.core.bus;
 
-import java.util.List;
+public interface ICallbackSharedData {
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.RequestData;
-
-public interface ILoadBalancePolicy {
-
-    public static final String CACHE_TIMEOUT_FIELDNAME = "cacheTimeout";
-
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData);
-
-    public boolean isDefault();
-
-    @Override
-    public String toString();
+    public void updateSharedData();
 
 }

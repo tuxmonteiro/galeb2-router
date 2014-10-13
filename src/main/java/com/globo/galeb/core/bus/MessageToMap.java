@@ -34,6 +34,7 @@ public abstract class MessageToMap<T> {
     protected Logger log            = null;
     protected String verticleId     = "";
     protected Vertx vertx           = null;
+    protected String staticConf     = "";
 
     public MessageToMap<T> setVerticleId(String id) {
         this.verticleId = id;
@@ -84,6 +85,11 @@ public abstract class MessageToMap<T> {
 
     public boolean change() {
         return false;
+    }
+
+    public MessageToMap<T> staticConf(String jsonConf) {
+        this.staticConf = jsonConf;
+        return this;
     }
 
 }

@@ -44,7 +44,7 @@ public class RouterVerticle extends Verticle {
       final Server server = new Server(vertx, container, counter);
 
       final Handler<HttpServerRequest> handlerHttpServerRequest =
-              new RouterRequestHandler(vertx, container, farm, counter, queueService);
+              new RouterRequestHandler(vertx, farm, counter, queueService, log);
 
       final Handler<ServerWebSocket> serverWebSocketHandler =
               new FrontendWebSocketHandler(vertx, container, farm);

@@ -14,12 +14,14 @@
  */
 package com.globo.galeb.exceptions;
 
-public class BadRequestException extends RuntimeException {
+import com.globo.galeb.core.HttpCode;
+
+public class BadRequestException extends AbstractHttpException {
 
     private static final long serialVersionUID = 4297206544278009367L;
 
     public BadRequestException() {
-        super("Bad Request");
+        super(HttpCode.BAD_REQUEST);
     }
 
 }

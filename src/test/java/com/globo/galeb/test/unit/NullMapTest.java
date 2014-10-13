@@ -25,22 +25,22 @@ public class NullMapTest {
     private NullMap nullMap = new NullMap();
 
     @Test
-    public void AddReturnFalse() {
+    public void addReturnFalse() {
         assertFalse(nullMap.add());
     }
 
     @Test
-    public void DelReturnFalse() {
+    public void delReturnFalse() {
         assertFalse(nullMap.del());
     }
 
     @Test
-    public void ResetReturnFalse() {
+    public void resetReturnFalse() {
         assertFalse(nullMap.reset());
     }
 
     @Test
-    public void ChangeReturnFalse() {
+    public void changeReturnFalse() {
         assertFalse(nullMap.change());
     }
 

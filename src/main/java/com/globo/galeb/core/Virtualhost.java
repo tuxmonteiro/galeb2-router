@@ -28,32 +28,36 @@ import org.vertx.java.core.json.JsonObject;
 
 public class Virtualhost extends Entity {
 
-    public static final String backendsFieldName          = "backends";
-    public static final String backendsElegibleFieldName  = "eligible";
-    public static final String backendsFailedFieldName    = "failed";
+    public static final String BACKENDS_FIELDNAME            = "backends";
+    public static final String BACKENDS_ELIGIBLE_FIELDNAME   = "eligible";
+    public static final String BACKENDS_FAILED_FIELDNAME     = "failed";
 
-    // Modifiable
-    public static final String loadBalancePolicyFieldName = "loadBalancePolicy";
+    public static final String LOADBALANCE_POLICY_FIELDNAME  = "loadBalancePolicy";
+    public static final String REQUEST_TIMEOUT_FIELDNAME     = "requestTimeOut";
+    public static final String ENABLE_CHUNCKED_FIELDNAME     = "enableChunked";
+    public static final String ENABLE_ACCESSLOG_FIELDNAME    = "enableAccessLog";
 
-    //
-    public static final String transientStateFieldName    = "_transientState";
+    public static final String TRANSIENT_STATE_FIELDNAME     = "_transientState";
 
     private final UniqueArrayList<Backend> backends;
     private final UniqueArrayList<Backend> badBackends;
     private final Vertx                    vertx;
     private IQueueService                  queueService      = null;
     private ILoadBalancePolicy             loadbalancePolicy = null;
+    private Long                           requestTimeOut    = 60000L;
+    private int                            maxPoolSize       = 1;
+    private boolean                        enableChunked     = true;
+    private boolean                        enableAccessLog   = false;
 
     public Virtualhost(JsonObject json, final Vertx vertx) {
         super();
-        this.id = json.getString(IJsonable.jsonIdFieldName, "UNDEF");
+        this.id = json.getString(IJsonable.ID_FIELDNAME, "UNDEF");
         this.backends = new UniqueArrayList<Backend>();
         this.badBackends = new UniqueArrayList<Backend>();
         this.vertx = vertx;
-        properties.mergeIn(json.getObject(IJsonable.jsonPropertiesFieldName, new JsonObject()));
-        if (!properties.containsField(loadBalancePolicyFieldName)) {
-            getLoadBalancePolicy();
-        }
+
+        properties.mergeIn(json.getObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()));
+        getLoadBalancePolicy();
     }
 
     @Override
@@ -78,13 +82,14 @@ public class Virtualhost extends Entity {
     }
 
     public boolean addBackend(String backend, boolean backendOk) {
-        return addBackend(new JsonObject().putString(IJsonable.jsonIdFieldName, backend), backendOk);
+        return addBackend(new JsonObject().putString(IJsonable.ID_FIELDNAME, backend), backendOk);
     }
 
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         updateModifiedTimestamp();
         Backend backend = new Backend(backendJson, vertx);
         backend.setQueueService(queueService);
+        backend.setMaxPoolSize(maxPoolSize);
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
@@ -136,16 +141,16 @@ public class Virtualhost extends Entity {
     }
 
     public Virtualhost setLoadBalancePolicy(String loadBalancePolicyName) {
-        properties.putString(Virtualhost.loadBalancePolicyFieldName, loadBalancePolicyName);
+        properties.putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, loadBalancePolicyName);
         return this;
     }
 
     public ILoadBalancePolicy getLoadBalancePolicy() {
-        String loadBalancePolicyStr = properties.getString(loadBalancePolicyFieldName,
+        String loadBalancePolicyStr = properties.getString(LOADBALANCE_POLICY_FIELDNAME,
                 DefaultLoadBalancePolicy.class.getSimpleName());
         loadbalancePolicy = loadBalancePolicyClassLoader(loadBalancePolicyStr);
         if (loadbalancePolicy.isDefault()) {
-            properties.putString(loadBalancePolicyFieldName, loadbalancePolicy.toString());
+            properties.putString(LOADBALANCE_POLICY_FIELDNAME, loadbalancePolicy.toString());
         }
         return loadbalancePolicy;
     }
@@ -183,6 +188,9 @@ public class Virtualhost extends Entity {
 
     @Override
     public JsonObject toJson() {
+        properties.putNumber(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
+        properties.putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+
         prepareJson();
 
         JsonArray backendsElegiblesJson = new JsonArray();
@@ -200,21 +208,44 @@ public class Virtualhost extends Entity {
             }
         }
 
-        JsonObject backends = new JsonObject();
+        JsonObject backendsJson = new JsonObject();
 
-        backends.putArray(backendsElegibleFieldName, backendsElegiblesJson);
-        backends.putArray(backendsFailedFieldName, backendsFailedJson);
+        backendsJson.putArray(BACKENDS_ELIGIBLE_FIELDNAME, backendsElegiblesJson);
+        backendsJson.putArray(BACKENDS_FAILED_FIELDNAME, backendsFailedJson);
 
-        idObj.putObject(backendsFieldName, backends);
+        idObj.putObject(BACKENDS_FIELDNAME, backendsJson);
 
         return super.toJson();
     }
 
     public void setTransientState() {
-        idObj.putBoolean(transientStateFieldName, true);
+        idObj.putBoolean(TRANSIENT_STATE_FIELDNAME, true);
     }
 
     private void unSetTransientState() {
-        idObj.putBoolean(transientStateFieldName, false);
+        idObj.putBoolean(TRANSIENT_STATE_FIELDNAME, false);
+    }
+
+    public Long getRequestTimeOut() {
+        return this.requestTimeOut;
+    }
+
+    @Override
+    public Virtualhost setStaticConf(String staticConf) {
+        super.setStaticConf(staticConf);
+        requestTimeOut = this.staticConf.getLong(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
+        maxPoolSize = this.staticConf.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+        enableChunked = this.staticConf.getBoolean(ENABLE_CHUNCKED_FIELDNAME, enableChunked);
+        enableAccessLog = this.staticConf.getBoolean(ENABLE_ACCESSLOG_FIELDNAME, enableAccessLog);
+
+        return this;
+    }
+
+    public Boolean isChunked() {
+        return properties.getBoolean(ENABLE_CHUNCKED_FIELDNAME, enableChunked);
+    }
+
+    public Boolean hasAccessLog() {
+        return properties.getBoolean(ENABLE_ACCESSLOG_FIELDNAME, enableAccessLog);
     }
 }

@@ -12,22 +12,15 @@
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
  * PARTICULAR PURPOSE.
  */
-package com.globo.galeb.loadbalance;
+package com.globo.galeb.exceptions;
 
-import java.util.List;
+import com.globo.galeb.core.HttpCode;
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.RequestData;
+public class NotFoundException extends AbstractHttpException {
 
-public interface ILoadBalancePolicy {
+    private static final long serialVersionUID = -1148048070375338827L;
 
-    public static final String CACHE_TIMEOUT_FIELDNAME = "cacheTimeout";
-
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData);
-
-    public boolean isDefault();
-
-    @Override
-    public String toString();
-
+    public NotFoundException() {
+        super(HttpCode.NOT_FOUND);
+    }
 }

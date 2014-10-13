@@ -14,10 +14,12 @@
  */
 package com.globo.galeb.core;
 
+import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 
 public abstract class Entity implements IJsonable {
 
+    protected JsonObject           staticConf    = new JsonObject();
     protected String               id            = "";
     protected final Long           createdAt     = System.currentTimeMillis();
     protected Long                 modifiedAt    = System.currentTimeMillis();
@@ -30,15 +32,24 @@ public abstract class Entity implements IJsonable {
     }
 
     protected Entity prepareJson() {
-        idObj.putString(IJsonable.jsonIdFieldName, id);
-        idObj.putObject(jsonLinksFieldName, new SafeJsonObject()
-            .putString(jsonLinksRelFieldName, "self")
-            .putString(jsonLinksHrefFieldName, String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
+        idObj.putString(IJsonable.ID_FIELDNAME, id);
+        idObj.putObject(LINKS_FIELDNAME, new SafeJsonObject()
+            .putString(LINKS_REL_FIELDNAME, "self")
+            .putString(LINKS_HREF_FIELDNAME, String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
         );
-        idObj.putString(jsonStatusFieldName, "created");
-        idObj.putNumber(IJsonable.jsonCreatedAtFieldName, createdAt);
-        idObj.putNumber(IJsonable.jsonModifiedAtFieldName, modifiedAt);
-        idObj.putObject(IJsonable.jsonPropertiesFieldName, properties);
+        idObj.putString(STATUS_FIELDNAME, "created");
+        idObj.putNumber(IJsonable.CREATED_AT_FIELDNAME, createdAt);
+        idObj.putNumber(IJsonable.MODIFIED_AT_FIELDNAME, modifiedAt);
+        idObj.putObject(IJsonable.PROPERTIES_FIELDNAME, properties);
+        return this;
+    }
+
+    public Entity setStaticConf(String staticConf) {
+        if (!"".equals(staticConf)) {
+            try {
+                this.staticConf = new JsonObject(staticConf);
+            } catch (DecodeException ignore) {}
+        }
         return this;
     }
 

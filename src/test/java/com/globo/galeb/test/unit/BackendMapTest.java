@@ -51,49 +51,49 @@ public class BackendMapTest {
         messageBus = new MessageBus();
         messageBus.setUri("/backend")
                   .setParentId("test.localdomain")
-                  .setEntity(new JsonObject().putString(Entity.jsonIdFieldName, "127.0.0.1:8080").encode());
+                  .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.1:8080").encode());
 
         backendMap = new BackendMap();
         backendMap.setMessageBus(messageBus).setLogger(logger).setMap(map);
 
         messageBusParent = new MessageBus();
         messageBusParent.setUri("/virtualhost")
-                  .setEntity(new JsonObject().putString(Entity.jsonIdFieldName, "test.localdomain").encode());
+                  .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "test.localdomain").encode());
 
         virtualhostMap = new VirtualhostMap();
         virtualhostMap.setMessageBus(messageBusParent).setLogger(logger).setMap(map);
     }
 
     @Test
-    public void AddReturnFalseIfParentIdNotExist() {
+    public void addReturnFalseIfParentIdNotExist() {
         assertFalse(backendMap.add());
     }
 
     @Test
-    public void AddReturnTrueIfParentIdExist() {
+    public void addReturnTrueIfParentIdExist() {
         virtualhostMap.add();
         assertTrue(backendMap.add());
     }
 
     @Test
-    public void DelAllReturnTrue() {
+    public void delAllReturnTrue() {
         assertTrue(backendMap.del());
     }
 
     @Test
-    public void DelReturnTrueIfExist() {
+    public void delReturnTrueIfExist() {
         virtualhostMap.add();
         backendMap.add();
         assertTrue(backendMap.del());
     }
 
     @Test
-    public void ResetReturnFalse() {
+    public void resetReturnFalse() {
         assertFalse(backendMap.reset());
     }
 
     @Test
-    public void ChangeReturnFalse() {
+    public void changeReturnFalse() {
         assertFalse(backendMap.change());
     }
 

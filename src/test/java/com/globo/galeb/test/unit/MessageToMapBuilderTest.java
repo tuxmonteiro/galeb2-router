@@ -41,7 +41,7 @@ public class MessageToMapBuilderTest {
     @Test
     public void instanceIsVirtualhostMap() {
         message = new SafeJsonObject()
-                        .putString(MessageBus.uriFieldName, "/virtualhost")
+                        .putString(MessageBus.URI_FIELDNAME, "/virtualhost")
                         .encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
             .as("instanceIsVirtualhostMap").isEqualTo(VirtualhostMap.class);
@@ -50,7 +50,7 @@ public class MessageToMapBuilderTest {
     @Test
     public void instanceIsBackendMap() {
         message = new SafeJsonObject()
-                        .putString(MessageBus.uriFieldName, "/backend")
+                        .putString(MessageBus.URI_FIELDNAME, "/backend")
                         .encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
             .as("instanceIsBackendMap").isEqualTo(BackendMap.class);
@@ -67,7 +67,7 @@ public class MessageToMapBuilderTest {
     @Test
     public void messageWithUriInvalid() {
         message = new SafeJsonObject()
-            .putString(MessageBus.uriFieldName, "/invalid")
+            .putString(MessageBus.URI_FIELDNAME, "/invalid")
             .encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
             .as("messageWithUriInvalid").isEqualTo(NullMap.class);
@@ -76,7 +76,7 @@ public class MessageToMapBuilderTest {
     @Test
     public void farmIsNull() {
         message = new SafeJsonObject()
-            .putString(MessageBus.uriFieldName, "/virtualhost")
+            .putString(MessageBus.URI_FIELDNAME, "/virtualhost")
             .encode();
         assertThat(MessageToMapBuilder.getInstance(message, null).getClass())
         .as("farmIsNull").isEqualTo(NullMap.class);

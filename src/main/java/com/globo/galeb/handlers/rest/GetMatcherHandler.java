@@ -15,19 +15,15 @@
 package com.globo.galeb.handlers.rest;
 
 import java.io.UnsupportedEncodingException;
-import java.util.Collection;
-
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
-import com.globo.galeb.core.Entity;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
 
@@ -71,7 +67,7 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
             uriBase = java.net.URLDecoder.decode(uriBase, "UTF-8");
             id = java.net.URLDecoder.decode(id, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            serverResponse.setStatusCode(HttpCode.BadRequest)
+            serverResponse.setStatusCode(HttpCode.BAD_REQUEST)
                                 .setId(id)
                                 .end();
             log.error("Unsupported Encoding");
@@ -83,22 +79,22 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
                 message = new JsonObject().putNumber("version", farm.getVersion()).encodePrettily();
                 break;
             case "farm":
-                message = farm.toJson().encodePrettily();
+                message = farm.getFarmJson();
                 break;
             case "virtualhost":
-                message = getResult(id, farm.getVirtualhosts(), "virtualhosts");
+                message = farm.getVirtualhostJson(id);
                 break;
             case "backend":
-                message = getResult(id, farm.getBackends(), "backends");
+                message = farm.getBackendJson(id);
                 break;
             default:
                 message = "";
                 break;
         }
 
-        int statusCode = HttpCode.Ok;
-        if ("".equals(message)) {
-            statusCode = HttpCode.NotFound;
+        int statusCode = HttpCode.OK;
+        if ("".equals(message)||"{}".equals(message)||"[ ]".equals(message)) {
+            statusCode = HttpCode.NOT_FOUND;
             message = HttpCode.getMessage(statusCode, true);
         }
 
@@ -109,22 +105,4 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
         log.info(String.format("GET /%s", uriBase));
     }
 
-    public String getResult(String key, Collection<? extends Entity> collection, String arrayFieldName) {
-        String result = "";
-        boolean isArray = false;
-        JsonArray entityArray = new JsonArray();
-
-        for (Entity entityObj: collection) {
-            entityArray.add(entityObj.toJson());
-            if (!"".equals(key)) {
-                if (entityObj.toString().equalsIgnoreCase(key)) {
-                    result = entityObj.toJson().encodePrettily();
-                    break;
-                }
-            } else {
-                isArray = true;
-            }
-        }
-        return !isArray ? result : new JsonObject().putArray(arrayFieldName, entityArray).encodePrettily();
-    }
 }

@@ -30,7 +30,7 @@ public class ManagerService {
         VERSION
     }
 
-    private String id;
+    private final String id;
     private final Logger log;
     private HttpServerRequest req = null;
     private ServerResponse serverResponse = null;
@@ -59,12 +59,12 @@ public class ManagerService {
                 uriBase = java.net.URLDecoder.decode(uriBase, "UTF-8");
             } else {
                 log.error("UriBase is null");
-                endResponse(HttpCode.NotFound, "UriBase is null");
+                endResponse(HttpCode.NOT_FOUND, "UriBase is null");
                 return false;
             }
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage());
-            endResponse(HttpCode.NotFound, e.getMessage());
+            endResponse(HttpCode.NOT_FOUND, e.getMessage());
             return false;
         }
         for (UriSupported uriEnum : EnumSet.allOf(UriSupported.class)) {
@@ -72,23 +72,23 @@ public class ManagerService {
                 return true;
             }
         }
-        endResponse(HttpCode.NotFound, String.format("URI /%s not supported", uriBase));
+        endResponse(HttpCode.NOT_FOUND, String.format("URI /%s not supported", uriBase));
         return false;
     }
 
     public boolean checkMethodOk(String methodId) {
         String method = req.method();
         if (!methodId.equalsIgnoreCase(method)) {
-            endResponse(HttpCode.MethotNotAllowed, "Method Not Allowed");
+            endResponse(HttpCode.METHOD_NOT_ALLOWED, "Method Not Allowed");
             return false;
         }
         return true;
     }
 
     public boolean checkIdConsistency(JsonObject entityJson, String idFromUri) {
-        String idFromJson = entityJson.getString(IJsonable.jsonIdFieldName, "");
+        String idFromJson = entityJson.getString(IJsonable.ID_FIELDNAME, "");
         if ("".equals(idFromJson) || "".equals(idFromUri) || !idFromJson.equals(idFromUri)) {
-            endResponse(HttpCode.BadRequest,
+            endResponse(HttpCode.BAD_REQUEST,
                     String.format("IDs inconsistents: bodyId(%s) not equal uriId(%s)", idFromJson, idFromUri));
             return false;
         }
@@ -96,29 +96,27 @@ public class ManagerService {
     }
 
     public String getRequestId() {
-        String id = "";
+        String idFromUri = "";
         try {
-            id = req.params() != null && req.params().contains(IJsonable.jsonIdFieldName) ?
-                    java.net.URLDecoder.decode(req.params().get(IJsonable.jsonIdFieldName), "UTF-8") : "";
+            idFromUri = req.params() != null && req.params().contains(IJsonable.ID_FIELDNAME) ?
+                    java.net.URLDecoder.decode(req.params().get(IJsonable.ID_FIELDNAME), "UTF-8") : "";
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage());
         }
-        return id;
+        return idFromUri;
     }
 
 
     public boolean checkIdPresent() {
-        String id = getRequestId();
-
-        if ("".equals(id)) {
-            endResponse(HttpCode.BadRequest, String.format("ID absent", id));
+        if ("".equals(getRequestId())) {
+            endResponse(HttpCode.BAD_REQUEST, "ID absent");
             return false;
         }
         return true;
     }
 
     public boolean endResponse(int statusCode, String message) {
-        if (statusCode < HttpCode.BadRequest) {
+        if (statusCode < HttpCode.BAD_REQUEST) {
             log.info(message);
         } else {
             log.warn(message);
@@ -143,19 +141,19 @@ public class ManagerService {
             if (registerLog) {
                 log.error(String.format("Json decode error: %s", message));
             }
-            return HttpCode.BadRequest;
+            return HttpCode.BAD_REQUEST;
         }
 
         if (!json.containsField("version")) {
             if (registerLog) log.error(String.format("Version is mandatory: %s", message));
-            return HttpCode.BadRequest;
+            return HttpCode.BAD_REQUEST;
         }
 
-        if (!json.containsField(IJsonable.jsonIdFieldName)) {
+        if (!json.containsField(IJsonable.ID_FIELDNAME)) {
             if (registerLog) log.error(String.format("ID is mandatory: %s", message));
-            return HttpCode.BadRequest;
+            return HttpCode.BAD_REQUEST;
         }
-        return HttpCode.Ok;
+        return HttpCode.OK;
     }
 
     public int statusFromMessageSchema(String message, String uri) {
