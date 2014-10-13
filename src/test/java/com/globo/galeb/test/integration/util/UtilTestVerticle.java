@@ -66,7 +66,7 @@ public abstract class UtilTestVerticle extends TestVerticle {
 
         initialize();
         JsonObject config = new JsonObject().putObject("router",
-                new JsonObject().putNumber(CONF_INSTANCES, 1).putNumber(Virtualhost.requestTimeOutFieldName, 1000));
+                new JsonObject().putNumber(CONF_INSTANCES, 1).putNumber(Virtualhost.REQUEST_TIMEOUT_FIELDNAME, 1000));
         container.deployModule(System.getProperty("vertx.modulename"), config, new AsyncResultHandler<String>() {
             @Override
             public void handle(AsyncResult<String> asyncResult) {
@@ -76,21 +76,24 @@ public abstract class UtilTestVerticle extends TestVerticle {
         });
     }
 
-
     public RequestForTest newRequest() {
         return new RequestForTest();
     }
+
     public ExpectedResponse newResponse() {
         return new ExpectedResponse();
     }
+
     public Action newAction() {
-    	return new Action(this);
+        return new Action(this);
     }
+
     public Action newGet() {
-    	return new Action(this).usingMethod("GET");
+        return new Action(this).usingMethod("GET");
     }
+
     public Action newPost() {
-    	return new Action(this).usingMethod("POST");
+        return new Action(this).usingMethod("POST");
     }
 
 

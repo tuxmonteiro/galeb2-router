@@ -19,9 +19,9 @@ import com.globo.galeb.core.SafeJsonObject;
 
 public class MessageBus {
 
-    public static final String entityFieldName      = "entity";
-    public static final String parentIdFieldName    = "parentId";
-    public static final String uriFieldName         = "uri";
+    public static final String ENTITY_FIELDNAME    = "entity";
+    public static final String PARENT_ID_FIELDNAME = "parentId";
+    public static final String URI_FIELDNAME       = "uri";
 
     private String entityStr  = "{}";
     private String parentId   = "";
@@ -34,9 +34,9 @@ public class MessageBus {
 
     public MessageBus(String message) {
         SafeJsonObject json = new SafeJsonObject(message);
-        setEntity(json.getString(entityFieldName,"{}"));
-        setParentId(json.getString(parentIdFieldName, ""));
-        setUri(json.getString(uriFieldName, ""));
+        setEntity(json.getString(ENTITY_FIELDNAME,"{}"));
+        setParentId(json.getString(PARENT_ID_FIELDNAME, ""));
+        setUri(json.getString(URI_FIELDNAME, ""));
         make();
     }
 
@@ -56,7 +56,7 @@ public class MessageBus {
     }
 
     public String getEntityId() {
-        return getEntity().getString(IJsonable.jsonIdFieldName, "");
+        return getEntity().getString(IJsonable.ID_FIELDNAME, "");
     }
 
     public MessageBus setEntity(String entityStr) {
@@ -92,9 +92,9 @@ public class MessageBus {
     public MessageBus make() {
 
         messageBus = new SafeJsonObject()
-                            .putString(uriFieldName, uriStr)
-                            .putString(parentIdFieldName, parentId)
-                            .putString(entityFieldName, getEntity().encode())
+                            .putString(URI_FIELDNAME, uriStr)
+                            .putString(PARENT_ID_FIELDNAME, parentId)
+                            .putString(ENTITY_FIELDNAME, getEntity().encode())
                             .encode();
         return this;
     }

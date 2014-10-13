@@ -46,7 +46,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private Farm farm;
     private IQueueService queueService;
 
-    private final static String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
+    private static final String URI_PATTERN_REGEX = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
     @Override
     public void start() {
@@ -81,13 +81,13 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
         RouteMatcher routeMatcher = new RouteMatcher();
 
-        routeMatcher.getWithRegEx(patternRegex, new GetMatcherHandler(routeManagerId, log, farm));
+        routeMatcher.getWithRegEx(URI_PATTERN_REGEX, new GetMatcherHandler(routeManagerId, log, farm));
 
         routeMatcher.post("/:uriBase", new PostMatcherHandler(routeManagerId, log, queueService));
 
-        routeMatcher.deleteWithRegEx(patternRegex, new DeleteMatcherHandler(routeManagerId, log, queueService));
+        routeMatcher.deleteWithRegEx(URI_PATTERN_REGEX, new DeleteMatcherHandler(routeManagerId, log, queueService));
 
-        routeMatcher.putWithRegEx(patternRegex, new PutMatcherHandler(routeManagerId, log, queueService));
+        routeMatcher.putWithRegEx(URI_PATTERN_REGEX, new PutMatcherHandler(routeManagerId, log, queueService));
 
         routeMatcher.noMatch(new Handler<HttpServerRequest>() {
 
@@ -100,7 +100,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                     Server.setHttpServerName(httpServerName);
                 }
 
-                int statusCode = HttpCode.BadRequest;
+                int statusCode = HttpCode.BAD_REQUEST;
                 serverResponse.setStatusCode(statusCode)
                     .setMessage(HttpCode.getMessage(statusCode, true))
                     .setId(routeManagerId)

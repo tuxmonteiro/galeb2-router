@@ -37,6 +37,12 @@ import com.globo.galeb.verticles.RouterVerticle;
 
 public class Farm extends Entity implements ICallbackQueueAction, ICallbackSharedData {
 
+    public static final String FARM_MAP                    = "farm";
+    public static final String FARM_BACKENDS_FIELDNAME     = "backends";
+    public static final String FARM_VIRTUALHOSTS_FIELDNAME = "virtualhosts";
+    public static final String FARM_SHAREDDATA_ID          = "farm.sharedData";
+    public static final String FARM_VERSION_FIELDNAME      = "version";
+
     private final Map<String, Virtualhost> virtualhosts = new HashMap<>();
     private Long version = 0L;
     private final Verticle verticle;
@@ -51,9 +57,9 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         this.verticle = verticle;
         this.queueService = queueService;
         if (verticle!=null) {
-            this.sharedMap = verticle.getVertx().sharedData().getMap("farm.sharedData");
-            this.sharedMap.put("farm", toJson().encodePrettily());
-            this.sharedMap.put("backends", "{}");
+            this.sharedMap = verticle.getVertx().sharedData().getMap(FARM_SHAREDDATA_ID);
+            this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
+            this.sharedMap.put(FARM_BACKENDS_FIELDNAME, "{}");
             properties.mergeIn(verticle.getContainer().config());
             this.log = verticle.getContainer().logger();
             registerQueueAction();
@@ -112,8 +118,8 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
     public JsonObject toJson() {
         prepareJson();
 
-        idObj.removeField(jsonStatusFieldName);
-        idObj.putNumber("version", version);
+        idObj.removeField(STATUS_FIELDNAME);
+        idObj.putNumber(FARM_VERSION_FIELDNAME, version);
         JsonArray virtualhostArray = new JsonArray();
 
         for (String vhost : virtualhosts.keySet()) {
@@ -124,7 +130,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
             virtualhostArray.add(virtualhost.toJson());
         }
 
-        idObj.putArray("virtualhosts", virtualhostArray);
+        idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, virtualhostArray);
         return super.toJson();
     }
 
@@ -165,9 +171,9 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
     @Override
     public void updateSharedData() {
         if (verticle instanceof RouterVerticle) {
-            this.sharedMap.put("farm", toJson().encodePrettily());
+            this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
             String backendClassName = Backend.class.getSimpleName().toLowerCase();
-            this.sharedMap.put("backends", collectionToJson("", getBackends(), backendClassName));
+            this.sharedMap.put(FARM_BACKENDS_FIELDNAME, collectionToJson("", getBackends(), backendClassName));
         }
     }
 
@@ -176,7 +182,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         try {
             Thread.sleep(500);
         } catch (InterruptedException ignore) {}
-        return this.sharedMap.get("farm");
+        return this.sharedMap.get(FARM_MAP);
     }
 
     public String getVirtualhostJson(String id) {
@@ -184,7 +190,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         try {
             Thread.sleep(500);
         } catch (InterruptedException ignore) {}
-        return getJsonObject(id, this.sharedMap.get("farm"), Virtualhost.class.getSimpleName().toLowerCase());
+        return getJsonObject(id, this.sharedMap.get(FARM_MAP), Virtualhost.class.getSimpleName().toLowerCase());
     }
 
     public String getBackendJson(String id) {
@@ -192,7 +198,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         try {
             Thread.sleep(500);
         } catch (InterruptedException ignore) {}
-        return getJsonObject(id, this.sharedMap.get("backends"), Backend.class.getSimpleName().toLowerCase());
+        return getJsonObject(id, this.sharedMap.get(FARM_BACKENDS_FIELDNAME), Backend.class.getSimpleName().toLowerCase());
     }
 
     private String getJsonObject(String key, String jsonCollection, String clazz) {
@@ -208,7 +214,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
             Iterator<Object> jsonArrayIterator = jsonArray.iterator();
             while (jsonArrayIterator.hasNext()) {
                 JsonObject entity = (JsonObject)jsonArrayIterator.next();
-                String id = entity.getString(IJsonable.jsonIdFieldName);
+                String id = entity.getString(IJsonable.ID_FIELDNAME);
                 if (id.equals(key)) {
                     return entity.encodePrettily();
                 }

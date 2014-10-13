@@ -29,8 +29,8 @@ import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 public class HashPolicy implements ILoadBalancePolicy {
 
-    public static final String defaultHashAlgorithm     = SIP24.toString();
-    public static final String hashAlgorithmFieldName   = "hashAlgorithm";
+    public static final String DEFAULT_HASH_ALGORITHM     = SIP24.toString();
+    public static final String HASH_ALGORITHM_FIELDNAME   = "hashAlgorithm";
 
     private ConsistentHash<Backend> consistentHash = null;
     private String                  lastHashType   = null;
@@ -40,8 +40,8 @@ public class HashPolicy implements ILoadBalancePolicy {
 
         String sourceIp = requestData.getRemoteAddress();
         JsonObject properties = requestData.getProperties();
-        String hashType = properties.getString(hashAlgorithmFieldName, defaultHashAlgorithm);
-        boolean transientState = properties.getBoolean(Virtualhost.transientStateFieldName, false);
+        String hashType = properties.getString(HASH_ALGORITHM_FIELDNAME, DEFAULT_HASH_ALGORITHM);
+        boolean transientState = properties.getBoolean(Virtualhost.TRANSIENT_STATE_FIELDNAME, false);
 
         int numberOfReplicas = 1;
 

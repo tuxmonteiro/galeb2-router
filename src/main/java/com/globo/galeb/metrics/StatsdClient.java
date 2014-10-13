@@ -18,10 +18,10 @@ import org.vertx.java.core.datagram.DatagramSocket;
 import org.vertx.java.core.logging.Logger;
 
 public class StatsdClient {
-    private final static String PATTERN_COUNT = "%s:%s|c";
-    private final static String PATTERN_TIME  = "%s:%s|ms";
-    private final static String PATTERN_GAUGE = "%s:%s|g";
-    private final static String PATTERN_SET   = "%s:%s|s";
+    private static final String PATTERN_COUNT = "%s:%s|c";
+    private static final String PATTERN_TIME  = "%s:%s|ms";
+    private static final String PATTERN_GAUGE = "%s:%s|g";
+    private static final String PATTERN_SET   = "%s:%s|s";
 
     public static enum TypeStatsdMessage {
         COUNT(PATTERN_COUNT),

@@ -76,7 +76,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                         HttpClientRequest cReq = client.get(uriHealthCheck, new Handler<HttpClientResponse>() {
                                 @Override
                                 public void handle(HttpClientResponse cResp) {
-                                    if (cResp!=null && cResp.statusCode()==HttpCode.Ok) {
+                                    if (cResp!=null && cResp.statusCode()==HttpCode.OK) {
                                         queueService.publishBackendOk(backend);
                                     }
                                 }
@@ -120,7 +120,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
 
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyElegibleFieldName, true);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
             final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
@@ -138,7 +138,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
 
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.propertyElegibleFieldName, true);
+            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
             final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
@@ -177,10 +177,10 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                         String uriDel = String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8"));
                         String uriAdd = "/backend";
 
-                        backendJson.putBoolean(Backend.propertyElegibleFieldName, !elegible);
+                        backendJson.putBoolean(Backend.ELEGIBLE_FIELDNAME, !elegible);
                         queueService.queueToDel(backendJson, uriDel);
 
-                        backendJson.putBoolean(Backend.propertyElegibleFieldName, elegible);
+                        backendJson.putBoolean(Backend.ELEGIBLE_FIELDNAME, elegible);
                         queueService.queueToAdd(backendJson, uriAdd);
                     }
 

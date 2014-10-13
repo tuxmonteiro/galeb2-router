@@ -20,26 +20,27 @@ public class Constants {
     }
 
     // Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults)
-    public static final boolean tcpNoDelay           = true;
-    public static final int     tcpSendBufferSize    = 8 * 1024;
-    public static final int     tcpReceiveBufferSize = 32 * 1024;
+    public static final boolean TCP_NODELAY              = true;
+    public static final int     TCP_SEND_BUFFER_SIZE     = 8 * 1024;
+    public static final int     TCP_RECEIVED_BUFFER_SIZE = 32 * 1024;
 
-    public static final String CONF_ROOT_ROUTER                  = "router";
-    public static final String CONF_ROOT_ROUTEMANAGER            = "routemanager";
-    public static final String CONF_ROOT_HEALTHMANAGER           = "healthmanager";
-    public static final String CONF_ROOT_STATSD                  = "statsd";
+    // json attributes name used in configuration
+    public static final String CONF_ROOT_ROUTER          = "router";
+    public static final String CONF_ROOT_ROUTEMANAGER    = "routemanager";
+    public static final String CONF_ROOT_HEALTHMANAGER   = "healthmanager";
+    public static final String CONF_ROOT_STATSD          = "statsd";
 
-    public static final String CONF_INSTANCES                    = "instances";
-    public static final String CONF_HOST                         = "host";
-    public static final String CONF_PORT                         = "port";
-    public static final String CONF_PREFIX                       = "prefix";
-    public static final String CONF_ENABLE_ACCESSLOG             = "enableAccessLog";
-    public static final String CONF_STATSD_ENABLE                = "enableStatsd";
-    public static final String CONF_STATSD_HOST                  = "statsdHost";
-    public static final String CONF_STATSD_PORT                  = "statsdPort";
-    public static final String CONF_STATSD_PREFIX                = "statsdPrefix";
+    public static final String CONF_INSTANCES            = "instances";
+    public static final String CONF_HOST                 = "host";
+    public static final String CONF_PORT                 = "port";
+    public static final String CONF_PREFIX               = "prefix";
+    public static final String CONF_ENABLE_ACCESSLOG     = "enableAccessLog";
+    public static final String CONF_STATSD_ENABLE        = "enableStatsd";
+    public static final String CONF_STATSD_HOST          = "statsdHost";
+    public static final String CONF_STATSD_PORT          = "statsdPort";
+    public static final String CONF_STATSD_PREFIX        = "statsdPrefix";
 
-    public static final String CONF_STARTER_CONF                 = "_starterConf";
+    public static final String CONF_STARTER_CONF         = "_starterConf";
 
 
 }

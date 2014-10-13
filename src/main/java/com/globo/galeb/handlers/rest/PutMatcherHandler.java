@@ -69,9 +69,9 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
 
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
-                if (statusCode==HttpCode.Ok) {
+                if (statusCode==HttpCode.OK) {
                     queueService.queueToChange(bodyJson, uri);
-                    statusCode = HttpCode.Accepted;
+                    statusCode = HttpCode.ACCEPTED;
                 }
 
                 serverResponse.setStatusCode(statusCode)

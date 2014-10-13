@@ -69,10 +69,10 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
                 String uri = req.uri();
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
-                if (statusCode==HttpCode.Ok) {
+                if (statusCode==HttpCode.OK) {
                     queueService.queueToDel(bodyJson, uri);
                     log.info(String.format("[%s] DEL %s : json '%s'", this.toString(), uri, bodyStr));
-                    statusCode = HttpCode.Accepted;
+                    statusCode = HttpCode.ACCEPTED;
                 }
 
                 serverResponse.setStatusCode(statusCode)

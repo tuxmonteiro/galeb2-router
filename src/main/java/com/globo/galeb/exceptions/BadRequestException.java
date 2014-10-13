@@ -21,7 +21,7 @@ public class BadRequestException extends AbstractHttpException {
     private static final long serialVersionUID = 4297206544278009367L;
 
     public BadRequestException() {
-        super(HttpCode.BadRequest);
+        super(HttpCode.BAD_REQUEST);
     }
 
 }

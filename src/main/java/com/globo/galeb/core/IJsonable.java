@@ -18,16 +18,16 @@ import org.vertx.java.core.json.JsonObject;
 
 public interface IJsonable {
 
-    public static final String jsonIdFieldName         = "id";
-    public static final String jsonParentIdFieldName   = "parentId";
-    public static final String jsonPropertiesFieldName = "properties";
+    public static final String ID_FIELDNAME          = "id";
+    public static final String PARENT_ID_FIELDNAME   = "parentId";
+    public static final String PROPERTIES_FIELDNAME  = "properties";
 
-    public static final String jsonStatusFieldName     = "_status";
-    public static final String jsonCreatedAtFieldName  = "_created_at";
-    public static final String jsonModifiedAtFieldName = "_modified_at";
-    public static final String jsonLinksFieldName      = "_links";
-    public static final String jsonLinksRelFieldName   = "rel";
-    public static final String jsonLinksHrefFieldName  = "href";
+    public static final String STATUS_FIELDNAME      = "_status";
+    public static final String CREATED_AT_FIELDNAME  = "_created_at";
+    public static final String MODIFIED_AT_FIELDNAME = "_modified_at";
+    public static final String LINKS_FIELDNAME       = "_links";
+    public static final String LINKS_REL_FIELDNAME   = "rel";
+    public static final String LINKS_HREF_FIELDNAME  = "href";
 
     public JsonObject toJson();
 

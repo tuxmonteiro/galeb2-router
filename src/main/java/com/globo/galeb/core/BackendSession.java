@@ -34,11 +34,6 @@ public class BackendSession {
     private SafeJsonObject backendProperties = new SafeJsonObject();
 
     private ICounter   counter              = null;
-//    private Long       keepAliveMaxRequest  = Long.MAX_VALUE;
-//    private Long       keepAliveTimeOut     = Long.MAX_VALUE;
-
-//    private Long       keepAliveTimeMark    = System.currentTimeMillis();;
-//    private Long       requestCount         = 0L;
     private RemoteUser remoteUser           = null;
     private Boolean    keepAlive            = true;
     private int        maxPoolSize          = 1;
@@ -58,23 +53,6 @@ public class BackendSession {
         this.backendProperties = backendProperties;
         return this;
     }
-
-
-//    public boolean isKeepAliveLimit() {
-//        boolean limitedExceed = false;
-//        Long now = System.currentTimeMillis();
-//        if (requestCount<=keepAliveMaxRequest) {
-//            requestCount++;
-//        }
-//        if ((requestCount>=keepAliveMaxRequest) || (requestCount==Long.MAX_VALUE) ||
-//                (now-keepAliveTimeMark)>keepAliveTimeOut) {
-//            requestCount = 0L;
-//            limitedExceed = true;
-//        }
-//        keepAliveTimeMark = now;
-//
-//        return limitedExceed;
-//    }
 
     // Lazy initialization
     public HttpClient connect() {
@@ -98,7 +76,6 @@ public class BackendSession {
 
         if (client==null) {
             connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
-//            connectionsCounter.setConnectionMapTimeout(keepAliveTimeOut);
 
             client = vertx.createHttpClient();
             if (keepAlive!=null) {
@@ -134,9 +111,7 @@ public class BackendSession {
     }
 
     private void processProperties() {
-//        keepAliveMaxRequest = backendProperties.getLong(Backend.propertyKeepaliveMaxRequestFieldName, Long.MAX_VALUE);
-//        keepAliveTimeOut    = backendProperties.getLong(Backend.propertyKeepAliveTimeOutFieldName, Long.MAX_VALUE);
-        keepAlive           = backendProperties.getBoolean(Backend.propertyKeepAliveFieldName, true);
+        keepAlive           = backendProperties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
     }
 
     public ConnectionsCounter getSessionController() {
@@ -144,21 +119,19 @@ public class BackendSession {
     }
 
     public void close() {
-        if (client!=null) {
-            try {
-                client.close();
-            } catch (IllegalStateException e) {
-                // Already closed. Ignore exception.
-            } finally {
-                client=null;
-//                keepAliveMaxRequest  = null;
-//                keepAliveTimeOut     = null;
-            }
-        }
         if (connectionsCounter!=null) {
             connectionsCounter.unregisterConnectionsCounter();
             connectionsCounter.clearConnectionsMap();
             connectionsCounter = null;
+        }
+        if (client!=null) {
+            try {
+                client.close();
+            } catch (IllegalStateException ignore) {
+                // Already closed. Ignore exception.
+            } finally {
+                client=null;
+            }
         }
     }
 
@@ -178,22 +151,6 @@ public class BackendSession {
     public void setQueueService(IQueueService queueService) {
         this.queueService = queueService;
     }
-
-//    public void setKeepAliveMaxRequest(Long keepAliveMaxRequest) {
-//        this.keepAliveMaxRequest = keepAliveMaxRequest;
-//    }
-//
-//    public void setKeepAliveTimeOut(Long keepAliveTimeOut) {
-//        this.keepAliveTimeOut = keepAliveTimeOut;
-//    }
-
-//    public boolean checkKeepAliveLimit() {
-//        if (isKeepAliveLimit()) {
-//            close();
-//            return true;
-//        }
-//        return false;
-//    }
 
     public void setRemoteUser(RemoteUser remoteUser) {
         this.remoteUser = remoteUser;

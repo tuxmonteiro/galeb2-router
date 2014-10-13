@@ -33,9 +33,9 @@ import com.globo.galeb.core.bus.MessageBus;
 
 public class FarmTest extends TestVerticle {
 
-    private SafeJsonObject virtualhostJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "test.virtualhost.com");
+    private SafeJsonObject virtualhostJson = new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, "test.virtualhost.com");
     private String virtualhostId = "test.virtualhost.com";
-    private SafeJsonObject backendJson = new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "0.0.0.0:00");
+    private SafeJsonObject backendJson = new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, "0.0.0.0:00");
     private IQueueService queueService = mock(IQueueService.class);
 
     @Test
@@ -44,7 +44,7 @@ public class FarmTest extends TestVerticle {
 
         for (int x=0; x<10;x++) {
             SafeJsonObject virtualhostJson =
-                    new SafeJsonObject().putString(IJsonable.jsonIdFieldName, String.valueOf(x));
+                    new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, String.valueOf(x));
             String message = new MessageBus()
                                     .setEntity(virtualhostJson)
                                     .setUri("/virtualhost")
@@ -64,7 +64,7 @@ public class FarmTest extends TestVerticle {
 
         String message = "";
         SafeJsonObject virtualhostJson =
-                new SafeJsonObject().putString(IJsonable.jsonIdFieldName, "test.localdomain");
+                new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, "test.localdomain");
         message = new MessageBus().setEntity(virtualhostJson)
                                   .setUri("/virtualhost")
                                   .make()
@@ -74,7 +74,7 @@ public class FarmTest extends TestVerticle {
 
         for (int x=0; x<10;x++) {
             SafeJsonObject backendJson =
-                    new SafeJsonObject().putString(IJsonable.jsonIdFieldName, String.format("0:%d", x));
+                    new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%d", x));
             message = new MessageBus().setEntity(backendJson)
                                       .setParentId("test.localdomain")
                                       .setUri("/backend")
@@ -93,7 +93,7 @@ public class FarmTest extends TestVerticle {
         Farm farm = new Farm(this, queueService);
 
         String uriStr = "/virtualhost";
-        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
         String message = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -112,7 +112,7 @@ public class FarmTest extends TestVerticle {
         Farm farm = new Farm(this, queueService);
 
         String uriStr = "/virtualhost";
-        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
         String message = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -217,7 +217,7 @@ public class FarmTest extends TestVerticle {
     public void insertDuplicatedBackendToExistingVirtualhostSet() {
         Farm farm = new Farm(this, queueService);
 
-        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
 
         String messageVirtualhost = new MessageBus()
                                         .setEntity(virtualhostJson)
@@ -249,7 +249,7 @@ public class FarmTest extends TestVerticle {
     public void removeExistingBackendFromExistingVirtualhostSet() throws UnsupportedEncodingException {
         Farm farm = new Farm(this, queueService);
 
-        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
 
         String messageVirtualhost = new MessageBus()
                                         .setEntity(virtualhostJson)
@@ -300,7 +300,7 @@ public class FarmTest extends TestVerticle {
         Farm farm = new Farm(this, queueService);
 
         String statusStr = "";
-        String virtualhostId = virtualhostJson.getString(IJsonable.jsonIdFieldName);
+        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
 
         String messageVirtualhost = new MessageBus()
                                             .setEntity(virtualhostJson)

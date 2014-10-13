@@ -85,9 +85,8 @@ public class SafeJsonObject extends JsonObject implements Cloneable {
     public SafeJsonObject clone() {
         try {
             super.clone();
-        } catch (CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
+        } catch (CloneNotSupportedException ignore) {}
+
         return new SafeJsonObject(this.encode());
     }
 

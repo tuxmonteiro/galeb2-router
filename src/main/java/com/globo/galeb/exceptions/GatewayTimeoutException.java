@@ -21,7 +21,7 @@ public class GatewayTimeoutException extends AbstractHttpException {
     private static final long serialVersionUID = 4297206544278009365L;
 
     public GatewayTimeoutException() {
-        super(HttpCode.GatewayTimeout);
+        super(HttpCode.GATEWAY_TIMEOUT);
     }
 
 }

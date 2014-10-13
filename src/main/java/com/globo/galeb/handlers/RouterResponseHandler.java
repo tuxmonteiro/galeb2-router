@@ -33,7 +33,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private final Long requestTimeoutTimer;
     private final HttpServerResponse httpServerResponse;
     private final ServerResponse sResponse;
-//    private final Backend backend;
     private final String backendId;
     private final ICounter counter;
     private final Logger log;
@@ -41,7 +40,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private String headerHost = "UNDEF";
     private Long initialRequestTime = null;
     private boolean connectionKeepalive = true;
-//    private boolean backendForceKeepAlive = true;
 
     @Override
     public void handle(final HttpClientResponse cResponse) {
@@ -74,19 +72,8 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     .end();
 
                 if (!connectionKeepalive) {
-//                    if (backend.checkKeepAliveLimit()) {
-//                        sResponse.closeResponse();
-//                    }
-//                } else {
                     sResponse.closeResponse();
                 }
-
-//                else {
-//                    if (!backendForceKeepAlive) {
-//                        backend.close();
-//                    }
-//                    sResponse.closeResponse();
-//                }
             }
         });
 
@@ -97,7 +84,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                 vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId );
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
-//                backend.close();
             }
         });
 
@@ -126,15 +112,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         return this;
     }
 
-//    public boolean isBackendForceKeepAlive() {
-//        return backendForceKeepAlive;
-//    }
-
-//    public RouterResponseHandler setBackendForceKeepAlive(boolean backendForceKeepAlive) {
-//        this.backendForceKeepAlive = backendForceKeepAlive;
-//        return this;
-//    }
-
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,
@@ -157,7 +134,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         this.requestTimeoutTimer = requestTimeoutTimer;
         this.httpServerResponse = httpServerResponse;
         this.sResponse = sResponse;
-//        this.backend = backend;
         this.backendId = backend.toString();
         this.log = log;
         this.counter = counter;

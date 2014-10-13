@@ -48,8 +48,8 @@ public class FarmMap extends MessageToMap<Farm> {
                           .setVerticleId(verticleId);
             virtualhostMap.add();
 
-            JsonArray backends = virtualhostJson.getObject(Virtualhost.backendsFieldName, new JsonObject())
-                                                .getArray(Virtualhost.backendsElegibleFieldName);
+            JsonArray backends = virtualhostJson.getObject(Virtualhost.BACKENDS_FIELDNAME, new JsonObject())
+                                                .getArray(Virtualhost.BACKENDS_ELIGIBLE_FIELDNAME);
             if (backends==null) {
                 continue;
             }

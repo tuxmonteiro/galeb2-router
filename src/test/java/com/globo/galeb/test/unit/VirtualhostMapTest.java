@@ -41,35 +41,35 @@ public class VirtualhostMapTest {
 
         messageBus = new MessageBus();
         messageBus.setUri("/virtualhost/test.localdomain")
-                  .setEntity(new JsonObject().putString(Entity.jsonIdFieldName, "test.localdomain").encode());
+                  .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "test.localdomain").encode());
 
         virtualhostMap = new VirtualhostMap();
         virtualhostMap.setMessageBus(messageBus).setLogger(logger);
     }
 
     @Test
-    public void AddReturnTrue() {
+    public void addReturnTrue() {
         assertTrue(virtualhostMap.add());
     }
 
     @Test
-    public void DelReturnFalseIfNotExist() {
+    public void delReturnFalseIfNotExist() {
         assertFalse(virtualhostMap.del());
     }
 
     @Test
-    public void DelReturnTrueIfExist() {
+    public void delReturnTrueIfExist() {
         virtualhostMap.add();
         assertTrue(virtualhostMap.del());
     }
 
     @Test
-    public void ResetReturnFalse() {
+    public void resetReturnFalse() {
         assertFalse(virtualhostMap.reset());
     }
 
     @Test
-    public void ChangeReturnFalse() {
+    public void changeReturnFalse() {
         assertFalse(virtualhostMap.change());
     }
 

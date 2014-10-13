@@ -28,21 +28,21 @@ public class HashAlgorithm {
 
     public static enum HashType {
         MD5,            // It's not so bad, but is a little slow.
-//      MURMUR3_128,    // Slow
+        MURMUR3_128,    // Slow
         MURMUR3_32,     // Fast and reliable, but not so good for small keys
-//      GOOD_FAST_32,   // Super Fast, but with excessive collisions. Why this was released?
-//      ADLER_32,       // Unreliable
-//      CRC_32,         // Unreliable
-//      SHA1,           // Slow and Unreliable
+        GOOD_FAST_32,   // Super Fast, but with excessive collisions. Why this was released?
+        ADLER_32,       // Unreliable
+        CRC_32,         // Unreliable
+        SHA1,           // Slow and Unreliable
         SHA256,         // Reliable. Its a little slow, but not quite.
-//      SHA512,         // Reliable, but very slow
+        SHA512,         // Reliable, but very slow
         SIP24           // Fast and reliable. The best for small keys
     }
 
-    private static final Map<String, HashType> HashTypeMap = new HashMap<>();
+    private static final Map<String, HashType> HASH_TYPE_MAP = new HashMap<>();
     static {
         for (HashType hash : EnumSet.allOf(HashType.class)) {
-            HashTypeMap.put(hash.toString(), hash);
+            HASH_TYPE_MAP.put(hash.toString(), hash);
         }
     }
 
@@ -58,7 +58,7 @@ public class HashAlgorithm {
     }
 
     public HashAlgorithm(String hashTypeStr) {
-        this.hashType = HashTypeMap.containsKey(hashTypeStr) ? HashType.valueOf(hashTypeStr) : HashType.SIP24;
+        this.hashType = HASH_TYPE_MAP.containsKey(hashTypeStr) ? HashType.valueOf(hashTypeStr) : HashType.SIP24;
     }
 
     public int hash(Object key) {

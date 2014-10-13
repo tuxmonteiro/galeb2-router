@@ -21,6 +21,6 @@ public class NotFoundException extends AbstractHttpException {
     private static final long serialVersionUID = -1148048070375338827L;
 
     public NotFoundException() {
-        super(HttpCode.NotFound);
+        super(HttpCode.NOT_FOUND);
     }
 }

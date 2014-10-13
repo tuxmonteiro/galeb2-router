@@ -25,6 +25,8 @@ import org.vertx.java.core.logging.Logger;
 
 public class ServerResponse {
 
+    private static final String UNDEF = "UNDEF";
+
     private final HttpServerRequest req;
     private final Logger log;
     private final ICounter counter;
@@ -39,7 +41,7 @@ public class ServerResponse {
         if (e instanceof AbstractHttpException) {
             return ((AbstractHttpException)e).getHttpCode();
         } else {
-            return HttpCode.ServiceUnavailable;
+            return HttpCode.SERVICE_UNAVAILABLE;
         }
     }
 
@@ -97,7 +99,7 @@ public class ServerResponse {
                 !"".equals(headerHost) ? String.format(" (virtualhost: %s)", headerHost) : "",
                 HttpCode.getMessage(statusCode, false));
 
-        if (statusCode>=HttpCode.InternalServerError) {
+        if (statusCode>=HttpCode.INTERNAL_SERVER_ERROR) {
             log.error(logMessage);
         } else {
             log.warn(logMessage);
@@ -145,33 +147,27 @@ public class ServerResponse {
     public void logRequest(boolean enable) {
 
         if (enableAccessLog) {
+
             Integer code = resp.getStatusCode();
-            int codeFamily = code.intValue()/100;
             String httpLogMessage = new NcsaLogExtendedFormatter()
                                         .setRequestData(req)
                                         .getFormatedLog();
-            switch (codeFamily) {
-                case 5: // SERVER_ERROR
-                    log.error(httpLogMessage);
-                    break;
-                case 0: // OTHER,
-                case 1: // INFORMATIONAL
-                case 2: // SUCCESSFUL
-                case 3: // REDIRECTION
-                case 4: // CLIENT_ERROR
-                default:
-                    log.info(httpLogMessage);
-                    break;
+
+            if (HttpCode.isServerError(code.intValue())) {
+                log.error(httpLogMessage);
+            } else {
+                log.info(httpLogMessage);
             }
+
         }
     }
 
     public void sendRequestCount(int code) {
         if (counter!=null) {
-            if (!"".equals(headerHost) && !"UNDEF".equals(headerHost) &&
-                    !"".equals(backendId) && !"UNDEF".equals(backendId)) {
+            if (!"".equals(headerHost) && !UNDEF.equals(headerHost) &&
+                    !"".equals(backendId) && !UNDEF.equals(backendId)) {
                 counter.httpCode(headerHost, backendId, code);
-            } else if (!"".equals(id) && !"UNDEF".equals(id)) {
+            } else if (!"".equals(id) && !UNDEF.equals(id)) {
                 counter.httpCode(id, code);
             }
         }

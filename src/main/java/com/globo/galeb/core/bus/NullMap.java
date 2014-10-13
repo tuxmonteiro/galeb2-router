@@ -16,6 +16,9 @@ package com.globo.galeb.core.bus;
 
 public class NullMap extends MessageToMap<IEventObserver> {
 
+    private String logMessageOnErr = "Farm is NULL or uriBase not supported";
+    private String logMessageOk    = String.format("[%s] uriBase %s not supported", verticleId, uriBase);
+
     public NullMap() {
         super();
     }
@@ -23,9 +26,9 @@ public class NullMap extends MessageToMap<IEventObserver> {
     @Override
     public boolean add() {
         if (log!=null) {
-            log.warn(String.format("[%s] uriBase %s not supported", verticleId, uriBase));
+            log.warn(logMessageOk);
         } else {
-            System.err.println("Farm is NULL or uriBase not supported");
+            System.err.println(logMessageOnErr);
         }
         return super.add();
     }
@@ -33,9 +36,9 @@ public class NullMap extends MessageToMap<IEventObserver> {
     @Override
     public boolean del() {
         if (log!=null) {
-            log.warn(String.format("[%s] uriBase %s not supported", verticleId, uriBase));
+            log.warn(logMessageOk);
         } else {
-            System.err.println("Farm is Null and uriBase not supported");
+            System.err.println(logMessageOnErr);
         }
         return super.del();
     }
@@ -43,9 +46,9 @@ public class NullMap extends MessageToMap<IEventObserver> {
     @Override
     public boolean reset() {
         if (log!=null) {
-            log.warn(String.format("[%s] uriBase %s not supported", verticleId, uriBase));
+            log.warn(logMessageOk);
         } else {
-            System.err.println("Farm is Null and uriBase not supported");
+            System.err.println(logMessageOnErr);
         }
         return super.reset();
     }
@@ -53,9 +56,9 @@ public class NullMap extends MessageToMap<IEventObserver> {
     @Override
     public boolean change() {
         if (log!=null) {
-            log.warn(String.format("[%s] uriBase %s not supported", verticleId, uriBase));
+            log.warn(logMessageOk);
         } else {
-            System.err.println("Farm is Null and uriBase not supported");
+            System.err.println(logMessageOnErr);
         }
         return super.change();
     }

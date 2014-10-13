@@ -72,9 +72,10 @@ public class VertxQueueService implements IQueueService {
             }
             return;
         }
+
         json.removeField("version");
 
-        String parentId = json.getString(MessageBus.parentIdFieldName, "");
+        String parentId = json.getString(MessageBus.PARENT_ID_FIELDNAME, "");
 
         MessageBus messageBus = new MessageBus()
                                     .setUri(uri)

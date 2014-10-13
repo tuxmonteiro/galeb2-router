@@ -47,10 +47,10 @@ public class RoundRobinPolicyTest {
         when(vertx.sharedData()).thenReturn(sharedData);
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(Virtualhost.loadBalancePolicyFieldName, RoundRobinPolicy.class.getSimpleName());
+            .putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, RoundRobinPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
-            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
+            .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {

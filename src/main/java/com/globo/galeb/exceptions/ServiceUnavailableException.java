@@ -21,7 +21,7 @@ public class ServiceUnavailableException extends AbstractHttpException {
     private static final long serialVersionUID = 4297206544278009366L;
 
     public ServiceUnavailableException() {
-        super(HttpCode.ServiceUnavailable);
+        super(HttpCode.SERVICE_UNAVAILABLE);
     }
 
 }

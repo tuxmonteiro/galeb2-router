@@ -40,10 +40,10 @@ public class LeastConnPolicyTest extends TestVerticle {
     public void leastConnection() {
 
         JsonObject virtualhostProperties = new JsonObject()
-            .putString(Virtualhost.loadBalancePolicyFieldName, LeastConnPolicy.class.getSimpleName());
+            .putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, LeastConnPolicy.class.getSimpleName());
         JsonObject virtualhostJson = new JsonObject()
-            .putString(IJsonable.jsonIdFieldName, "test.localdomain")
-            .putObject(IJsonable.jsonPropertiesFieldName, virtualhostProperties);
+            .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
+            .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
         virtualhost = new Virtualhost(virtualhostJson, vertx);
 
         for (int x=0; x<numBackends; x++) {
@@ -76,8 +76,6 @@ public class LeastConnPolicyTest extends TestVerticle {
         }
 
         testComplete();
-
-
     }
 
 }

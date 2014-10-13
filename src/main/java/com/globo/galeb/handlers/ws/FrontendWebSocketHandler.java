@@ -35,7 +35,6 @@ import org.vertx.java.platform.Container;
 public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
     private final Vertx vertx;
-//    private final JsonObject conf;
     private final Logger log;
     private Farm farm;
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
@@ -45,7 +44,6 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
             final Container container,
             final Farm farm) {
         this.vertx = vertx;
-//        this.conf = container.config();
         this.farm = farm;
         this.log = container.logger();
     }

@@ -21,6 +21,8 @@ import com.globo.galeb.core.RequestData;
 
 public interface ILoadBalancePolicy {
 
+    public static final String CACHE_TIMEOUT_FIELDNAME = "cacheTimeout";
+
     public Backend getChoice(final List<Backend> backends, final RequestData requestData);
 
     public boolean isDefault();

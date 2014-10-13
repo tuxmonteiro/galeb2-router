@@ -21,7 +21,7 @@ public class BadGatewayException extends AbstractHttpException {
     private static final long serialVersionUID = 4297206544278009368L;
 
     public BadGatewayException() {
-        super(HttpCode.BadGateway);
+        super(HttpCode.BAD_GATEWAY);
     }
 
 }
