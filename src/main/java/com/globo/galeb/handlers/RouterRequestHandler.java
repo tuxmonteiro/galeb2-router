@@ -55,11 +55,57 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private String lastHeaderHost = "";
     private Backend lastBackend = null;
 
+    private class GatewayTimeoutTaskHandler implements Handler<Long> {
+
+        private final ServerResponse sResponse;
+        private final String headerHost;
+        private final String backendId;
+
+        public GatewayTimeoutTaskHandler(final ServerResponse sResponse, String headerHost, String backendId) {
+            this.sResponse = sResponse;
+            this.headerHost = headerHost;
+            this.backendId = backendId;
+        }
+
+        @Override
+        public void handle(Long event) {
+            sResponse.setHeaderHost(headerHost)
+                .setHeaderHost(headerHost)
+                .setBackendId(backendId)
+                .showErrorAndClose(new GatewayTimeoutException());
+        }
+
+    }
+
+    private class ClientRequestExceptionHandler implements Handler<Throwable> {
+
+        private final ServerResponse sResponse;
+        private final Long requestTimeoutTimer;
+        private final String headerHost;
+        private final String backendId;
+
+        public ClientRequestExceptionHandler(final ServerResponse sResponse,
+                Long requestTimeoutTimer, String headerHost, String backendId) {
+            this.sResponse = sResponse;
+            this.requestTimeoutTimer = requestTimeoutTimer;
+            this.headerHost = headerHost;
+            this.backendId = backendId;
+        }
+
+        @Override
+        public void handle(Throwable event) {
+            vertx.cancelTimer(requestTimeoutTimer);
+            queueService.publishBackendFail(backendId.toString());
+            sResponse.setHeaderHost(headerHost).setBackendId(backendId)
+                .showErrorAndClose(event);
+        }
+
+    }
+
     @Override
     public void handle(final HttpServerRequest sRequest) {
 
         String headerHost = "UNDEF";
-        @SuppressWarnings(value = { "unused" })
         String backendId = "UNDEF";
 
         if (sRequest.headers().contains(httpHeaderHost)) {
@@ -87,17 +133,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
         sRequest.response().setChunked(enableChunked);
 
-        @SuppressWarnings(value = { "all" })
-        final Long requestTimeoutTimer = vertx.setTimer(requestTimeOut, new Handler<Long>() {
-            final String headerHost = this.headerHost;
-            final String backendId = this.backendId;
-            @Override
-            public void handle(Long event) {
-                sResponse.setHeaderHost(headerHost)
-                    .setId(String.format("%s.%s", headerHost, backendId))
-                    .showErrorAndClose(new GatewayTimeoutException());
-            }
-        });
+        final Long requestTimeoutTimer = vertx.setTimer(requestTimeOut,
+                                            new GatewayTimeoutTaskHandler(sResponse, headerHost, backendId));
 
         if (!virtualhost.hasBackends()) {
             vertx.cancelTimer(requestTimeoutTimer);
@@ -171,20 +208,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             });
         }
 
-        cRequest.exceptionHandler(new Handler<Throwable>() {
-            @SuppressWarnings(value = { "all" })
-            final String headerHost = this.headerHost;
-            @SuppressWarnings(value = { "all" })
-            final String backendId = this.backendId;
-
-            @Override
-            public void handle(Throwable event) {
-                vertx.cancelTimer(requestTimeoutTimer);
-                queueService.notifyBackendFail(backend.toString());
-                sResponse.setId(String.format("%s.%s", headerHost, backendId))
-                    .showErrorAndClose(event);
-            }
-         });
+        cRequest.exceptionHandler(
+                new ClientRequestExceptionHandler(sResponse, requestTimeoutTimer, headerHost, backendId));
 
         sRequest.endHandler(new VoidHandler() {
             @Override

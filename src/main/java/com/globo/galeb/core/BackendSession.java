@@ -41,7 +41,6 @@ public class BackendSession {
 //    private Long       requestCount         = 0L;
     private RemoteUser remoteUser           = null;
     private Boolean    keepAlive            = true;
-    private String     counterKey           = null;
     private int        maxPoolSize          = 1;
 
     public BackendSession(final Vertx vertx, String serverHost, String backendId) {
@@ -125,8 +124,10 @@ public class BackendSession {
         }
         connectionsCounter.addConnection(remoteUser);
 
-        if (counter!=null && client!=null && getSessionController().isNewConnection()) {
-            counter.sendActiveSessions(getCounterKey(serverHost, backendId),1L);
+        if (counter!=null && client!=null && getSessionController().isNewConnection() &&
+                !"".equals(serverHost) && !"UNDEF".equals(serverHost) &&
+                !"".equals(backendId) && !"UNDEF".equals(backendId)) {
+            counter.sendActiveSessions(serverHost, backendId, 1L);
         }
 
         return client;
@@ -193,24 +194,6 @@ public class BackendSession {
 //        }
 //        return false;
 //    }
-
-    private String getCounterKey(String aVirtualhost, String aBackend) {
-        if (counter==null) {
-            return "UNDEF";
-        }
-        if (counterKey==null || "".equals(counterKey)) {
-            String strDefault = "UNDEF";
-            String result = String.format("%s.%s",
-                    counter.cleanupString(aVirtualhost, strDefault),
-                    counter.cleanupString(aBackend, strDefault));
-            if (!"".equals(aVirtualhost) && !"".equals(aBackend)) {
-                counterKey = result;
-            }
-            return result;
-        } else {
-            return counterKey;
-        }
-    }
 
     public void setRemoteUser(RemoteUser remoteUser) {
         this.remoteUser = remoteUser;

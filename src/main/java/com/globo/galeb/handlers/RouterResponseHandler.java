@@ -33,7 +33,8 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private final Long requestTimeoutTimer;
     private final HttpServerResponse httpServerResponse;
     private final ServerResponse sResponse;
-    private final Backend backend;
+//    private final Backend backend;
+    private final String backendId;
     private final ICounter counter;
     private final Logger log;
 
@@ -63,14 +64,13 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             @Override
             public void handle() {
 
-                if (headerHost!=null) {
-                    if (initialRequestTime!=null) {
-                        counter.requestTime(getKey(), initialRequestTime);
-                    }
+                if (!"UNDEF".equals(headerHost) && initialRequestTime!=null) {
+                    counter.requestTime(headerHost, backendId, initialRequestTime);
                 }
 
                 sResponse.setStatusCode(statusCode)
-                    .setId(getKey())
+                    .setHeaderHost(headerHost)
+                    .setBackendId(backendId)
                     .end();
 
                 if (!connectionKeepalive) {
@@ -93,19 +93,14 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         cResponse.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
-                log.error(String.format("host+backend: %s, message: %s", getKey(), event.getMessage()));
-                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend.toString() );
-                sResponse.setHeaderHost(getHeaderHost())
-                    .setId(getKey())
+                log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
+                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId );
+                sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
-                backend.close();
+//                backend.close();
             }
         });
 
-    }
-
-    public String getHeaderHost() {
-        return headerHost;
     }
 
     public RouterResponseHandler setHeaderHost(String headerHost) {
@@ -140,12 +135,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 //        return this;
 //    }
 
-    private String getKey() {
-        return String.format("%s.%s",
-                headerHost!=null?headerHost.replaceAll("[^\\w]", "_"):"UNDEF",
-                backend!=null?backend.toString().replaceAll("[^\\w]", "_"):"UNDEF");
-    }
-
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,
@@ -168,7 +157,8 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         this.requestTimeoutTimer = requestTimeoutTimer;
         this.httpServerResponse = httpServerResponse;
         this.sResponse = sResponse;
-        this.backend = backend;
+//        this.backend = backend;
+        this.backendId = backend.toString();
         this.log = log;
         this.counter = counter;
 

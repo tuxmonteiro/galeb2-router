@@ -30,7 +30,7 @@ public class ManagerService {
         VERSION
     }
 
-    private String id;
+    private final String id;
     private final Logger log;
     private HttpServerRequest req = null;
     private ServerResponse serverResponse = null;
@@ -96,22 +96,20 @@ public class ManagerService {
     }
 
     public String getRequestId() {
-        String id = "";
+        String idFromUri = "";
         try {
-            id = req.params() != null && req.params().contains(IJsonable.jsonIdFieldName) ?
+            idFromUri = req.params() != null && req.params().contains(IJsonable.jsonIdFieldName) ?
                     java.net.URLDecoder.decode(req.params().get(IJsonable.jsonIdFieldName), "UTF-8") : "";
         } catch (UnsupportedEncodingException e) {
             log.error(e.getMessage());
         }
-        return id;
+        return idFromUri;
     }
 
 
     public boolean checkIdPresent() {
-        String id = getRequestId();
-
-        if ("".equals(id)) {
-            endResponse(HttpCode.BadRequest, String.format("ID absent", id));
+        if ("".equals(getRequestId())) {
+            endResponse(HttpCode.BadRequest, "ID absent");
             return false;
         }
         return true;

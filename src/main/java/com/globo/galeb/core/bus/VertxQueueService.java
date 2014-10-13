@@ -30,7 +30,7 @@ import com.globo.galeb.core.SafeJsonObject;
 
 public class VertxQueueService implements IQueueService {
 
-    public final EventBus eb;
+    private final EventBus eb;
     private final Logger log;
 
     public VertxQueueService(final EventBus eb, final Logger log) {
@@ -147,12 +147,12 @@ public class VertxQueueService implements IQueueService {
     }
 
     @Override
-    public void publishBackendFail(String backend) {
+    public void publishBackendFail(String backendId) {
         if (eb==null) {
             return;
         }
-        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend);
-        log.info(String.format("Backend %s Fail. disabling it", backend));
+        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId);
+        log.info(String.format("Backend %s Fail. disabling it", backendId));
     }
 
     @Override
@@ -319,12 +319,4 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
-    @Override
-    public void notifyBackendFail(String backendId) {
-        if (eb!=null) {
-            eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId);
-        } else {
-            logEventBusNull();
-        }
-    }
 }

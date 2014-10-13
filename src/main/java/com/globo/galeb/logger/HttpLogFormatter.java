@@ -16,7 +16,7 @@ package com.globo.galeb.logger;
 
 public interface HttpLogFormatter {
 
-    public HttpLogFormatter setRequestData(Object request, String message);
+    public HttpLogFormatter setRequestData(Object request);
     public String getFormatedLog();
 
 }

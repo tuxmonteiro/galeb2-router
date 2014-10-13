@@ -27,7 +27,7 @@ public class NcsaLogExtendedFormatter implements HttpLogFormatter {
     private HttpServerRequest req;
 
     @Override
-    public HttpLogFormatter setRequestData(final Object request, String message) {
+    public HttpLogFormatter setRequestData(final Object request) {
         this.req = (HttpServerRequest) request;
         return this;
     }
@@ -60,7 +60,7 @@ public class NcsaLogExtendedFormatter implements HttpLogFormatter {
                     version = httpVersion.toString();
                     break;
             }
-            String request_uri = req.path();
+            String requestUri = req.path();
             int status = req.response().getStatusCode();
             int bytes = 0;
             try {
@@ -76,7 +76,7 @@ public class NcsaLogExtendedFormatter implements HttpLogFormatter {
                     authuser,
                     date,
                     method,
-                    request_uri,
+                    requestUri,
                     version,
                     status,
                     bytes);

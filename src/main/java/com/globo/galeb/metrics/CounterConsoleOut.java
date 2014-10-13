@@ -8,6 +8,11 @@ public class CounterConsoleOut implements ICounter {
     }
 
     @Override
+    public void httpCode(String serverHost, String backendId, Integer code) {
+        httpCode(String.format("%s.%s", serverHost, backendId), code);
+    }
+
+    @Override
     public void incrHttpCode(String key, Integer code) {
         incrHttpCode(key, code, 1.0);
     }
@@ -36,13 +41,20 @@ public class CounterConsoleOut implements ICounter {
     }
 
     @Override
+    public void requestTime(String serverHost, String backendId,
+            Long initialRequestTime) {
+        requestTime(String.format("%s.%s", serverHost, backendId), initialRequestTime);
+    }
+
+    @Override
     public void sendActiveSessions(String key, Long initialRequestTime) {
         System.out.println(String.format("%s.active:%d", key, 1));
     }
 
     @Override
-    public String cleanupString(String aString, String strDefault) {
-        return !"".equals(aString)?aString.replaceAll("[^\\w]", "_"):strDefault;
+    public void sendActiveSessions(String serverHost, String backendId,
+            Long initialRequestTime) {
+        sendActiveSessions(String.format("%s.%s", serverHost, backendId), initialRequestTime);
     }
 
 }

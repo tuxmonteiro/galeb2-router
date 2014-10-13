@@ -23,18 +23,18 @@ import com.globo.galeb.metrics.ICounter;
 
 public class Backend extends Entity {
 
-    public static String propertyKeepAliveFieldName           = "keepalive";
-    public static String propertyConnectionTimeoutFieldName   = "connectionTimeout";
-    public static String propertyKeepaliveMaxRequestFieldName = "keepaliveMaxRequest";
-    public static String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
-    public static String propertyMaxPoolSizeFieldName         = "maxPoolSize";
-    public static String propertyPipeliningFieldName          = "pipelining";
-    public static String propertyReceiveBufferSizeFieldName   = "receiveBufferSize";
-    public static String propertySendBufferSizeFieldName      = "sendBufferSize";
-    public static String propertyUsePooledBuffersFieldName    = "usePooledBuffers";
+    public static final String propertyKeepAliveFieldName           = "keepalive";
+    public static final String propertyConnectionTimeoutFieldName   = "connectionTimeout";
+    public static final String propertyKeepaliveMaxRequestFieldName = "keepaliveMaxRequest";
+    public static final String propertyKeepAliveTimeOutFieldName    = "keepAliveTimeOut";
+    public static final String propertyMaxPoolSizeFieldName         = "maxPoolSize";
+    public static final String propertyPipeliningFieldName          = "pipelining";
+    public static final String propertyReceiveBufferSizeFieldName   = "receiveBufferSize";
+    public static final String propertySendBufferSizeFieldName      = "sendBufferSize";
+    public static final String propertyUsePooledBuffersFieldName    = "usePooledBuffers";
 
-    public static String propertyElegibleFieldName            = "_elegible";
-    public static String propertyActiveConnectionsFieldName   = "_activeConnections";
+    public static final String propertyElegibleFieldName            = "_elegible";
+    public static final String propertyActiveConnectionsFieldName   = "_activeConnections";
 
     private final Vertx vertx;
     private final String host;

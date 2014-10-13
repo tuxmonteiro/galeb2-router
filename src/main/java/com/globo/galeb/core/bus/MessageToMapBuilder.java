@@ -24,7 +24,10 @@ import com.globo.galeb.core.Farm;
 
 public class MessageToMapBuilder {
 
-    public static MessageToMap<?> getInstance(String message, Farm farm) {
+    private MessageToMapBuilder() {}
+
+    @SuppressWarnings("rawtypes")
+    public static MessageToMap getInstance(String message, Farm farm) {
 
         if (farm==null) {
             return new NullMap();

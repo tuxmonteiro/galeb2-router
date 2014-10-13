@@ -40,13 +40,13 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
     private static String routeManagerId = "route_manager";
 
-    public Logger log;
+    private Logger log;
     private Server server;
     private String httpServerName = null;
     private Farm farm;
     private IQueueService queueService;
 
-    private final String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
+    private final static String patternRegex = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
     @Override
     public void start() {
@@ -77,9 +77,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         return;
     };
 
-    private void startHttpServer(final SafeJsonObject serverConf) throws RuntimeException {
-        final Logger log = this.getContainer().logger();
-        final Server server = this.server;
+    private void startHttpServer(final SafeJsonObject serverConf) {
 
         RouteMatcher routeMatcher = new RouteMatcher();
 

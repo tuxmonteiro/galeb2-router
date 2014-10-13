@@ -33,6 +33,7 @@ public class ServerResponse {
     private String message = "";
     private String id = "";
     private String headerHost = "";
+    private String backendId = "";
 
     private int exceptionToHttpCode(final Throwable e) {
         if (e instanceof AbstractHttpException) {
@@ -58,6 +59,11 @@ public class ServerResponse {
         return this;
     }
 
+    public ServerResponse setBackendId(String backendId) {
+        this.backendId = backendId;
+        return this;
+    }
+
     public ServerResponse setHeaderHost(String headerHost) {
         this.headerHost = headerHost;
         return this;
@@ -69,10 +75,8 @@ public class ServerResponse {
     }
 
     public ServerResponse setStatusCode(Integer code) {
-
         resp.setStatusCode(code);
-        String message = HttpCode.getMessage(code);
-        resp.setStatusMessage(message);
+        resp.setStatusMessage(HttpCode.getMessage(code));
         return this;
     }
 
@@ -88,15 +92,15 @@ public class ServerResponse {
 
         end();
 
-        String message = String.format("FAIL with HttpStatus %d%s: %s",
+        String logMessage = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
-                !"".equals(headerHost) ? " (virtualhost: "+headerHost+")" : "",
+                !"".equals(headerHost) ? String.format(" (virtualhost: %s)", headerHost) : "",
                 HttpCode.getMessage(statusCode, false));
 
         if (statusCode>=HttpCode.InternalServerError) {
-            log.error(message);
+            log.error(logMessage);
         } else {
-            log.warn(message);
+            log.warn(logMessage);
         }
 
         closeResponse();
@@ -119,20 +123,22 @@ public class ServerResponse {
             } else {
                 resp.end();
             }
-        } catch (RuntimeException e) {
-            if (e instanceof java.lang.IllegalStateException) {
-                // Response has already been written ? Ignore.
-                log.debug(e.getMessage());
-            } else {
-                log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e.getMessage()));
-            }
+
+        } catch (java.lang.IllegalStateException e) {
+            // Response has already been written ? Ignore.
+            log.debug(e.getMessage());
+
+        } catch (RuntimeException e2) {
+            log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e2.getMessage()));
             return;
+
         }
+
     }
 
     public void end() {
         logRequest(enableAccessLog);
-        sendRequestCount(id, resp.getStatusCode());
+        sendRequestCount(resp.getStatusCode());
         realEnd(message);
     }
 
@@ -140,11 +146,9 @@ public class ServerResponse {
 
         if (enableAccessLog) {
             Integer code = resp.getStatusCode();
-            String message = "";
             int codeFamily = code.intValue()/100;
-            // TODO: Dependency Injection
             String httpLogMessage = new NcsaLogExtendedFormatter()
-                                        .setRequestData(req, message)
+                                        .setRequestData(req)
                                         .getFormatedLog();
             switch (codeFamily) {
                 case 5: // SERVER_ERROR
@@ -162,9 +166,14 @@ public class ServerResponse {
         }
     }
 
-    public void sendRequestCount(String id, int code) {
-        if (counter!=null && !"".equals(id)) {
-            counter.httpCode(id, code);
+    public void sendRequestCount(int code) {
+        if (counter!=null) {
+            if (!"".equals(headerHost) && !"UNDEF".equals(headerHost) &&
+                    !"".equals(backendId) && !"UNDEF".equals(backendId)) {
+                counter.httpCode(headerHost, backendId, code);
+            } else if (!"".equals(id) && !"UNDEF".equals(id)) {
+                counter.httpCode(id, code);
+            }
         }
     }
 

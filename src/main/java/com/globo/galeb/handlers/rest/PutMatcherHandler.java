@@ -61,7 +61,7 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
                     id = req.params().contains("param1") ? req.params().get("param1") : "";
                 }
 
-                SafeJsonObject bodyJson = new SafeJsonObject(body.toString());
+                SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
 
                 if (!managerService.checkIdConsistency(bodyJson, id)) {
                     return;

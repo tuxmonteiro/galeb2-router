@@ -209,12 +209,12 @@ public class Virtualhost extends Entity {
             }
         }
 
-        JsonObject backends = new JsonObject();
+        JsonObject backendsJson = new JsonObject();
 
-        backends.putArray(backendsElegibleFieldName, backendsElegiblesJson);
-        backends.putArray(backendsFailedFieldName, backendsFailedJson);
+        backendsJson.putArray(backendsElegibleFieldName, backendsElegiblesJson);
+        backendsJson.putArray(backendsFailedFieldName, backendsFailedJson);
 
-        idObj.putObject(backendsFieldName, backends);
+        idObj.putObject(backendsFieldName, backendsJson);
 
         return super.toJson();
     }

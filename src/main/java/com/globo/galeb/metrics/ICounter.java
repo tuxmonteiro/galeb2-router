@@ -18,6 +18,8 @@ public interface ICounter {
 
     public abstract void httpCode(String key, Integer code);
 
+    public abstract void httpCode(String virtualhostId, String backendId, Integer code);
+
     public abstract void incrHttpCode(String key, Integer code);
 
     public abstract void incrHttpCode(String key, Integer code, double sample);
@@ -28,8 +30,10 @@ public interface ICounter {
 
     public abstract void requestTime(String key, Long initialRequestTime);
 
+    public abstract void requestTime(String virtualhostId, String backendId, Long initialRequestTime);
+
     public abstract void sendActiveSessions(String key, Long initialRequestTime);
 
-    public String cleanupString(String aString, String strDefault);
+    public abstract void sendActiveSessions(String virtualhostId, String backendId, Long initialRequestTime);
 
 }
