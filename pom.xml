@@ -92,7 +92,7 @@
 
     <dependency>
       <groupId>com.globo.galeb.vertx</groupId>
-      <artifactId>vertx2-log4j2</artifactId>
+      <artifactId>galeb-log4j2</artifactId>
       <version>${com.globo.galeb.vertx.vertx2-log4j2.version}</version>
     </dependency>
 
