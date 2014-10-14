@@ -9,11 +9,11 @@
   <version>1.0.0</version>
 
   <name>galeb - virtual router as a service</name>
-  <url>https://github.com/tuxmonteiro/vxrouter</url>
+  <url>https://github.com/galeb/vxrouter</url>
 
   <scm>
-    <connection>scm:git:git@github.com:tuxmonteiro/galeb-router.git</connection>
-    <url>https://github.com/tuxmonteiro/galeb-router.git</url>
+    <connection>scm:git:git@github.com:galeb/galeb-router.git</connection>
+    <url>https://github.com/galeb/galeb-router.git</url>
   </scm>
 
   <licenses>
