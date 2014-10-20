@@ -14,12 +14,11 @@
  */
 package com.globo.galeb.core.bus;
 
-import java.util.List;
+import java.util.Iterator;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.Virtualhost;
 
@@ -30,15 +29,16 @@ public class FarmMap extends MessageToMap<Farm> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public boolean add() {
         boolean isOk = false;
         Farm farm = map.get("farm");
 
         JsonArray virtualhosts = entity.getArray("virtualhosts", new JsonArray());
-        List<Virtualhost> virtualhostsList = (List<Virtualhost>) virtualhosts.toList();
-        for (Virtualhost virtualhostObj: virtualhostsList) {
-            JsonObject virtualhostJson = virtualhostObj.toJson();
+
+        Iterator<Object> virtualhostIterator = virtualhosts.iterator();
+        while (virtualhostIterator.hasNext()) {
+            Object virtualhostObj = virtualhostIterator.next();
+            JsonObject virtualhostJson = (JsonObject) virtualhostObj;
 
             VirtualhostMap virtualhostMap = new VirtualhostMap();
             virtualhostMap.setMessageBus(new MessageBus(virtualhostJson.encode()))
@@ -53,9 +53,12 @@ public class FarmMap extends MessageToMap<Farm> {
             if (backends==null) {
                 continue;
             }
-            List<Backend> backendsList = (List<Backend>) backends.toList();
-            for (Backend backendObj: backendsList) {
-                JsonObject backendJson = backendObj.toJson();
+
+            Iterator<Object> backendIterator = backends.iterator();
+            while (backendIterator.hasNext()) {
+                Object backendObj = backendIterator.next();
+                JsonObject backendJson = (JsonObject) backendObj;
+
                 BackendMap backendMap = new BackendMap();
                 backendMap.setMessageBus(new MessageBus(backendJson.encode()))
                           .setLogger(log)
@@ -64,6 +67,7 @@ public class FarmMap extends MessageToMap<Farm> {
                           .setVerticleId(verticleId);
                 backendMap.add();
             }
+            isOk = true;
         }
 
         return isOk;
