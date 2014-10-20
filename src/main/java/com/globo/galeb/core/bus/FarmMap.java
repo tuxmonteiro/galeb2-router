@@ -20,6 +20,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
 
 public class FarmMap extends MessageToMap<Farm> {
@@ -41,11 +42,18 @@ public class FarmMap extends MessageToMap<Farm> {
             JsonObject virtualhostJson = (JsonObject) virtualhostObj;
 
             VirtualhostMap virtualhostMap = new VirtualhostMap();
-            virtualhostMap.setMessageBus(new MessageBus(virtualhostJson.encode()))
+
+            MessageBus virtualhostMessageBus = new MessageBus()
+                                                .setEntity(virtualhostJson.encode())
+                                                .setUri("/virtualhost")
+                                                .make();
+
+            virtualhostMap.setMessageBus(virtualhostMessageBus)
                           .setLogger(log)
                           .setVertx(vertx)
                           .setMap(farm.getVirtualhostsToMap())
                           .setVerticleId(verticleId);
+
             virtualhostMap.add();
 
             JsonArray backends = virtualhostJson.getObject(Virtualhost.BACKENDS_FIELDNAME, new JsonObject())
@@ -60,7 +68,13 @@ public class FarmMap extends MessageToMap<Farm> {
                 JsonObject backendJson = (JsonObject) backendObj;
 
                 BackendMap backendMap = new BackendMap();
-                backendMap.setMessageBus(new MessageBus(backendJson.encode()))
+                MessageBus backendMessageBus = new MessageBus()
+                                                    .setEntity(backendJson.encode())
+                                                    .setParentId(virtualhostJson.getString(IJsonable.ID_FIELDNAME))
+                                                    .setUri("/backend")
+                                                    .make();
+
+                backendMap.setMessageBus(backendMessageBus)
                           .setLogger(log)
                           .setVertx(vertx)
                           .setMap(farm.getVirtualhostsToMap())
