@@ -104,7 +104,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
                 serverResponse.setStatusCode(statusCode)
                     .setMessage(HttpCode.getMessage(statusCode, true))
                     .setId(routeManagerId)
-                    .end();
+                    .endResponse();
                 log.warn(String.format("%s %s not supported", req.method(), req.uri()));
             }
         });

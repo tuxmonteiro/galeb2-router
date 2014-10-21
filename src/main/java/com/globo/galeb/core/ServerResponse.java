@@ -92,8 +92,6 @@ public class ServerResponse {
         int statusCode = exceptionToHttpCode(event);
         setStatusCode(statusCode);
 
-        end();
-
         String logMessage = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
                 !"".equals(headerHost) ? String.format(" (virtualhost: %s)", headerHost) : "",
@@ -105,46 +103,37 @@ public class ServerResponse {
             log.warn(logMessage);
         }
 
-        closeResponse();
-    }
-
-    public void closeResponse() {
         try {
-            resp.close();
-        } catch (RuntimeException ignoreAlreadyClose) {
-            return;
-        }
-    }
-
-    private void realEnd(String message) {
-
-        try {
-            if (!"".equals(message)) {
-
-                resp.end(message);
-            } else {
-                resp.end();
-            }
-
-        } catch (java.lang.IllegalStateException e) {
-            // Response has already been written ? Ignore.
+            endResponse();
+            closeResponse();
+        } catch (IllegalStateException e) {
+            // Response has already been finish?
             log.debug(e.getMessage());
-
         } catch (RuntimeException e2) {
             log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e2.getMessage()));
-            return;
-
         }
-
     }
 
-    public void end() {
-        logRequest(enableAccessLog);
-        sendRequestCount(resp.getStatusCode());
-        realEnd(message);
+    public void closeResponse() throws RuntimeException {
+            resp.close();
     }
 
-    public void logRequest(boolean enable) {
+    private void realEnd() throws RuntimeException {
+
+        if (!"".equals(message)) {
+            resp.end(message);
+        } else {
+            resp.end();
+        }
+    }
+
+    public void endResponse() {
+        logRequest();
+        sendRequestCount();
+        realEnd();
+    }
+
+    public void logRequest() {
 
         if (enableAccessLog) {
 
@@ -162,7 +151,11 @@ public class ServerResponse {
         }
     }
 
-    public void sendRequestCount(int code) {
+    public void sendRequestCount() {
+        int code = HttpCode.INTERNAL_SERVER_ERROR;
+        if (req!=null) {
+            code = resp.getStatusCode();
+        }
         if (counter!=null) {
             if (!"".equals(headerHost) && !UNDEF.equals(headerHost) &&
                     !"".equals(backendId) && !UNDEF.equals(backendId)) {

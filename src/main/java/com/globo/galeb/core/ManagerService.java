@@ -126,7 +126,7 @@ public class ManagerService {
             serverResponse.setStatusCode(statusCode)
                 .setMessage(HttpCode.getMessage(statusCode, true))
                 .setId(id)
-                .end();
+                .endResponse();
         } catch (RuntimeException e) {
             log.error(e.getMessage());
             isOk = false;

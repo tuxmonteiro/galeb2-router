@@ -34,6 +34,10 @@ public class CounterWithStatsd implements ICounter {
         return !"".equals(aString)?aString.replaceAll("[^\\w]", "_"):strDefault;
     }
 
+    private String mergeVirtualhostIdWithBackendId(String virtualhostId, String backendId) {
+        return String.format("%s.%s",cleanupString(virtualhostId,"UNDEF"), cleanupString(backendId, "UNDEF"));
+    }
+
     public CounterWithStatsd(final JsonObject conf, final Vertx vertx, final Logger log) {
         if (conf.getBoolean(CONF_STATSD_ENABLE, false)) {
             String statsdHost = conf.getString(CONF_STATSD_HOST,"127.0.0.1");
@@ -56,7 +60,7 @@ public class CounterWithStatsd implements ICounter {
 
     @Override
     public void httpCode(String virtualhostId, String backendId, Integer code) {
-        httpCode(cleanupString(virtualhostId, backendId), code);
+        httpCode(mergeVirtualhostIdWithBackendId(virtualhostId, backendId), code);
     }
 
     @Override
@@ -99,7 +103,7 @@ public class CounterWithStatsd implements ICounter {
     @Override
     public void requestTime(String virtualhostId, String backendId,
             Long initialRequestTime) {
-        requestTime(cleanupString(virtualhostId, backendId), initialRequestTime);
+        requestTime(mergeVirtualhostIdWithBackendId(virtualhostId, backendId), initialRequestTime);
     }
 
     @Override
@@ -111,6 +115,6 @@ public class CounterWithStatsd implements ICounter {
 
     @Override
     public void sendActiveSessions(String virtualhostId, String backendId, Long initialRequestTime) {
-        sendActiveSessions(cleanupString(virtualhostId, backendId), initialRequestTime);
+        sendActiveSessions(mergeVirtualhostIdWithBackendId(virtualhostId, backendId), initialRequestTime);
     }
 }
