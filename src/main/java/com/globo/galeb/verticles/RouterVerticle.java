@@ -43,15 +43,20 @@ public class RouterVerticle extends Verticle {
 
       final Server server = new Server(vertx, container, counter);
 
-      final Handler<HttpServerRequest> handlerHttpServerRequest =
-              new RouterRequestHandler(vertx, farm, counter, queueService, log);
+      try {
+          final Handler<HttpServerRequest> handlerHttpServerRequest =
+                  new RouterRequestHandler(vertx, farm, counter, queueService, log);
 
-      final Handler<ServerWebSocket> serverWebSocketHandler =
-              new FrontendWebSocketHandler(vertx, container, farm);
+          final Handler<ServerWebSocket> serverWebSocketHandler =
+                  new FrontendWebSocketHandler(vertx, container, farm);
 
-      server.setDefaultPort(9000)
-          .setHttpServerRequestHandler(handlerHttpServerRequest)
-          .setWebsocketServerRequestHandler(serverWebSocketHandler).start(this);
+          server.setDefaultPort(9000)
+              .setHttpServerRequestHandler(handlerHttpServerRequest)
+              .setWebsocketServerRequestHandler(serverWebSocketHandler).start(this);
+      } catch (RuntimeException e) {
+          log.debug(e);
+      }
+
       log.info(String.format("Instance %s started", this.toString()));
 
    }
