@@ -103,7 +103,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     }
 
     @Override
-    public void handle(final HttpServerRequest sRequest) {
+    public void handle(final HttpServerRequest sRequest) throws RuntimeException {
 
         String headerHost = "UNDEF";
         String backendId = "UNDEF";

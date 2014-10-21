@@ -42,7 +42,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private boolean connectionKeepalive = true;
 
     @Override
-    public void handle(final HttpClientResponse cResponse) {
+    public void handle(final HttpClientResponse cResponse) throws RuntimeException {
         log.debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
 
         vertx.cancelTimer(requestTimeoutTimer);
@@ -69,7 +69,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                 sResponse.setStatusCode(statusCode)
                     .setHeaderHost(headerHost)
                     .setBackendId(backendId)
-                    .end();
+                    .endResponse();
 
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
