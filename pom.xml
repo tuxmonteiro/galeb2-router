@@ -6,7 +6,6 @@
   <groupId>com.globo.galeb</groupId>
   <artifactId>galeb-router</artifactId>
   <packaging>jar</packaging>
-  <version>1.0.0</version>
 
   <name>galeb - virtual router as a service</name>
   <url>https://github.com/galeb/vxrouter</url>
