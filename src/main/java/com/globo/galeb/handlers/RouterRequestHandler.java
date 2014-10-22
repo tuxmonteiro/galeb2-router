@@ -197,7 +197,11 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         if (enableChunked) {
             // Pump sRequest => cRequest
-            Pump.createPump(sRequest, cRequest).start();
+            try {
+                Pump.createPump(sRequest, cRequest).start();
+            } catch (RuntimeException e) {
+                log.debug(e);
+            }
         } else {
             sRequest.bodyHandler(new Handler<Buffer>() {
                 @Override

@@ -56,7 +56,11 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         }
 
         // Pump cResponse => sResponse
-        Pump.createPump(cResponse, httpServerResponse).start();
+        try {
+            Pump.createPump(cResponse, httpServerResponse).start();
+        } catch (RuntimeException e) {
+            log.debug(e);
+        }
 
         cResponse.endHandler(new VoidHandler() {
             @Override
