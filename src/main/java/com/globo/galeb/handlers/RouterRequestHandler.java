@@ -26,7 +26,6 @@ import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpVersion;
 import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.streams.Pump;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
@@ -39,6 +38,10 @@ import com.globo.galeb.exceptions.GatewayTimeoutException;
 import com.globo.galeb.exceptions.NotFoundException;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.VertxDelayScheduler;
+import com.globo.galeb.streams.Pump;
 
 public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
@@ -55,7 +58,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private String lastHeaderHost = "";
     private Backend lastBackend = null;
 
-    private class GatewayTimeoutTaskHandler implements Handler<Long> {
+    private class GatewayTimeoutTaskHandler implements ISchedulerHandler {
 
         private final ServerResponse sResponse;
         private final String headerHost;
@@ -68,10 +71,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         }
 
         @Override
-        public void handle(Long event) {
-            sResponse.setHeaderHost(headerHost)
-                .setHeaderHost(headerHost)
-                .setBackendId(backendId)
+        public void handle() {
+            sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                 .showErrorAndClose(new GatewayTimeoutException());
         }
 
@@ -80,21 +81,21 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private class ClientRequestExceptionHandler implements Handler<Throwable> {
 
         private final ServerResponse sResponse;
-        private final Long requestTimeoutTimer;
+        private final IScheduler scheduler;
         private final String headerHost;
         private final String backendId;
 
         public ClientRequestExceptionHandler(final ServerResponse sResponse,
-                Long requestTimeoutTimer, String headerHost, String backendId) {
+                IScheduler scheduler, String headerHost, String backendId) {
             this.sResponse = sResponse;
-            this.requestTimeoutTimer = requestTimeoutTimer;
+            this.scheduler = scheduler;
             this.headerHost = headerHost;
             this.backendId = backendId;
         }
 
         @Override
         public void handle(Throwable event) {
-            vertx.cancelTimer(requestTimeoutTimer);
+            scheduler.cancel();
             queueService.publishBackendFail(backendId.toString());
             sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                 .showErrorAndClose(event);
@@ -131,17 +132,25 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         Boolean enableAccessLog = virtualhost.hasAccessLog();
 
         final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
-        sRequest.response().setChunked(enableChunked);
+        sRequest.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                sResponse.showErrorAndClose(event);
+            }
+        });
 
-        final Long requestTimeoutTimer = vertx.setTimer(requestTimeOut,
-                                            new GatewayTimeoutTaskHandler(sResponse, headerHost, backendId));
+        sResponse.setChunked(enableChunked);
 
         if (!virtualhost.hasBackends()) {
-            vertx.cancelTimer(requestTimeoutTimer);
             log.warn(String.format("Host %s without backends", headerHost));
             sResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
+
+        final IScheduler schedulerTimeOut = new VertxDelayScheduler(vertx)
+                        .setPeriod(requestTimeOut)
+                        .setHandler(new GatewayTimeoutTaskHandler(sResponse, headerHost, backendId))
+                        .start();
 
         RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
         final HttpClient httpClient;
@@ -169,9 +178,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
         final Handler<HttpClientResponse> handlerHttpClientResponse =
-                new RouterResponseHandler(vertx,
+                new RouterResponseHandler(schedulerTimeOut,
+                                          queueService,
                                           log,
-                                          requestTimeoutTimer,
                                           sRequest.response(),
                                           sResponse,
                                           backend,
@@ -184,6 +193,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                 httpClient.request(sRequest.method(), sRequest.uri(), handlerHttpClientResponse) : null;
 
         if (cRequest==null) {
+            schedulerTimeOut.cancel();
             sResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
@@ -198,7 +208,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         if (enableChunked) {
             // Pump sRequest => cRequest
             try {
-                Pump.createPump(sRequest, cRequest).start();
+                new Pump(sRequest, cRequest).setSchedulerTimeOut(schedulerTimeOut).start();
             } catch (RuntimeException e) {
                 log.debug(e);
             }
@@ -213,7 +223,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         }
 
         cRequest.exceptionHandler(
-                new ClientRequestExceptionHandler(sResponse, requestTimeoutTimer, headerHost, backendId));
+                new ClientRequestExceptionHandler(sResponse, schedulerTimeOut, headerHost, backendId));
 
         sRequest.endHandler(new VoidHandler() {
             @Override

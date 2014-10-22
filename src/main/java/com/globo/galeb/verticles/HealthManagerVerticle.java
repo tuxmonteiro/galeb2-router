@@ -32,6 +32,8 @@ import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.VertxQueueService;
+import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpClient;
@@ -53,10 +55,10 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     private Logger log;
     private String uriHealthCheck;
 
-    private class CheckBadBackendTaskHandler implements Handler<Long> {
+    private class CheckBadBackendTaskHandler implements ISchedulerHandler {
 
         @Override
-        public void handle(Long schedulerId) {
+        public void handle() {
             log.info("Checking bad backends...");
             if (badBackendsMap!=null) {
                 Iterator<String> it = badBackendsMap.keySet().iterator();
@@ -108,7 +110,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         queueService.registerHealthcheck(this);
         farm = new Farm(this, queueService);
 
-        vertx.setPeriodic(checkInterval, new CheckBadBackendTaskHandler());
+        new VertxPeriodicScheduler(vertx)
+                .setPeriod(checkInterval).setHandler(new CheckBadBackendTaskHandler()).start();
+
         log.info(String.format("Instance %s started", this.toString()));
     }
 

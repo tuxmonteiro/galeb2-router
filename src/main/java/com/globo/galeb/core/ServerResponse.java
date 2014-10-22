@@ -18,6 +18,7 @@ import com.globo.galeb.exceptions.AbstractHttpException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
 
+import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpServerResponse;
@@ -54,6 +55,12 @@ public class ServerResponse {
         this.enableAccessLog = enableAccessLog;
         this.req = req;
         this.resp = req.response();
+        resp.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                showErrorAndClose(event);
+            }
+        });
     }
 
     public ServerResponse setId(String id) {
@@ -103,8 +110,9 @@ public class ServerResponse {
             log.warn(logMessage);
         }
 
+        endResponse();
+
         try {
-            endResponse();
             closeResponse();
         } catch (IllegalStateException e) {
             // Response has already been finish?
@@ -119,7 +127,6 @@ public class ServerResponse {
     }
 
     private void realEnd() throws RuntimeException {
-
         if (!"".equals(message)) {
             resp.end(message);
         } else {
@@ -130,7 +137,11 @@ public class ServerResponse {
     public void endResponse() {
         logRequest();
         sendRequestCount();
-        realEnd();
+        try {
+            realEnd();
+        } catch (RuntimeException e) {
+            log.debug(e);
+        }
     }
 
     public void logRequest() {
@@ -164,6 +175,10 @@ public class ServerResponse {
                 counter.httpCode(id, code);
             }
         }
+    }
+
+    public void setChunked(Boolean enableChunked) {
+        this.resp.setChunked(enableChunked);
     }
 
 }

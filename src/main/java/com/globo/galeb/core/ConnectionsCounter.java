@@ -20,22 +20,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.NullScheduler;
+import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
 public class ConnectionsCounter implements ICallbackConnectionCounter {
 
     public static final String NUM_CONNECTIONS_FIELDNAME  = "numConnections";
     public static final String UUID_FIELDNAME             = "uuid";
 
-    private final Vertx vertx;
     private final IQueueService queueService;
 
-    private Long schedulerId = 0L;
+    private IScheduler scheduler = new NullScheduler();
     private Long schedulerDelay = 10000L;
     private Long connectionMapTimeout = 60000L;
 
@@ -52,7 +54,9 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     private int activeConnections = 0;
 
     public ConnectionsCounter(final String backendWithPort, final Vertx vertx, final IQueueService queueService) {
-        this.vertx = vertx;
+        if (vertx!=null) {
+            this.scheduler = new VertxPeriodicScheduler(vertx);
+        }
         this.queueService = queueService;
         this.queueActiveConnections = String.format("%s%s", IQueueService.QUEUE_BACKEND_CONNECTIONS_PREFIX, backendWithPort);
         this.myUUID = UUID.randomUUID().toString();
@@ -162,27 +166,20 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     }
 
     public void activeScheduler() {
-        if (schedulerId==0L && vertx!=null) {
-            schedulerId = vertx.setPeriodic(schedulerDelay, new Handler<Long>() {
-
-                @Override
-                public void handle(Long event) {
-                    expireLocalConnections();
-                    recalcNumConnections();
-                    clearGlobalConnections();
-                    notifyNumConnections();
-                }
-            });
-        }
+        ISchedulerHandler taskPeriodic = new ISchedulerHandler() {
+            @Override
+            public void handle() {
+                expireLocalConnections();
+                recalcNumConnections();
+                clearGlobalConnections();
+                notifyNumConnections();
+            }
+        };
+        scheduler.setHandler(taskPeriodic).setPeriod(schedulerDelay).start();
     }
 
     public void cancelScheduler() {
-        if (schedulerId!=0L && vertx!=null) {
-            boolean canceled = vertx.cancelTimer(schedulerId);
-            if (canceled) {
-                schedulerId=0L;
-            }
-        }
+        scheduler.cancel();
     }
 
     public void publishZero() {
