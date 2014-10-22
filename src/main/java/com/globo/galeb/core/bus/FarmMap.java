@@ -42,6 +42,7 @@ public class FarmMap extends MessageToMap<Farm> {
             JsonObject virtualhostJson = (JsonObject) virtualhostObj;
 
             VirtualhostMap virtualhostMap = new VirtualhostMap();
+            virtualhostMap.staticConf(staticConf);
 
             MessageBus virtualhostMessageBus = new MessageBus()
                                                 .setEntity(virtualhostJson.encode())
@@ -68,6 +69,8 @@ public class FarmMap extends MessageToMap<Farm> {
                 JsonObject backendJson = (JsonObject) backendObj;
 
                 BackendMap backendMap = new BackendMap();
+                backendMap.staticConf(staticConf);
+
                 MessageBus backendMessageBus = new MessageBus()
                                                     .setEntity(backendJson.encode())
                                                     .setParentId(virtualhostJson.getString(IJsonable.ID_FIELDNAME))
