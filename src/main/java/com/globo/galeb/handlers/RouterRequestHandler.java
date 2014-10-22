@@ -167,7 +167,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             lastRemoteUser = remoteUser;
             lastHeaderHost = headerHost;
 
-            backend = virtualhost.getChoice(new RequestData(sRequest));
+            backend = virtualhost.getChoice(new RequestData(sRequest)).setCounter(counter);
             backendId = backend.toString();
             lastBackend = backend;
 
