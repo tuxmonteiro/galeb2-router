@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.handlers.ws;
 
@@ -32,13 +33,33 @@ import org.vertx.java.core.http.WebSocketVersion;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Container;
 
+/**
+ * Class FrontendWebSocketHandler.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
+    /** The vertx. */
     private final Vertx vertx;
+
+    /** The logger. */
     private final Logger log;
+
+    /** The farm. */
     private Farm farm;
+
+    /** The http header host. */
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
 
+    /**
+     * Instantiates a new frontend web socket handler.
+     *
+     * @param vertx the vertx
+     * @param container the container
+     * @param farm the farm
+     */
     public FrontendWebSocketHandler(
             final Vertx vertx,
             final Container container,
@@ -48,6 +69,9 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
         this.log = container.logger();
     }
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+     */
     @Override
     public void handle(final ServerWebSocket serverWebSocket) {
 

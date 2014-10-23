@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.verticles;
 
@@ -30,8 +31,17 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
+/**
+ * Class RouterVerticle.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class RouterVerticle extends Verticle {
 
+  /* (non-Javadoc)
+   * @see org.vertx.java.platform.Verticle#start()
+   */
   @Override
   public void start() {
 

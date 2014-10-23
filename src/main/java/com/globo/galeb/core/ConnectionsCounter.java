@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.core;
 
@@ -27,30 +28,63 @@ import org.vertx.java.core.json.JsonObject;
 import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
 
+/**
+ * Class ConnectionsCounter.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class ConnectionsCounter implements ICallbackConnectionCounter {
 
+    /** The Constant NUM_CONNECTIONS_FIELDNAME. */
     public static final String NUM_CONNECTIONS_FIELDNAME  = "numConnections";
+
+    /** The Constant UUID_FIELDNAME. */
     public static final String UUID_FIELDNAME             = "uuid";
 
+    /** The vertx. */
     private final Vertx vertx;
+
+    /** The queue service. */
     private final IQueueService queueService;
 
+    /** The scheduler id. */
     private Long schedulerId = 0L;
+
+    /** The scheduler delay. */
     private Long schedulerDelay = 10000L;
+
+    /** The connection map timeout. */
     private Long connectionMapTimeout = 60000L;
 
-    // < remoteWithPort, timestamp >
+    /** The connections map < remoteWithPort, timestamp >. */
     private final Map<String, Long> connections = new HashMap<>();
-    // < backendInstanceUUID, numConnections >
+
+    /** The global connections map < backendInstanceUUID, numConnections >. */
     private final Map<String, Integer> globalConnections = new HashMap<>();
 
+    /** The queue active connections. */
     private final String queueActiveConnections;
+
+    /** The my uuid. */
     private final String myUUID;
+
+    /** Is registered? */
     private boolean registered = false;
 
+    /** Is new connection? */
     private boolean newConnection = true;
+
+    /** The active connections. */
     private int activeConnections = 0;
 
+    /**
+     * Instantiates a new connections counter.
+     *
+     * @param backendWithPort the backend with port
+     * @param vertx the vertx
+     * @param queueService the queue service
+     */
     public ConnectionsCounter(final String backendWithPort, final Vertx vertx, final IQueueService queueService) {
         this.vertx = vertx;
         this.queueService = queueService;
@@ -58,16 +92,25 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         this.myUUID = UUID.randomUUID().toString();
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#setRegistered(boolean)
+     */
     @Override
     public void setRegistered(boolean registered) {
         this.registered = registered;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#isRegistered()
+     */
     @Override
     public boolean isRegistered() {
         return registered;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#callbackGlobalConnectionsInfo(org.vertx.java.core.json.JsonObject)
+     */
     @Override
     public void callbackGlobalConnectionsInfo(JsonObject message) {
         String uuid = message.getString(UUID_FIELDNAME);
@@ -77,6 +120,12 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
+    /**
+     * Adds the connection to map.
+     *
+     * @param remoteUser the remote user
+     * @return true, if successful
+     */
     public boolean addConnection(RemoteUser remoteUser) {
         if (remoteUser==null) {
             return false;
@@ -87,38 +136,80 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         return newConnection;
     }
 
+    /**
+     * Adds the connection to map.
+     *
+     * @param host the host
+     * @param port the port
+     * @return true, if successful
+     */
     public boolean addConnection(String host, Integer port) {
         RemoteUser remoteUser = new RemoteUser(host, port);
         return addConnection(remoteUser);
     }
 
+    /**
+     * Removes the connection from map.
+     *
+     * @param remoteUserId the remote user id
+     * @return true, if successful
+     */
     public boolean removeConnection(String remoteUserId) {
         return connections.remove(remoteUserId) != null;
     }
 
+    /**
+     * Clear connections map.
+     */
     public void clearConnectionsMap() {
         connections.clear();
         globalConnections.clear();
         cancelScheduler();
     }
 
+    /**
+     * Gets the active connections.
+     *
+     * @return the active connections
+     */
     public Integer getActiveConnections() {
         int counterActiveConnection = (activeConnections > 0) ? activeConnections : recalcNumConnections();
         return counterActiveConnection;
     }
 
+    /**
+     * Gets the active connections from instance only.
+     *
+     * @return the instance active connections
+     */
     public Integer getInstanceActiveConnections() {
         return connections.size();
     }
 
+    /**
+     * Checks if is new connection.
+     *
+     * @return true, if is new connection
+     */
     public boolean isNewConnection() {
         return newConnection;
     }
 
+    /**
+     * Gets the scheduler delay.
+     *
+     * @return the scheduler delay
+     */
     public Long getSchedulerDelay() {
         return schedulerDelay;
     }
 
+    /**
+     * Sets the scheduler delay.
+     *
+     * @param schedulerDelay the scheduler delay
+     * @return the connections counter
+     */
     public ConnectionsCounter setSchedulerDelay(Long schedulerDelay) {
         if (!this.schedulerDelay.equals(schedulerDelay)) {
             this.schedulerDelay = schedulerDelay;
@@ -128,6 +219,9 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         return this;
     }
 
+    /**
+     * Expire local connections.
+     */
     private void expireLocalConnections() {
         Long timeout = System.currentTimeMillis() - connectionMapTimeout;
         Set<String> connectionIds = new HashSet<>(connections.keySet());
@@ -138,10 +232,16 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
+    /**
+     * Clear global connections.
+     */
     private void clearGlobalConnections() {
         globalConnections.clear();
     }
 
+    /**
+     * Notify num connections.
+     */
     private void notifyNumConnections() {
         Integer localConnections = getInstanceActiveConnections();
         if (localConnections>0 && queueService!=null) {
@@ -152,6 +252,11 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
+    /**
+     * Recalc num connections.
+     *
+     * @return the int
+     */
     private int recalcNumConnections() {
         int globalSum = getInstanceActiveConnections();
         for (int externalValue: globalConnections.values()) {
@@ -161,6 +266,9 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         return activeConnections;
     }
 
+    /**
+     * Active scheduler.
+     */
     public void activeScheduler() {
         if (schedulerId==0L && vertx!=null) {
             schedulerId = vertx.setPeriodic(schedulerDelay, new Handler<Long>() {
@@ -176,6 +284,9 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
+    /**
+     * Cancel scheduler.
+     */
     public void cancelScheduler() {
         if (schedulerId!=0L && vertx!=null) {
             boolean canceled = vertx.cancelTimer(schedulerId);
@@ -185,6 +296,9 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
+    /**
+     * Publish zero to all instances.
+     */
     public void publishZero() {
         if (queueService!=null) {
             SafeJsonObject myConnections = new SafeJsonObject();
@@ -194,12 +308,18 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
         }
     }
 
+    /**
+     * Register connections counter.
+     */
     public void registerConnectionsCounter() {
         if (queueService!=null) {
             queueService.registerConnectionsCounter(this, queueActiveConnections);
         }
     }
 
+    /**
+     * Unregister connections counter.
+     */
     public void unregisterConnectionsCounter() {
         if (queueService!=null) {
             publishZero();

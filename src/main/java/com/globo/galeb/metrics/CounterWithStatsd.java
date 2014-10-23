@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.metrics;
 
@@ -27,13 +28,35 @@ import org.vertx.java.core.datagram.DatagramSocket;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
+/**
+ * Class CounterWithStatsd: send metrics to statsd
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class CounterWithStatsd implements ICounter {
+
+    /** The statsd client. */
     private final StatsdClient statsdClient;
 
+    /**
+     * Cleanup the key.
+     *
+     * @param aString the a string
+     * @param strDefault the str default
+     * @return the string
+     */
     private String cleanupString(String aString, String strDefault) {
         return !"".equals(aString)?aString.replaceAll("[^\\w]", "_"):strDefault;
     }
 
+    /**
+     * Instantiates a new counter with statsd.
+     *
+     * @param conf the conf
+     * @param vertx the vertx
+     * @param log the log
+     */
     public CounterWithStatsd(final JsonObject conf, final Vertx vertx, final Logger log) {
         if (conf.getBoolean(CONF_STATSD_ENABLE, false)) {
             String statsdHost = conf.getString(CONF_STATSD_HOST,"127.0.0.1");
@@ -46,6 +69,9 @@ public class CounterWithStatsd implements ICounter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#httpCode(java.lang.String, java.lang.Integer)
+     */
     @Override
     public void httpCode(String key, Integer code) {
         if (statsdClient!=null && key!=null && !("".equals(key))) {
@@ -54,16 +80,25 @@ public class CounterWithStatsd implements ICounter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#httpCode(java.lang.String, java.lang.String, java.lang.Integer)
+     */
     @Override
     public void httpCode(String virtualhostId, String backendId, Integer code) {
         httpCode(cleanupString(virtualhostId, backendId), code);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#incrHttpCode(java.lang.String, java.lang.Integer)
+     */
     @Override
     public void incrHttpCode(String key, Integer code) {
         incrHttpCode(key, code, 1.0);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#incrHttpCode(java.lang.String, java.lang.Integer, double)
+     */
     @Override
     public void incrHttpCode(String key, Integer code, double sample) {
         String srtSample = sample > 0.0 && sample < 1.0 ? String.format("|@%f", sample) : "";
@@ -73,11 +108,17 @@ public class CounterWithStatsd implements ICounter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#decrHttpCode(java.lang.String, java.lang.Integer)
+     */
     @Override
     public void decrHttpCode(String key, Integer code) {
         decrHttpCode(key, code, 1.0);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#decrHttpCode(java.lang.String, java.lang.Integer, double)
+     */
     @Override
     public void decrHttpCode(String key, Integer code, double sample) {
         String srtSample = sample > 0.0 && sample < 1.0 ? String.format("|@%f", sample) : "";
@@ -87,6 +128,9 @@ public class CounterWithStatsd implements ICounter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#requestTime(java.lang.String, java.lang.Long)
+     */
     @Override
     public void requestTime(String key, final Long initialRequestTime) {
         Long requestTime = System.currentTimeMillis() - initialRequestTime;
@@ -96,12 +140,18 @@ public class CounterWithStatsd implements ICounter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#requestTime(java.lang.String, java.lang.String, java.lang.Long)
+     */
     @Override
     public void requestTime(String virtualhostId, String backendId,
             Long initialRequestTime) {
         requestTime(cleanupString(virtualhostId, backendId), initialRequestTime);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#sendActiveSessions(java.lang.String, java.lang.Long)
+     */
     @Override
     public void sendActiveSessions(String key, Long initialRequestTime) {
         if (statsdClient!=null && key!=null && !("".equals(key))) {
@@ -109,6 +159,9 @@ public class CounterWithStatsd implements ICounter {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.metrics.ICounter#sendActiveSessions(java.lang.String, java.lang.String, java.lang.Long)
+     */
     @Override
     public void sendActiveSessions(String virtualhostId, String backendId, Long initialRequestTime) {
         sendActiveSessions(cleanupString(virtualhostId, backendId), initialRequestTime);

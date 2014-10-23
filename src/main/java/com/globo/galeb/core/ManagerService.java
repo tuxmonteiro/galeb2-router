@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.core;
 
@@ -21,35 +22,85 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
+/**
+ * Class ManagerService.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class ManagerService {
 
+    /**
+     * Enum UriSupported.
+     *
+     * @author: See AUTHORS file.
+     * @version: 1.0.0, Oct 23, 2014.
+     */
     public enum UriSupported {
+
+        /** The virtualhost. */
         VIRTUALHOST,
+
+        /** The backend. */
         BACKEND,
+
+        /** The farm. */
         FARM,
+
+        /** The version. */
         VERSION
     }
 
+    /** The manager service id. */
     private final String id;
+
+    /** The logger. */
     private final Logger log;
+
+    /** The httpServerRequest. */
     private HttpServerRequest req = null;
+
+    /** The server response. */
     private ServerResponse serverResponse = null;
 
+    /**
+     * Instantiates a new manager service.
+     *
+     * @param id the id
+     * @param log the log
+     */
     public ManagerService(String id, final Logger log) {
         this.id = id;
         this.log = log;
     }
 
+    /**
+     * Sets the httpServerRequest.
+     *
+     * @param req the httpServerRequest
+     * @return this
+     */
     public ManagerService setRequest(final HttpServerRequest req) {
         this.req = req;
         return this;
     }
 
+    /**
+     * Sets the serverResponse.
+     *
+     * @param resp the serverResponse
+     * @return this
+     */
     public ManagerService setResponse(final ServerResponse resp) {
         this.serverResponse = resp;
         return this;
     }
 
+    /**
+     * Check if uri is ok.
+     *
+     * @return true, if successful
+     */
     public boolean checkUriOk() {
         String uriBase = "";
         try {
@@ -76,6 +127,12 @@ public class ManagerService {
         return false;
     }
 
+    /**
+     * Check if method is ok.
+     *
+     * @param methodId the method id
+     * @return true, if successful
+     */
     public boolean checkMethodOk(String methodId) {
         String method = req.method();
         if (!methodId.equalsIgnoreCase(method)) {
@@ -85,6 +142,13 @@ public class ManagerService {
         return true;
     }
 
+    /**
+     * Check if id is consistency.
+     *
+     * @param entityJson the entity json
+     * @param idFromUri the id from uri
+     * @return true, if successful
+     */
     public boolean checkIdConsistency(JsonObject entityJson, String idFromUri) {
         String idFromJson = entityJson.getString(IJsonable.ID_FIELDNAME, "");
         if ("".equals(idFromJson) || "".equals(idFromUri) || !idFromJson.equals(idFromUri)) {
@@ -95,6 +159,11 @@ public class ManagerService {
         return true;
     }
 
+    /**
+     * Gets the request id.
+     *
+     * @return the request id
+     */
     public String getRequestId() {
         String idFromUri = "";
         try {
@@ -107,6 +176,11 @@ public class ManagerService {
     }
 
 
+    /**
+     * Check if id is present.
+     *
+     * @return true, if successful
+     */
     public boolean checkIdPresent() {
         if ("".equals(getRequestId())) {
             endResponse(HttpCode.BAD_REQUEST, "ID absent");
@@ -115,6 +189,13 @@ public class ManagerService {
         return true;
     }
 
+    /**
+     * End response.
+     *
+     * @param statusCode the status code
+     * @param message the message
+     * @return true, if successful
+     */
     public boolean endResponse(int statusCode, String message) {
         if (statusCode < HttpCode.BAD_REQUEST) {
             log.info(message);
@@ -134,6 +215,14 @@ public class ManagerService {
         return isOk;
     }
 
+    /**
+     * Status from message schema.
+     *
+     * @param message the message
+     * @param uri the uri
+     * @param registerLog the register log
+     * @return http status code
+     */
     public int statusFromMessageSchema(String message, String uri, boolean registerLog) {
 
         SafeJsonObject json = new SafeJsonObject(message);
@@ -156,6 +245,13 @@ public class ManagerService {
         return HttpCode.OK;
     }
 
+    /**
+     * Status from message schema.
+     *
+     * @param message the message
+     * @param uri the uri
+     * @return http status code
+     */
     public int statusFromMessageSchema(String message, String uri) {
         return statusFromMessageSchema(message, uri, true);
     }

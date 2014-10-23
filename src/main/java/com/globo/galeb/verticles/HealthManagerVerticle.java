@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.verticles;
 
@@ -42,19 +43,49 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
+/**
+ * Class HealthManagerVerticle.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class HealthManagerVerticle extends Verticle implements IEventObserver, ICallbackHealthcheck {
 
+    /** The backends map. */
     private final Map<String, Set<String>> backendsMap = new HashMap<>();
+
+    /** The bad backends map. */
     private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
+
+    /** The http header host. */
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
+
+    /** The farm. */
     private Farm farm;
+
+    /** The queue service. */
     private IQueueService queueService;
+
+    /** The Json conf. */
     private JsonObject conf;
+
+    /** The logger. */
     private Logger log;
+
+    /** The uri health check. */
     private String uriHealthCheck;
 
+    /**
+     * Class CheckBadBackendTaskHandler.
+     *
+     * @author: See AUTHORS file.
+     * @version: 1.0.0, Oct 23, 2014.
+     */
     private class CheckBadBackendTaskHandler implements Handler<Long> {
 
+        /* (non-Javadoc)
+         * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+         */
         @Override
         public void handle(Long schedulerId) {
             log.info("Checking bad backends...");
@@ -97,6 +128,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
 
     }
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.platform.Verticle#start()
+     */
     @Override
     public void start() {
         log = container.logger();
@@ -112,9 +146,15 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         log.info(String.format("Instance %s started", this.toString()));
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IEventObserver#setVersion(java.lang.Long)
+     */
     @Override
     public void setVersion(Long version) {}
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IEventObserver#postAddEvent(java.lang.String)
+     */
     @Override
     public void postAddEvent(String message) {
 
@@ -133,6 +173,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         }
     };
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IEventObserver#postDelEvent(java.lang.String)
+     */
     @Override
     public void postDelEvent(String message) {
         MessageBus messageBus = new MessageBus(message);
@@ -153,6 +196,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         }
     };
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackHealthcheck#moveBackend(java.lang.String, boolean)
+     */
     @Override
     public void moveBackend(String backend, boolean elegible) throws UnsupportedEncodingException {
 

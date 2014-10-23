@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.logger.impl;
 
@@ -22,16 +23,29 @@ import org.vertx.java.core.http.HttpVersion;
 
 import com.globo.galeb.logger.HttpLogFormatter;
 
+/**
+ * Class NcsaLogExtendedFormatter.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class NcsaLogExtendedFormatter implements HttpLogFormatter {
 
+    /** The HttpServerRequest. */
     private HttpServerRequest req;
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.logger.HttpLogFormatter#setRequestData(java.lang.Object)
+     */
     @Override
     public HttpLogFormatter setRequestData(final Object request) {
         this.req = (HttpServerRequest) request;
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.logger.HttpLogFormatter#getFormatedLog()
+     */
     @Override
     public String getFormatedLog() {
         if (req!=null) {

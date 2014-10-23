@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.verticles;
 
@@ -36,18 +37,38 @@ import org.vertx.java.core.http.RouteMatcher;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
+/**
+ * Class RouteManagerVerticle.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
+    /** The route manager id. */
     private static String routeManagerId = "route_manager";
 
+    /** The logger. */
     private Logger log;
+
+    /** The server instance. */
     private Server server;
+
+    /** The http server name. */
     private String httpServerName = null;
+
+    /** The farm instance. */
     private Farm farm;
+
+    /** The queue service. */
     private IQueueService queueService;
 
+    /** The Constant URI_PATTERN_REGEX. */
     private static final String URI_PATTERN_REGEX = "\\/([^\\/]+)[\\/]?([^\\/]+)?";
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.platform.Verticle#start()
+     */
     @Override
     public void start() {
         log = container.logger();
@@ -62,21 +83,35 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         log.info(String.format("Instance %s started", this.toString()));
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IEventObserver#setVersion(java.lang.Long)
+     */
     @Override
     public void setVersion(Long version) {
         farm.setVersion(version);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IEventObserver#postAddEvent(java.lang.String)
+     */
     @Override
     public void postAddEvent(String message) {
         return;
     };
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IEventObserver#postDelEvent(java.lang.String)
+     */
     @Override
     public void postDelEvent(String message) {
         return;
     };
 
+    /**
+     * Start http server.
+     *
+     * @param serverConf the server conf
+     */
     private void startHttpServer(final SafeJsonObject serverConf) {
 
         RouteMatcher routeMatcher = new RouteMatcher();

@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.core;
 
@@ -35,23 +36,53 @@ import com.globo.galeb.core.bus.MessageToMap;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
 import com.globo.galeb.verticles.RouterVerticle;
 
+/**
+ * Class Farm.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class Farm extends Entity implements ICallbackQueueAction, ICallbackSharedData {
 
+    /** The Constant FARM_MAP. */
     public static final String FARM_MAP                    = "farm";
+
+    /** The Constant FARM_BACKENDS_FIELDNAME. */
     public static final String FARM_BACKENDS_FIELDNAME     = "backends";
+
+    /** The Constant FARM_VIRTUALHOSTS_FIELDNAME. */
     public static final String FARM_VIRTUALHOSTS_FIELDNAME = "virtualhosts";
+
+    /** The Constant FARM_SHAREDDATA_ID. */
     public static final String FARM_SHAREDDATA_ID          = "farm.sharedData";
+
+    /** The Constant FARM_VERSION_FIELDNAME. */
     public static final String FARM_VERSION_FIELDNAME      = "version";
 
+    /** The virtualhosts. */
     private final Map<String, Virtualhost> virtualhosts = new HashMap<>();
+
+    /** The version. */
     private Long version = 0L;
+
+    /** The verticle. */
     private final Verticle verticle;
+
+    /** The log. */
     private final Logger log;
+
+    /** The queue service. */
     private final IQueueService queueService;
 
+    /** The shared map. */
     private final ConcurrentMap<String, String> sharedMap;
 
-
+    /**
+     * Instantiates a new farm.
+     *
+     * @param verticle the verticle
+     * @param queueService the queue service
+     */
     public Farm(final Verticle verticle, final IQueueService queueService) {
         this.id = "";
         this.verticle = verticle;
@@ -70,10 +101,18 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
 
     }
 
+    /**
+     * Gets the version.
+     *
+     * @return the version
+     */
     public Long getVersion() {
         return version;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackQueueAction#setVersion(long)
+     */
     @Override
     public void setVersion(long version) {
         this.version = version;
@@ -85,18 +124,38 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         }
     }
 
+    /**
+     * Gets the vertx.
+     *
+     * @return the vertx
+     */
     public Vertx getVertx() {
         return (verticle!=null) ? verticle.getVertx() : null;
     }
 
+    /**
+     * Gets the logger.
+     *
+     * @return the logger
+     */
     public Logger getLogger() {
         return (verticle!=null) ? log : null;
     }
 
+    /**
+     * Gets the verticle id.
+     *
+     * @return the verticle id
+     */
     public String getVerticleId() {
         return (verticle!=null) ? verticle.toString() : "";
     }
 
+    /**
+     * Gets the backends.
+     *
+     * @return the backends
+     */
     public Set<Backend> getBackends() {
         Set<Backend> backends = new HashSet<>();
         for (Virtualhost virtualhost: virtualhosts.values()) {
@@ -106,14 +165,28 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return backends;
     }
 
+    /**
+     * Gets the virtualhosts.
+     *
+     * @return the virtualhosts
+     */
     public Set<Virtualhost> getVirtualhosts() {
         return new HashSet<Virtualhost>(virtualhosts.values());
     }
 
+    /**
+     * Gets the virtualhost by virtualhostId (key).
+     *
+     * @param key the key
+     * @return the virtualhost
+     */
     public Virtualhost getVirtualhost(String key) {
         return "".equals(key) ? null : virtualhosts.get(key);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.Entity#toJson()
+     */
     @Override
     public JsonObject toJson() {
         prepareJson();
@@ -134,10 +207,18 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return super.toJson();
     }
 
+    /**
+     * Gets the virtualhosts (map).
+     *
+     * @return the virtualhosts
+     */
     public Map<String, Virtualhost> getVirtualhostsToMap() {
         return virtualhosts;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackQueueAction#addToMap(java.lang.String)
+     */
     @Override
     public boolean addToMap(String message) {
         @SuppressWarnings("rawtypes")
@@ -152,11 +233,17 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return messageToMap.add();
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackQueueAction#delFromMap(java.lang.String)
+     */
     @Override
     public boolean delFromMap(String message) {
         return MessageToMapBuilder.getInstance(message, this).del();
     }
 
+    /**
+     * Register queue action.
+     */
     public void registerQueueAction() {
         queueService.registerQueueAdd(verticle, this);
         queueService.registerQueueDel(verticle, this);
@@ -164,10 +251,16 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         queueService.registerUpdateSharedData(verticle, this);
     }
 
+    /**
+     * Clear all virtualhosts.
+     */
     public void clearAll() {
         virtualhosts.clear();
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackSharedData#updateSharedData()
+     */
     @Override
     public void updateSharedData() {
         if (verticle instanceof RouterVerticle) {
@@ -177,6 +270,11 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         }
     }
 
+    /**
+     * Gets the farm json.
+     *
+     * @return the farm json
+     */
     public String getFarmJson() {
         queueService.updateSharedData();
         try {
@@ -185,6 +283,12 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return this.sharedMap.get(FARM_MAP);
     }
 
+    /**
+     * Gets the virtualhost json by virtualhostId.
+     *
+     * @param id the id
+     * @return the virtualhost json
+     */
     public String getVirtualhostJson(String id) {
         queueService.updateSharedData();
         try {
@@ -193,6 +297,12 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return getJsonObject(id, this.sharedMap.get(FARM_MAP), Virtualhost.class.getSimpleName().toLowerCase());
     }
 
+    /**
+     * Gets the backend json by backendId.
+     *
+     * @param id the id
+     * @return the backend json
+     */
     public String getBackendJson(String id) {
         queueService.updateSharedData();
         try {
@@ -201,6 +311,14 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return getJsonObject(id, this.sharedMap.get(FARM_BACKENDS_FIELDNAME), Backend.class.getSimpleName().toLowerCase());
     }
 
+    /**
+     * Gets the json object.
+     *
+     * @param key the key
+     * @param jsonCollection the json collection
+     * @param clazz the clazz
+     * @return the json object
+     */
     private String getJsonObject(String key, String jsonCollection, String clazz) {
         if ("".equals(jsonCollection)) {
             return "{}";
@@ -224,6 +342,14 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         return "{}";
     }
 
+    /**
+     * Convert Collection to json.
+     *
+     * @param key the key
+     * @param collection the collection
+     * @param clazz the clazz
+     * @return the string
+     */
     public String collectionToJson(String key, Collection<? extends Entity> collection, String clazz) {
         String result = "";
         boolean isArray = false;

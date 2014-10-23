@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.handlers.rest;
 
@@ -27,19 +28,42 @@ import com.globo.galeb.core.ManagerService;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.ServerResponse;
 
+/**
+ * Class GetMatcherHandler.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class GetMatcherHandler implements Handler<HttpServerRequest> {
 
+    /** The log. */
     private final Logger log;
+
+    /** The http server name. */
     private String httpServerName = null;
+
+    /** The farm. */
     private final Farm farm;
+
+    /** The class id. */
     private final String classId;
 
+    /**
+     * Instantiates a new gets the matcher handler.
+     *
+     * @param id the id from uri
+     * @param log the logger
+     * @param farm the farm
+     */
     public GetMatcherHandler(String id, final Logger log, final Farm farm) {
         this.log = log;
         this.classId = id;
         this.farm = farm;
     }
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+     */
     @Override
     public void handle(HttpServerRequest req) {
         final ServerResponse serverResponse = new ServerResponse(req, log, null, false);

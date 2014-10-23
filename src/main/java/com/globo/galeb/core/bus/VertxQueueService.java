@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.core.bus;
 
@@ -28,26 +29,50 @@ import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.core.SafeJsonObject;
 
+/**
+ * Class VertxQueueService.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class VertxQueueService implements IQueueService {
 
+    /** The Vertx EventBus. */
     private final EventBus eb;
+
+    /** The logger. */
     private final Logger log;
 
+    /**
+     * Instantiates a new vertxQueueService.
+     *
+     * @param eb the eb
+     * @param log the log
+     */
     public VertxQueueService(final EventBus eb, final Logger log) {
         this.eb=eb;
         this.log=log;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#queueToAdd(com.globo.galeb.core.SafeJsonObject, java.lang.String)
+     */
     @Override
     public void queueToAdd(SafeJsonObject json, final String uri) {
         putMessageToQueue(json, IQueueService.ACTION.ADD, uri);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#queueToDel(com.globo.galeb.core.SafeJsonObject, java.lang.String)
+     */
     @Override
     public void queueToDel(SafeJsonObject json, final String uri) {
         putMessageToQueue(json, IQueueService.ACTION.DEL, uri);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#queueToChange(com.globo.galeb.core.SafeJsonObject, java.lang.String)
+     */
     @Override
     public void queueToChange(SafeJsonObject json, final String uri) {
         // putMessageToQueue(json, ACTION.CHANGE, uri);
@@ -59,6 +84,13 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /**
+     * Put message to queue.
+     *
+     * @param json the json
+     * @param action the action
+     * @param uri the uri
+     */
     private void putMessageToQueue(SafeJsonObject json, IQueueService.ACTION action, final String uri) {
         Long version = 0L;
 
@@ -92,6 +124,12 @@ public class VertxQueueService implements IQueueService {
 
     }
 
+    /**
+     * Publish action.
+     *
+     * @param message the message
+     * @param action the action
+     */
     private void publishAction(String message, final IQueueService.ACTION action) {
         if (eb!=null) {
             eb.publish(action.toString(), message);
@@ -106,6 +144,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#registerHealthcheck(com.globo.galeb.core.bus.ICallbackHealthcheck)
+     */
     @Override
     public void registerHealthcheck(final ICallbackHealthcheck callbackHealthcheck) {
         if (eb==null) {
@@ -138,6 +179,9 @@ public class VertxQueueService implements IQueueService {
 
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#publishBackendOk(java.lang.String)
+     */
     @Override
     public void publishBackendOk(String backend) {
         if (eb==null) {
@@ -147,6 +191,9 @@ public class VertxQueueService implements IQueueService {
         log.info(String.format("Backend %s OK. Enabling it", backend));
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#publishBackendFail(java.lang.String)
+     */
     @Override
     public void publishBackendFail(String backendId) {
         if (eb==null) {
@@ -156,11 +203,20 @@ public class VertxQueueService implements IQueueService {
         log.info(String.format("Backend %s Fail. disabling it", backendId));
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#publishBackendConnections(java.lang.String, com.globo.galeb.core.SafeJsonObject)
+     */
     @Override
     public void publishBackendConnections(String queueActiveConnections, SafeJsonObject myConnections) {
         eb.publish(queueActiveConnections, myConnections);
     }
 
+    /**
+     * Connection counter handler.
+     *
+     * @param connectionsCounter the connections counter
+     * @return the handler
+     */
     private Handler<Message<JsonObject>> connectionCounterHandler(final ICallbackConnectionCounter connectionsCounter) {
         return new Handler<Message<JsonObject>>() {
             @Override
@@ -170,6 +226,9 @@ public class VertxQueueService implements IQueueService {
         };
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#registerConnectionsCounter(com.globo.galeb.core.bus.ICallbackConnectionCounter, java.lang.String)
+     */
     @Override
     public void registerConnectionsCounter(final ICallbackConnectionCounter connectionsCounter,
             String queueActiveConnections) {
@@ -182,6 +241,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#publishActiveConnections(java.lang.String, com.globo.galeb.core.SafeJsonObject)
+     */
     @Override
     public void publishActiveConnections(String queueActiveConnections,
             SafeJsonObject myConnections) {
@@ -191,6 +253,9 @@ public class VertxQueueService implements IQueueService {
         eb.publish(queueActiveConnections, myConnections);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#unregisterConnectionsCounter(com.globo.galeb.core.bus.ICallbackConnectionCounter, java.lang.String)
+     */
     @Override
     public void unregisterConnectionsCounter(final ICallbackConnectionCounter connectionsCounter,
             String queueActiveConnections) {
@@ -200,6 +265,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /**
+     * Log if eventBus is null.
+     */
     private void logEventBusNull() {
         String logMessage = "registerQueueAdd is not possible: EventBus is null";
         if (log!=null)  {
@@ -209,6 +277,12 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /**
+     * Log queue registered.
+     *
+     * @param starter the starter
+     * @param queue the queue
+     */
     private void logQueueRegistered(String starter, String queue) {
         String message = String.format("[%s] %s registered", starter, queue);
         if (log!=null) {
@@ -218,6 +292,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#registerQueueAdd(java.lang.Object, com.globo.galeb.core.bus.ICallbackQueueAction)
+     */
     @Override
     public void registerQueueAdd(final Object starter, final ICallbackQueueAction callbackQueueAction) {
         final Verticle verticle;
@@ -246,6 +323,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#registerQueueDel(java.lang.Object, com.globo.galeb.core.bus.ICallbackQueueAction)
+     */
     @Override
     public void registerQueueDel(final Object starter, final ICallbackQueueAction callbackQueueAction) {
         final Verticle verticle;
@@ -273,6 +353,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#registerQueueVersion(java.lang.Object, com.globo.galeb.core.bus.ICallbackQueueAction)
+     */
     @Override
     public void registerQueueVersion(final Object starter, final ICallbackQueueAction callbackQueueAction) {
         Handler<Message<String>> queueVersionHandler = new Handler<Message<String>>() {
@@ -294,6 +377,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#registerUpdateSharedData(java.lang.Object, com.globo.galeb.core.bus.ICallbackSharedData)
+     */
     @Override
     public void registerUpdateSharedData(final Object starter,
             final ICallbackSharedData callbackSharedData) {
@@ -311,6 +397,9 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.IQueueService#updateSharedData()
+     */
     @Override
     public void updateSharedData() {
         if (eb!=null) {

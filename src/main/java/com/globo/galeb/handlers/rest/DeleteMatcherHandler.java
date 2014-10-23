@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.handlers.rest;
 
@@ -25,18 +26,39 @@ import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
 
+/**
+ * Class DeleteMatcherHandler.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
 
+    /** The log. */
     private final Logger log;
+
+    /** The class id. */
     private final String classId;
+
+    /** The queue service. */
     private final IQueueService queueService;
 
+    /**
+     * Instantiates a new delete matcher handler.
+     *
+     * @param id the id from uri
+     * @param log the logger
+     * @param queueService the queue service
+     */
     public DeleteMatcherHandler(String id, final Logger log, final IQueueService queueService) {
         this.log = log;
         this.classId = id;
         this.queueService = queueService;
     }
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+     */
     @Override
     public void handle(final HttpServerRequest req) {
         final ServerResponse serverResponse = new ServerResponse(req, log, null, false);

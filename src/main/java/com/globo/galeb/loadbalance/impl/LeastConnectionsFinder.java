@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.loadbalance.impl;
 
@@ -23,35 +24,70 @@ import java.util.Map.Entry;
 
 import com.globo.galeb.core.Backend;
 
+/**
+ * Class LeastConnectionsFinder: Find the backend with least connection
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class LeastConnectionsFinder {
 
+    /** The map of the backends. */
     private final Map<Backend, Integer> mapBackends = new HashMap<>();
 
+    /**
+     * Instantiates a new least connections finder.
+     *
+     * @param backends the backends
+     */
     public LeastConnectionsFinder(final Collection<Backend> backends) {
         for (Backend backend : backends) {
             mapBackends.put(backend, backend.getActiveConnections());
         }
     }
 
+    /**
+     * Adds the backend to map.
+     *
+     * @param backend the backend
+     */
     public void add(final Backend backend) {
         mapBackends.put(backend, backend.getActiveConnections());
     }
 
+    /**
+     * Adds a backends collection to map.
+     *
+     * @param backends the backends
+     */
     public void addAll(final Collection<Backend> backends) {
         for (Backend backend : backends) {
             add(backend);
         }
     }
 
+    /**
+     * Update the backends map
+     */
     public void update() {
         addAll(mapBackends.keySet());
     }
 
+    /**
+     * Rebuild the backends map
+     *
+     * @param backends the backends
+     */
     public void rebuild(final Collection<Backend> backends) {
         mapBackends.clear();
         addAll(backends);
     }
 
+    /**
+     * Gets the backend chosen
+     *
+     * @return the backend
+     */
     public Backend get() {
         Backend chosen;
         if (!mapBackends.isEmpty()) {

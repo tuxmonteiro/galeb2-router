@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.handlers;
 
@@ -40,33 +41,77 @@ import com.globo.galeb.exceptions.NotFoundException;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.metrics.ICounter;
 
+/**
+ * Class RouterRequestHandler.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
+    /** The vertx. */
     private final Vertx vertx;
+
+    /** The farm. */
     private final Farm farm;
+
+    /** The counter. */
     private final ICounter counter;
+
+    /** The log. */
     private final Logger log;
 
+    /** The http header host. */
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
+
+    /** The http header connection. */
     private final String httpHeaderConnection = HttpHeaders.CONNECTION.toString();
+
+    /** The queueService instance. */
     private final IQueueService queueService;
 
+    /** The last remote user. */
     private RemoteUser lastRemoteUser = null;
+
+    /** The last header host. */
     private String lastHeaderHost = "";
+
+    /** The last backend chosen. */
     private Backend lastBackend = null;
 
+    /**
+     * Class GatewayTimeoutTaskHandler.
+     *
+     * @author: See AUTHORS file.
+     * @version: 1.0.0, Oct 23, 2014.
+     */
     private class GatewayTimeoutTaskHandler implements Handler<Long> {
 
+        /** The serverResponse. */
         private final ServerResponse sResponse;
+
+        /** The header host of request. */
         private final String headerHost;
+
+        /** The backend id. */
         private final String backendId;
 
+        /**
+         * Instantiates a new gateway timeout task handler.
+         *
+         * @param sResponse the serverResponse instance
+         * @param headerHost the header host
+         * @param backendId the backend id
+         */
         public GatewayTimeoutTaskHandler(final ServerResponse sResponse, String headerHost, String backendId) {
             this.sResponse = sResponse;
             this.headerHost = headerHost;
             this.backendId = backendId;
         }
 
+        /* (non-Javadoc)
+         * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+         */
         @Override
         public void handle(Long event) {
             sResponse.setHeaderHost(headerHost)
@@ -77,13 +122,34 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     }
 
+    /**
+     * Class ClientRequestExceptionHandler.
+     *
+     * @author: See AUTHORS file.
+     * @version: 1.0.0, Oct 23, 2014.
+     */
     private class ClientRequestExceptionHandler implements Handler<Throwable> {
 
+        /** The serverResponse instance. */
         private final ServerResponse sResponse;
+
+        /** The request timeout timer. */
         private final Long requestTimeoutTimer;
+
+        /** The header host of request. */
         private final String headerHost;
+
+        /** The backend id. */
         private final String backendId;
 
+        /**
+         * Instantiates a new client request exception handler.
+         *
+         * @param sResponse the serverResponse instance
+         * @param requestTimeoutTimer the request timeout timer
+         * @param headerHost the header host
+         * @param backendId the backend id
+         */
         public ClientRequestExceptionHandler(final ServerResponse sResponse,
                 Long requestTimeoutTimer, String headerHost, String backendId) {
             this.sResponse = sResponse;
@@ -92,6 +158,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             this.backendId = backendId;
         }
 
+        /* (non-Javadoc)
+         * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+         */
         @Override
         public void handle(Throwable event) {
             vertx.cancelTimer(requestTimeoutTimer);
@@ -102,6 +171,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     }
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+     */
     @Override
     public void handle(final HttpServerRequest sRequest) {
 
@@ -219,6 +291,15 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
          });
     }
 
+    /**
+     * Instantiates a new router request handler.
+     *
+     * @param vertx the vertx
+     * @param farm the farm
+     * @param counter the counter
+     * @param queueService the queue service
+     * @param log the logger
+     */
     public RouterRequestHandler(
             final Vertx vertx,
             final Farm farm,
@@ -232,6 +313,12 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         this.log = log;
     }
 
+    /**
+     * Update headers xff.
+     *
+     * @param headers the headers
+     * @param remoteUser the remote user
+     */
     private void updateHeadersXFF(final MultiMap headers, RemoteUser remoteUser) {
 
         final String httpHeaderXRealIp         = "X-Real-IP";
@@ -273,6 +360,13 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         }
     }
 
+    /**
+     * Checks if is http keep alive.
+     *
+     * @param headers the headers
+     * @param httpVersion the http version
+     * @return true, if is http keep alive
+     */
     public boolean isHttpKeepAlive(MultiMap headers, HttpVersion httpVersion) {
         return headers.contains(httpHeaderConnection) ?
                 !"close".equalsIgnoreCase(headers.get(httpHeaderConnection)) :

@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.handlers;
 
@@ -27,20 +28,47 @@ import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.streams.Pump;
 
+/**
+ * Class RouterResponseHandler.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
+    /** The vertx. */
     private final Vertx vertx;
+
+    /** The request timeout timer. */
     private final Long requestTimeoutTimer;
+
+    /** The http server response. */
     private final HttpServerResponse httpServerResponse;
+
+    /** The server response instance. */
     private final ServerResponse sResponse;
+
+    /** The backend id. */
     private final String backendId;
+
+    /** The counter. */
     private final ICounter counter;
+
+    /** The log. */
     private final Logger log;
 
+    /** The header host. */
     private String headerHost = "UNDEF";
+
+    /** The initial request time. */
     private Long initialRequestTime = null;
+
+    /** The connection keepalive. */
     private boolean connectionKeepalive = true;
 
+    /* (non-Javadoc)
+     * @see org.vertx.java.core.Handler#handle(java.lang.Object)
+     */
     @Override
     public void handle(final HttpClientResponse cResponse) {
         log.debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
@@ -89,29 +117,67 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     }
 
+    /**
+     * Sets the header host.
+     *
+     * @param headerHost the header host
+     * @return the router response handler
+     */
     public RouterResponseHandler setHeaderHost(String headerHost) {
         this.headerHost = headerHost;
         return this;
     }
 
+    /**
+     * Gets the initial request time.
+     *
+     * @return the initial request time
+     */
     public Long getInitialRequestTime() {
         return initialRequestTime;
     }
 
+    /**
+     * Sets the initial request time.
+     *
+     * @param initialRequestTime the initial request time
+     * @return the router response handler
+     */
     public RouterResponseHandler setInitialRequestTime(Long initialRequestTime) {
         this.initialRequestTime = initialRequestTime;
         return this;
     }
 
+    /**
+     * Checks if is connection keepalive.
+     *
+     * @return true, if is connection keepalive
+     */
     public boolean isConnectionKeepalive() {
         return connectionKeepalive;
     }
 
+    /**
+     * Sets the connection keepalive.
+     *
+     * @param connectionKeepalive the connection keepalive
+     * @return the router response handler
+     */
     public RouterResponseHandler setConnectionKeepalive(boolean connectionKeepalive) {
         this.connectionKeepalive = connectionKeepalive;
         return this;
     }
 
+    /**
+     * Instantiates a new router response handler.
+     *
+     * @param vertx the vertx
+     * @param log the log
+     * @param requestTimeoutTimer the request timeout timer
+     * @param httpServerResponse the http server response
+     * @param sResponse the s response
+     * @param backend the backend
+     */
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,
@@ -122,6 +188,17 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         this(vertx, log, requestTimeoutTimer, httpServerResponse, sResponse, backend, null);
     }
 
+    /**
+     * Instantiates a new router response handler.
+     *
+     * @param vertx the vertx
+     * @param log the log
+     * @param requestTimeoutTimer the request timeout timer
+     * @param httpServerResponse the http server response
+     * @param sResponse the s response
+     * @param backend the backend
+     * @param counter the counter
+     */
     public RouterResponseHandler(
             final Vertx vertx,
             final Logger log,

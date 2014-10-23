@@ -7,22 +7,35 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.core.bus;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Virtualhost;
 
+/**
+ * Class BackendMap.
+ *
+ * @author: See AUTHORS file.
+ * @version: 1.0.0, Oct 23, 2014.
+ */
 public class BackendMap extends MessageToMap<Virtualhost> {
 
+    /**
+     * Instantiates a new backend map.
+     */
     public BackendMap() {
         super();
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.MessageToMap#add()
+     */
     @Override
     public boolean add() {
         boolean isOk = false;
@@ -50,6 +63,9 @@ public class BackendMap extends MessageToMap<Virtualhost> {
         return isOk;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.MessageToMap#del()
+     */
     @Override
     public boolean del() {
         boolean isOk = false;
@@ -90,12 +106,18 @@ public class BackendMap extends MessageToMap<Virtualhost> {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.MessageToMap#reset()
+     */
     @Override
     public boolean reset()  {
         // TODO
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.MessageToMap#change()
+     */
     @Override
     public boolean change()  {
         // TODO
