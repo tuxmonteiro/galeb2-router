@@ -59,7 +59,7 @@ public class RouterVerticle extends Verticle {
       final Handler<ServerWebSocket> serverWebSocketHandler =
               new FrontendWebSocketHandler(vertx, container, farm);
 
-      server.setDefaultPort(9000)
+      server.setDefaultPort(8000)
           .setHttpServerRequestHandler(handlerHttpServerRequest)
           .setWebsocketServerRequestHandler(serverWebSocketHandler).start(this);
       log.info(String.format("Instance %s started", this.toString()));

@@ -36,21 +36,21 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyGetUnknownURI() {
         // Test GET unknown URI
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9090).atUri("/unknownuri").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
+        newGet().onPort(9000).atUri("/unknownuri").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
     }
 
     @Test
     public void testWhenEmptyGetVHost() {
         // Test GET /virtualhost
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9090).atUri("/virtualhost").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
+        newGet().onPort(9000).atUri("/virtualhost").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
     }
 
     @Test
     public void testWhenEmptyGetVHostId() {
         // Test GET /virtualhost/id
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9090).atUri("/virtualhost/1234").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();;
+        newGet().onPort(9000).atUri("/virtualhost/1234").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();;
     }
 
     @Ignore // TODO: Ignore "properties"
@@ -63,14 +63,14 @@ public class RouteManagerTest extends UtilTestVerticle {
             .putObject("properties", new JsonObject())
             .putNumber("version", 0)
             .putArray("virtualhosts", new JsonArray());
-        newGet().onPort(9090).atUri("/farm").expectBodyJson(expectedJson).run();;
+        newGet().onPort(9000).atUri("/farm").expectBodyJson(expectedJson).run();;
     }
 
     @Test
     public void testWhenEmptyGetVersion() {
         // Test GET /version
         // Expected: { "version" : 0 }
-        newGet().onPort(9090).atUri("/version").expectBodyJson("{ \"version\" : 0 }").run();
+        newGet().onPort(9000).atUri("/version").expectBodyJson("{ \"version\" : 0 }").run();
     }
 
     // Test POST /virtualhost
@@ -86,7 +86,7 @@ public class RouteManagerTest extends UtilTestVerticle {
         JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
 
 
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
         JsonObject getExpectedJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
@@ -98,7 +98,7 @@ public class RouteManagerTest extends UtilTestVerticle {
                     .putArray(Virtualhost.BACKENDS_ELIGIBLE_FIELDNAME, new JsonArray())
                     .putArray(Virtualhost.BACKENDS_FAILED_FIELDNAME, new JsonArray()));
 
-        newGet().onPort(9090).atUri("/virtualhost/test.localdomain").expectBodyJson(getExpectedJson).after(action1);
+        newGet().onPort(9000).atUri("/virtualhost/test.localdomain").expectBodyJson(getExpectedJson).after(action1);
 
         action1.run();
 

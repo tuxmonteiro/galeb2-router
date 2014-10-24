@@ -40,7 +40,7 @@ public class RouterTest extends UtilTestVerticle {
 
     @Test
     public void testRouterWhenEmpty() {
-        newGet().onPort(9000).addHeader(httpHeaderHost, "www.unknownhost1.com").expectCode(HttpCode.NOT_FOUND).expectBodySize(0).run();
+        newGet().onPort(8000).addHeader(httpHeaderHost, "www.unknownhost1.com").expectCode(HttpCode.NOT_FOUND).expectBodySize(0).run();
     }
 
     @Test
@@ -52,9 +52,9 @@ public class RouterTest extends UtilTestVerticle {
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.SERVICE_UNAVAILABLE).expectBodySize(0).after(action1);
+        newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.SERVICE_UNAVAILABLE).expectBodySize(0).after(action1);
         action1.run();
 
     }
@@ -68,9 +68,9 @@ public class RouterTest extends UtilTestVerticle {
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
-        Action action1 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.NOT_FOUND).expectBodySize(0).after(action1);
+        newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.NOT_FOUND).expectBodySize(0).after(action1);
         action1.run();
 
     }
@@ -88,11 +88,11 @@ public class RouterTest extends UtilTestVerticle {
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
-        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.SERVICE_UNAVAILABLE).expectBodySize(0).after(action2);
+        newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.SERVICE_UNAVAILABLE).expectBodySize(0).after(action2);
 
         action1.run();
 
@@ -112,11 +112,11 @@ public class RouterTest extends UtilTestVerticle {
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
 
-        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
 
-        newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.GATEWAY_TIMEOUT).expectBodySize(0).after(action2);
+        newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.GATEWAY_TIMEOUT).expectBodySize(0).after(action2);
 
         action1.run();
 
@@ -146,9 +146,9 @@ public class RouterTest extends UtilTestVerticle {
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
-        final Action action3 = newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain")
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        final Action action3 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
                 .expectCode(HttpCode.OK).expectBody("response from backend").after(action2).setDontStop();
 
         // Create handler to close server after the test
@@ -194,9 +194,9 @@ public class RouterTest extends UtilTestVerticle {
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
-        final Action action3 = newPost().onPort(9000).addHeader(httpHeaderHost, "test.localdomain").setBodyJson("{ \"some key\": \"some value\" }")
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        final Action action3 = newPost().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").setBodyJson("{ \"some key\": \"some value\" }")
                 .expectCode(HttpCode.OK).expectBody("{\"some key\":\"some value\"}").after(action2).setDontStop();
 
         // Create handler to close server after the test
@@ -249,13 +249,13 @@ public class RouterTest extends UtilTestVerticle {
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost")
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost")
                             .expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend")
+        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend")
                             .expectBodyJson(expectedJson).after(action1);
         Action actionn1 = action2; Action actionn2 = null;
         for (int httpCode=HttpCode.OK ; httpCode < 600 ; httpCode++) {
-            actionn2 = newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain")
+            actionn2 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
                         .atUri(String.format("/%d", httpCode))
                         .expectCode(httpCode).expectBodySize(0).setDontStop().after(actionn1);
             actionn1 = actionn2;
@@ -300,9 +300,9 @@ public class RouterTest extends UtilTestVerticle {
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9090).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9090).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
-        final Action action3 = newGet().onPort(9000).addHeader(httpHeaderHost, "test.localdomain")
+        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        final Action action3 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
                 .expectCode(HttpCode.FOUND).expectBodySize(0).after(action2).setDontStop();
 
         // Create handler to close server after the test

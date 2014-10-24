@@ -144,7 +144,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             }
         });
 
-        server.setDefaultPort(9090).setHttpServerRequestHandler(routeMatcher).start(this);
+        server.setDefaultPort(9000).setHttpServerRequestHandler(routeMatcher).start(this);
     }
 
 }
