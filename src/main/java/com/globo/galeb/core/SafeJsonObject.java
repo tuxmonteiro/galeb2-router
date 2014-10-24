@@ -119,7 +119,7 @@ public class SafeJsonObject extends JsonObject implements Cloneable {
      * Gets the safeJson array.
      *
      * @param key the key
-     * @return the json array
+     * @return this
      */
     public SafeJsonObject getJsonArray(String key) {
         this.array = super.getArray(key);
@@ -130,7 +130,7 @@ public class SafeJsonObject extends JsonObject implements Cloneable {
      * Make safeJson array.
      *
      * @param array the array
-     * @return the safe json object
+     * @return this
      */
     public SafeJsonObject makeArray(JsonArray array) {
         this.array = new JsonArray().addArray(array);

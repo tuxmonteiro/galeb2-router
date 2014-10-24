@@ -244,7 +244,7 @@ public class Virtualhost extends Entity {
      * Sets the load balance policy.
      *
      * @param loadBalancePolicyName the load balance policy name
-     * @return the virtualhost
+     * @return this
      */
     public Virtualhost setLoadBalancePolicy(String loadBalancePolicyName) {
         properties.putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, loadBalancePolicyName);

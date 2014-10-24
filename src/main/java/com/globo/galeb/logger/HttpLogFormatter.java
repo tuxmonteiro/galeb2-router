@@ -27,7 +27,7 @@ public interface HttpLogFormatter {
      * Sets the request data.
      *
      * @param request the request
-     * @return the http log formatter
+     * @return this
      */
     public HttpLogFormatter setRequestData(Object request);
 

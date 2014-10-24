@@ -42,16 +42,16 @@ public interface IQueueService {
      */
     public enum ACTION {
 
-        /** The add. */
+        /** The queue add name. */
         ADD         ("route.add"),
 
-        /** The del. */
+        /** The queue del name. */
         DEL         ("route.del"),
 
-        /** The set version. */
+        /** The queue set_version name. */
         SET_VERSION ("route.version"),
 
-        /** The shared data. */
+        /** The queue shared_data name. */
         SHARED_DATA ("route.shareddata");
 
         /** The queue name. */

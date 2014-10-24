@@ -99,7 +99,7 @@ public class ServerResponse {
      * Sets the id.
      *
      * @param id the id
-     * @return the server response
+     * @return this
      */
     public ServerResponse setId(String id) {
         this.id = id;
@@ -110,7 +110,7 @@ public class ServerResponse {
      * Sets the backend id.
      *
      * @param backendId the backend id
-     * @return the server response
+     * @return this
      */
     public ServerResponse setBackendId(String backendId) {
         this.backendId = backendId;
@@ -121,7 +121,7 @@ public class ServerResponse {
      * Sets the header host.
      *
      * @param headerHost the header host
-     * @return the server response
+     * @return this
      */
     public ServerResponse setHeaderHost(String headerHost) {
         this.headerHost = headerHost;
@@ -132,7 +132,7 @@ public class ServerResponse {
      * Sets the message.
      *
      * @param message the message
-     * @return the server response
+     * @return this
      */
     public ServerResponse setMessage(final String message) {
         this.message = message;
@@ -143,7 +143,7 @@ public class ServerResponse {
      * Sets the status code.
      *
      * @param code the code
-     * @return the server response
+     * @return this
      */
     public ServerResponse setStatusCode(Integer code) {
         resp.setStatusCode(code);
@@ -155,7 +155,7 @@ public class ServerResponse {
      * Sets the headers.
      *
      * @param headers the headers
-     * @return the server response
+     * @return this
      */
     public ServerResponse setHeaders(final MultiMap headers) {
         resp.headers().set(headers);

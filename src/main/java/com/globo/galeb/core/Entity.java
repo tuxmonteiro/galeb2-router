@@ -59,7 +59,7 @@ public abstract class Entity implements IJsonable {
     /**
      * Prepare json.
      *
-     * @return the entity
+     * @return this
      */
     protected Entity prepareJson() {
         idObj.putString(IJsonable.ID_FIELDNAME, id);
@@ -78,7 +78,7 @@ public abstract class Entity implements IJsonable {
      * Sets the static conf.
      *
      * @param staticConf the static conf
-     * @return the entity
+     * @return this
      */
     public Entity setStaticConf(String staticConf) {
         if (!"".equals(staticConf)) {

@@ -80,7 +80,7 @@ public class MessageBus {
      * Sets the parent id.
      *
      * @param parentId the parent id
-     * @return the message bus
+     * @return this
      */
     public MessageBus setParentId(String parentId) {
         if (parentId!=null) {
@@ -111,7 +111,7 @@ public class MessageBus {
      * Sets the entity.
      *
      * @param entityStr the entity str
-     * @return the message bus
+     * @return this
      */
     public MessageBus setEntity(String entityStr) {
         this.entityStr = new SafeJsonObject(entityStr).encode();
@@ -122,7 +122,7 @@ public class MessageBus {
      * Sets the entity.
      *
      * @param entityJson the entity json
-     * @return the message bus
+     * @return this
      */
     public MessageBus setEntity(SafeJsonObject entityJson) {
         if (entityJson!=null) {
@@ -146,7 +146,7 @@ public class MessageBus {
      * Sets the uri.
      *
      * @param uriStr the uri str
-     * @return the message bus
+     * @return this
      */
     public MessageBus setUri(String uriStr) {
         if (uriStr!=null) {
@@ -168,7 +168,7 @@ public class MessageBus {
     /**
      * Make messageBus message.
      *
-     * @return the message bus
+     * @return this
      */
     public MessageBus make() {
 
