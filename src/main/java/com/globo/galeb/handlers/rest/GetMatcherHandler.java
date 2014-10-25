@@ -93,7 +93,7 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
         } catch (UnsupportedEncodingException e) {
             serverResponse.setStatusCode(HttpCode.BAD_REQUEST)
                                 .setId(id)
-                                .end();
+                                .endResponse();
             log.error("Unsupported Encoding");
             return;
         }
@@ -125,7 +125,7 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
         serverResponse.setStatusCode(statusCode)
             .setMessage(message)
             .setId(id)
-            .end();
+            .endResponse();
         log.info(String.format("GET /%s", uriBase));
     }
 

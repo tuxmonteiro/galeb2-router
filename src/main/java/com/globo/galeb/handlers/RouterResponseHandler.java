@@ -19,14 +19,14 @@ import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.streams.Pump;
 
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.HttpServerResponse;
 import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.streams.Pump;
 
 /**
  * Class RouterResponseHandler.
@@ -36,11 +36,8 @@ import org.vertx.java.core.streams.Pump;
  */
 public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
-    /** The vertx. */
-    private final Vertx vertx;
-
-    /** The request timeout timer. */
-    private final Long requestTimeoutTimer;
+    /** the scheduler instance */
+    private final IScheduler scheduler;
 
     /** The http server response. */
     private final HttpServerResponse httpServerResponse;
@@ -56,6 +53,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     /** The log. */
     private final Logger log;
+    private final IQueueService queueService;
 
     /** The header host. */
     private String headerHost = "UNDEF";
@@ -70,10 +68,10 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * @see org.vertx.java.core.Handler#handle(java.lang.Object)
      */
     @Override
-    public void handle(final HttpClientResponse cResponse) {
+    public void handle(final HttpClientResponse cResponse) throws RuntimeException {
         log.debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
 
-        vertx.cancelTimer(requestTimeoutTimer);
+        scheduler.cancel();
 
         // Define statusCode and Headers
         final int statusCode = cResponse.statusCode();
@@ -84,7 +82,11 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         }
 
         // Pump cResponse => sResponse
-        Pump.createPump(cResponse, httpServerResponse).start();
+        try {
+            new Pump(cResponse, httpServerResponse).setSchedulerTimeOut(scheduler).start();
+        } catch (RuntimeException e) {
+            log.debug(e);
+        }
 
         cResponse.endHandler(new VoidHandler() {
             @Override
@@ -97,7 +99,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                 sResponse.setStatusCode(statusCode)
                     .setHeaderHost(headerHost)
                     .setBackendId(backendId)
-                    .end();
+                    .endResponse();
 
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
@@ -109,7 +111,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             @Override
             public void handle(Throwable event) {
                 log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
-                vertx.eventBus().publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId );
+                queueService.publishBackendFail(backendId);
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
             }
@@ -179,13 +181,13 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * @param backend the backend
      */
     public RouterResponseHandler(
-            final Vertx vertx,
+            final IScheduler scheduler,
+            final IQueueService queueService,
             final Logger log,
-            final Long requestTimeoutTimer,
             final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend) {
-        this(vertx, log, requestTimeoutTimer, httpServerResponse, sResponse, backend, null);
+        this(scheduler, queueService, log, httpServerResponse, sResponse, backend, null);
     }
 
     /**
@@ -200,29 +202,20 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * @param counter the counter
      */
     public RouterResponseHandler(
-            final Vertx vertx,
+            final IScheduler scheduler,
+            final IQueueService queueService,
             final Logger log,
-            final Long requestTimeoutTimer,
             final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend,
             final ICounter counter) {
-        this.vertx = vertx;
-        this.requestTimeoutTimer = requestTimeoutTimer;
+        this.scheduler = scheduler;
+        this.queueService = queueService;
         this.httpServerResponse = httpServerResponse;
         this.sResponse = sResponse;
         this.backendId = backend.toString();
         this.log = log;
         this.counter = counter;
-
-        this.httpServerResponse.exceptionHandler(new Handler<Throwable>() {
-            @Override
-            public void handle(Throwable event) {
-                String message = String.format("[%s] %s", this, event.getMessage());
-                log.error(message);
-            }
-        });
-
     }
 
 }

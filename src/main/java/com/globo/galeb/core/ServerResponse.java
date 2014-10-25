@@ -19,6 +19,7 @@ import com.globo.galeb.exceptions.AbstractHttpException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
 
+import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpServerResponse;
@@ -93,6 +94,12 @@ public class ServerResponse {
         this.enableAccessLog = enableAccessLog;
         this.req = req;
         this.resp = req.response();
+        resp.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                showErrorAndClose(event);
+            }
+        });
     }
 
     /**
@@ -172,8 +179,6 @@ public class ServerResponse {
         int statusCode = exceptionToHttpCode(event);
         setStatusCode(statusCode);
 
-        end();
-
         String logMessage = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
                 !"".equals(headerHost) ? String.format(" (virtualhost: %s)", headerHost) : "",
@@ -185,18 +190,23 @@ public class ServerResponse {
             log.warn(logMessage);
         }
 
-        closeResponse();
+        endResponse();
+
+        try {
+            closeResponse();
+        } catch (IllegalStateException e) {
+            // Response has already been finish?
+            log.debug(e.getMessage());
+        } catch (RuntimeException e2) {
+            log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e2.getMessage()));
+        }
     }
 
     /**
      * Close response.
      */
-    public void closeResponse() {
-        try {
+    public void closeResponse() throws RuntimeException {
             resp.close();
-        } catch (RuntimeException ignoreAlreadyClose) {
-            return;
-        }
     }
 
     /**
@@ -204,35 +214,25 @@ public class ServerResponse {
      *
      * @param message the message
      */
-    private void realEnd(String message) {
-
-        try {
-            if (!"".equals(message)) {
-
-                resp.end(message);
-            } else {
-                resp.end();
-            }
-
-        } catch (java.lang.IllegalStateException e) {
-            // Response has already been written ? Ignore.
-            log.debug(e.getMessage());
-
-        } catch (RuntimeException e2) {
-            log.error(String.format("FAIL: statusCode %d, Error > %s", resp.getStatusCode(), e2.getMessage()));
-            return;
-
+    private void realEnd() throws RuntimeException {
+        if (!"".equals(message)) {
+            resp.end(message);
+        } else {
+            resp.end();
         }
-
     }
 
     /**
      * Finish the connection.
      */
-    public void end() {
-        logRequest(enableAccessLog);
-        sendRequestCount(resp.getStatusCode());
-        realEnd(message);
+    public void endResponse() {
+        logRequest();
+        sendRequestCount();
+        try {
+            realEnd();
+        } catch (RuntimeException e) {
+            log.debug(e);
+        }
     }
 
     /**
@@ -240,7 +240,7 @@ public class ServerResponse {
      *
      * @param enable the enable
      */
-    public void logRequest(boolean enable) {
+    public void logRequest() {
 
         if (enableAccessLog) {
 
@@ -263,7 +263,11 @@ public class ServerResponse {
      *
      * @param code the code
      */
-    public void sendRequestCount(int code) {
+    public void sendRequestCount() {
+        int code = HttpCode.INTERNAL_SERVER_ERROR;
+        if (req!=null) {
+            code = resp.getStatusCode();
+        }
         if (counter!=null) {
             if (!"".equals(headerHost) && !UNDEF.equals(headerHost) &&
                     !"".equals(backendId) && !UNDEF.equals(backendId)) {
@@ -272,6 +276,10 @@ public class ServerResponse {
                 counter.httpCode(id, code);
             }
         }
+    }
+
+    public void setChunked(Boolean enableChunked) {
+        this.resp.setChunked(enableChunked);
     }
 
 }

@@ -60,6 +60,7 @@ public class MessageToMapBuilder {
                 Map<String, Farm> map = new HashMap<>();
                 map.put("farm", farm);
                 return new FarmMap()
+                    .setMessageBus(messageBus)
                     .setLogger(log)
                     .setVertx(vertx)
                     .setMap(map)

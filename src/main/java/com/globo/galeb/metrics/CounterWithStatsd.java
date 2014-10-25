@@ -51,6 +51,17 @@ public class CounterWithStatsd implements ICounter {
     }
 
     /**
+     * Merge virtualhost id with backend id.
+     *
+     * @param virtualhostId the virtualhost id
+     * @param backendId the backend id
+     * @return the string merged
+     */
+    private String mergeVirtualhostIdWithBackendId(String virtualhostId, String backendId) {
+        return String.format("%s.%s",cleanupString(virtualhostId,"UNDEF"), cleanupString(backendId, "UNDEF"));
+    }
+
+    /**
      * Instantiates a new counter with statsd.
      *
      * @param conf the conf
@@ -85,7 +96,7 @@ public class CounterWithStatsd implements ICounter {
      */
     @Override
     public void httpCode(String virtualhostId, String backendId, Integer code) {
-        httpCode(cleanupString(virtualhostId, backendId), code);
+        httpCode(mergeVirtualhostIdWithBackendId(virtualhostId, backendId), code);
     }
 
     /* (non-Javadoc)
@@ -146,7 +157,7 @@ public class CounterWithStatsd implements ICounter {
     @Override
     public void requestTime(String virtualhostId, String backendId,
             Long initialRequestTime) {
-        requestTime(cleanupString(virtualhostId, backendId), initialRequestTime);
+        requestTime(mergeVirtualhostIdWithBackendId(virtualhostId, backendId), initialRequestTime);
     }
 
     /* (non-Javadoc)
@@ -164,6 +175,6 @@ public class CounterWithStatsd implements ICounter {
      */
     @Override
     public void sendActiveSessions(String virtualhostId, String backendId, Long initialRequestTime) {
-        sendActiveSessions(cleanupString(virtualhostId, backendId), initialRequestTime);
+        sendActiveSessions(mergeVirtualhostIdWithBackendId(virtualhostId, backendId), initialRequestTime);
     }
 }

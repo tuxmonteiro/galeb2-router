@@ -85,7 +85,7 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
                 serverResponse.setStatusCode(statusCode)
                     .setMessage(HttpCode.getMessage(statusCode, true))
                     .setId(classId)
-                    .end();
+                    .endResponse();
             }
         });
 

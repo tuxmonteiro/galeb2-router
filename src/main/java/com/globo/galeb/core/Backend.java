@@ -72,6 +72,9 @@ public class Backend extends Entity {
     /** The port. */
     private final Integer port;
 
+    /** The ICounter. */
+    private ICounter           counter            = null;
+
     /** The backend session. */
     private BackendSession     backendSession     = null;
 
@@ -398,9 +401,7 @@ public class Backend extends Entity {
      * @return the backend
      */
     public Backend setCounter(ICounter counter) {
-        if (backendSession!=null) {
-            backendSession.setCounter(counter);
-        }
+        this.counter = counter;
         return this;
     }
 
@@ -413,6 +414,7 @@ public class Backend extends Entity {
         if (backendSession==null) {
             backendSession = new BackendSession(vertx, virtualhostId, id);
             backendSession.setMaxPoolSize(getMaxPoolSize());
+            backendSession.setCounter(counter);
         }
         backendSession.setBackendProperties(new SafeJsonObject(properties));
         backendSession.setRemoteUser(remoteUser);
