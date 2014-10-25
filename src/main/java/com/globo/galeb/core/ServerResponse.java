@@ -237,8 +237,6 @@ public class ServerResponse {
 
     /**
      * Log the request.
-     *
-     * @param enable the enable
      */
     public void logRequest() {
 
@@ -260,8 +258,6 @@ public class ServerResponse {
 
     /**
      * Send request count to counter.
-     *
-     * @param code the code
      */
     public void sendRequestCount() {
         int code = HttpCode.INTERNAL_SERVER_ERROR;

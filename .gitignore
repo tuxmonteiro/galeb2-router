@@ -14,3 +14,5 @@ mods/
 /bin
 
 .DS_Store
+
+docs/html

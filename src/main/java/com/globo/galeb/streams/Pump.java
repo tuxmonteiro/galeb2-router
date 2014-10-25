@@ -97,7 +97,7 @@ public class Pump {
     /**
      * Start the Pump. The Pump can be started and stopped multiple times.
      *
-     * @return the pump
+     * @return this
      */
     public Pump start() {
       rs.dataHandler(dataHandler);
@@ -107,7 +107,7 @@ public class Pump {
     /**
      * Stop the Pump. The Pump can be started and stopped multiple times.
      *
-     * @return the pump
+     * @return this
      */
     public Pump stop() {
       ws.drainHandler(null);
@@ -118,7 +118,7 @@ public class Pump {
     /**
      * Return the total number of bytes pumped by this pump.
      *
-     * @return the int
+     * @return bytes pumped
      */
     public int bytesPumped() {
       return this.pumped;
@@ -128,7 +128,7 @@ public class Pump {
      * Sets the scheduler time out.
      *
      * @param scheduler the scheduler
-     * @return the pump
+     * @return this
      */
     public Pump setSchedulerTimeOut(final IScheduler scheduler) {
         this.scheduler = scheduler;
