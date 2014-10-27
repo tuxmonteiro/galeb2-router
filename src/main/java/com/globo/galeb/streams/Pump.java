@@ -64,6 +64,7 @@ public class Pump {
             }
             try {
                 ws.write(buffer);
+                handleWrite();
                 pumped += buffer.length();
                 if (ws.writeQueueFull()) {
                     rs.pause();
@@ -79,6 +80,7 @@ public class Pump {
     /** The exception handler. */
     private Handler<Throwable> exceptionHandler;
 
+    private Handler<Void> writeHandler;
 
     /**
      * Instantiates a new pump.
@@ -168,6 +170,27 @@ public class Pump {
     private void handleException(Throwable throwable) {
         if (exceptionHandler != null) {
             exceptionHandler.handle(throwable);
+        }
+    }
+
+    /**
+     * Write handler.
+     *
+     * @param writeHandler the write handler
+     * @return this
+     */
+    public Pump writeHandler(Handler<Void> writeHandler) {
+        this.writeHandler = writeHandler;
+        return this;
+    }
+
+    /**
+     * Handle write: invoqued when pump call WriteStream.write()
+     */
+    private void handleWrite() {
+        Void voidParam = null;
+        if (writeHandler != null) {
+            writeHandler.handle(voidParam);
         }
     }
 }
