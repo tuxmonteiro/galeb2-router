@@ -279,11 +279,24 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         if (enableChunked) {
             // Pump sRequest => cRequest
-            try {
-                new Pump(sRequest, cRequest).setSchedulerTimeOut(schedulerTimeOut).start();
-            } catch (RuntimeException e) {
-                log.debug(e);
-            }
+
+            final Pump pump = new Pump(sRequest, cRequest);
+            pump.exceptionHandler(new Handler<Throwable>() {
+                @Override
+                public void handle(Throwable event) {
+                    schedulerTimeOut.cancel();
+                    sResponse.showErrorAndClose(new ServiceUnavailableException());
+                }
+            });
+            pump.writeHandler(new Handler<Void>() {
+                @Override
+                public void handle(Void event) {
+                    schedulerTimeOut.cancel();
+                    pump.writeHandler(null);
+                }
+            });
+            pump.start();
+
         } else {
             sRequest.bodyHandler(new Handler<Buffer>() {
                 @Override
