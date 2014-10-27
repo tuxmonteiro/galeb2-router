@@ -18,6 +18,7 @@ package com.globo.galeb.handlers;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.streams.Pump;
@@ -82,11 +83,23 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         }
 
         // Pump cResponse => sResponse
-        try {
-            new Pump(cResponse, httpServerResponse).setSchedulerTimeOut(scheduler).start();
-        } catch (RuntimeException e) {
-            log.debug(e);
-        }
+        final Pump pump = new Pump(cResponse, httpServerResponse);
+        pump.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable throwable) {
+                scheduler.cancel();
+                sResponse.showErrorAndClose(new ServiceUnavailableException());
+            }
+        });
+        pump.writeHandler(new Handler<Void>() {
+            @Override
+            public void handle(Void v) {
+                scheduler.cancel();
+                pump.writeHandler(null);
+            }
+        });
+        pump.start();
+
 
         cResponse.endHandler(new VoidHandler() {
             @Override
