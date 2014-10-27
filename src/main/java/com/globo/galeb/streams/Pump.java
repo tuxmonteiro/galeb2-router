@@ -46,7 +46,12 @@ public class Pump {
     private final Handler<Void> drainHandler = new Handler<Void>() {
         @Override
         public void handle(Void v) {
-          rs.resume();
+            try{
+                rs.resume();
+            } catch (RuntimeException e) {
+                stop();
+                handleException(e);
+            }
         }
       };
 
@@ -59,17 +64,21 @@ public class Pump {
             }
             try {
                 ws.write(buffer);
+                pumped += buffer.length();
+                if (ws.writeQueueFull()) {
+                    rs.pause();
+                    ws.drainHandler(drainHandler);
+                }
             } catch (RuntimeException e) {
-                rs.dataHandler(null);
-                return;
-            }
-            pumped += buffer.length();
-            if (ws.writeQueueFull()) {
-              rs.pause();
-              ws.drainHandler(drainHandler);
+                stop();
+                handleException(e);
             }
         }
     };
+
+    /** The exception handler. */
+    private Handler<Throwable> exceptionHandler;
+
 
     /**
      * Instantiates a new pump.
@@ -110,9 +119,14 @@ public class Pump {
      * @return this
      */
     public Pump stop() {
-      ws.drainHandler(null);
-      rs.dataHandler(null);
-      return this;
+        try {
+            ws.drainHandler(null);
+        } catch (RuntimeException e) {
+            handleException(e);
+        } finally {
+            rs.dataHandler(null);
+        }
+        return this;
     }
 
     /**
@@ -133,5 +147,27 @@ public class Pump {
     public Pump setSchedulerTimeOut(final IScheduler scheduler) {
         this.scheduler = scheduler;
         return this;
+    }
+
+    /**
+     * Exception handler.
+     *
+     * @param exceptionHandler the exception handler
+     * @return this
+     */
+    public Pump exceptionHandler(Handler<Throwable> exceptionHandler) {
+        this.exceptionHandler = exceptionHandler;
+        return this;
+    }
+
+    /**
+     * Handle exception.
+     *
+     * @param throwable the throwable event
+     */
+    private void handleException(Throwable throwable) {
+        if (exceptionHandler != null) {
+            exceptionHandler.handle(throwable);
+        }
     }
 }
