@@ -20,8 +20,6 @@ import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.streams.ReadStream;
 import org.vertx.java.core.streams.WriteStream;
 
-import com.globo.galeb.scheduler.IScheduler;
-
 /**
  * Class Pump.
  *
@@ -38,9 +36,6 @@ public class Pump {
 
     /** The number of bytes pumped by this pump. */
     private int pumped = 0;
-
-    /** The scheduler. */
-    private IScheduler scheduler = null;
 
     /** The drain handler. */
     private final Handler<Void> drainHandler = new Handler<Void>() {
@@ -59,9 +54,6 @@ public class Pump {
     private final Handler<Buffer> dataHandler = new Handler<Buffer>() {
         @Override
         public void handle(Buffer buffer) {
-            if (scheduler!=null) {
-                scheduler.cancel();
-            }
             try {
                 ws.write(buffer);
                 handleWrite();
@@ -139,17 +131,6 @@ public class Pump {
      */
     public int bytesPumped() {
       return this.pumped;
-    }
-
-    /**
-     * Sets the scheduler time out.
-     *
-     * @param scheduler the scheduler
-     * @return this
-     */
-    public Pump setSchedulerTimeOut(final IScheduler scheduler) {
-        this.scheduler = scheduler;
-        return this;
     }
 
     /**
