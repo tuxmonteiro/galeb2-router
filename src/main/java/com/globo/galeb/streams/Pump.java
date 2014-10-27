@@ -80,6 +80,7 @@ public class Pump {
     /** The exception handler. */
     private Handler<Throwable> exceptionHandler;
 
+    /** The write handler. */
     private Handler<Void> writeHandler;
 
     /**
@@ -163,7 +164,7 @@ public class Pump {
     }
 
     /**
-     * Handle exception.
+     * Handle exception: invoqued when happens exceptions.
      *
      * @param throwable the throwable event
      */
