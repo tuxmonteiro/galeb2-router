@@ -100,20 +100,15 @@ public class Pump {
 
     /**
      * Start the Pump. The Pump can be started and stopped multiple times.
-     *
-     * @return this
      */
-    public Pump start() {
+    public void start() {
       rs.dataHandler(dataHandler);
-      return this;
     }
 
     /**
      * Stop the Pump. The Pump can be started and stopped multiple times.
-     *
-     * @return this
      */
-    public Pump stop() {
+    public void stop() {
         try {
             ws.drainHandler(null);
         } catch (RuntimeException e) {
@@ -121,7 +116,6 @@ public class Pump {
         } finally {
             rs.dataHandler(null);
         }
-        return this;
     }
 
     /**
