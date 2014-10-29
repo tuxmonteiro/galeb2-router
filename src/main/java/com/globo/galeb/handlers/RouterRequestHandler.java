@@ -304,6 +304,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                 @Override
                 public void handle(Throwable event) {
                     schedulerTimeOut.cancel();
+                    log.error(String.format("FAIL: RouterRequest.pump with %s", event.getMessage()));
                     sResponse.showErrorAndClose(new ServiceUnavailableException());
                 }
             });

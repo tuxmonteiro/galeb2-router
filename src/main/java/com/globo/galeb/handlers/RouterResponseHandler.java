@@ -94,6 +94,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             @Override
             public void handle(Throwable throwable) {
                 scheduler.cancel();
+                log.error(String.format("FAIL: RouterResponse.pump with %s", throwable.getMessage()));
                 sResponse.showErrorAndClose(new ServiceUnavailableException());
             }
         });
