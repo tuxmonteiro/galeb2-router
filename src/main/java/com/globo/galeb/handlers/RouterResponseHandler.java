@@ -71,7 +71,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     /** The remote user. */
     private  final RemoteUser remoteUser;
 
-
     /* (non-Javadoc)
      * @see org.vertx.java.core.Handler#handle(java.lang.Object)
      */
@@ -205,6 +204,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * @param httpServerResponse the http server response
      * @param sResponse the s response
      * @param backend the backend
+     * @param remoteUser the remote user
      */
     public RouterResponseHandler(
             final IScheduler scheduler,
@@ -226,6 +226,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * @param httpServerResponse the http server response
      * @param sResponse the s response
      * @param backend the backend
+     * @param remoteUser the remote user
      * @param counter the counter
      */
     public RouterResponseHandler(
