@@ -15,6 +15,9 @@
  */
 package com.globo.galeb.core;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
@@ -75,8 +78,8 @@ public class Backend extends Entity {
     /** The ICounter. */
     private ICounter           counter            = null;
 
-    /** The backend session. */
-    private BackendSession     backendSession     = null;
+    /** The queue service. */
+    private IQueueService queueService            = null;
 
     /** The virtualhost id. */
     private String     virtualhostId = "";
@@ -108,8 +111,8 @@ public class Backend extends Entity {
     /** The default pipelining. */
     private Boolean defaultPipelining          = false;
 
-    /** The remote user. */
-    private RemoteUser remoteUser              = null;
+    /** The map of sessions. */
+    private final Map<RemoteUser, BackendSession> sessions = new HashMap<>();
 
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
@@ -194,9 +197,7 @@ public class Backend extends Entity {
      * @return the backend
      */
     public Backend setQueueService(IQueueService queueService) {
-        if (backendSession!=null) {
-            backendSession.setQueueService(queueService);
-        }
+        this.queueService = queueService;
         return this;
     }
 
@@ -216,17 +217,6 @@ public class Backend extends Entity {
      */
     public Integer getPort() {
         return port;
-    }
-
-    /**
-     * Sets the remote user.
-     *
-     * @param remoteUser the remote user
-     * @return the backend
-     */
-    public Backend setRemoteUser(RemoteUser remoteUser) {
-        this.remoteUser = remoteUser;
-        return this;
     }
 
     /**
@@ -410,27 +400,34 @@ public class Backend extends Entity {
      *
      * @return the http client
      */
-    public HttpClient connect() {
-        if (backendSession==null) {
-            backendSession = new BackendSession(vertx, virtualhostId, id);
-            backendSession.setMaxPoolSize(getMaxPoolSize());
-            backendSession.setCounter(counter);
+    public HttpClient connect(RemoteUser remoteUser) {
+        if (remoteUser==null) {
+            return null;
         }
-        backendSession.setBackendProperties(new SafeJsonObject(properties));
-        backendSession.setRemoteUser(remoteUser);
-        return backendSession.connect();
+        if (sessions.containsKey(remoteUser)) {
+            return sessions.get(remoteUser).connect();
+        } else {
+            BackendSession backendSession = new BackendSession(vertx, virtualhostId, id);
+
+            backendSession.setQueueService(queueService)
+                .setMaxPoolSize(getMaxPoolSize())
+                .setCounter(counter)
+                .setBackendProperties(new SafeJsonObject(properties))
+                .setRemoteUser(remoteUser);
+            sessions.put(remoteUser, backendSession);
+
+            return backendSession.connect();
+        }
     }
 
     /**
      * Close connection and destroy backendSession instance.
      */
-    public void close() {
-        if (backendSession==null) {
-            return;
+    public void close(RemoteUser remoteUser) {
+        if (!(remoteUser==null) && sessions.containsKey(remoteUser)) {
+            sessions.get(remoteUser).close();
+            sessions.remove(remoteUser);
         }
-        backendSession.close();
-        remoteUser = null;
-        backendSession = null;
     }
 
     /**
@@ -438,16 +435,18 @@ public class Backend extends Entity {
      *
      * @return the active connections
      */
-    public Integer getActiveConnections() {
-        if (backendSession==null) {
-            return 0;
+    public int getActiveConnections() {
+        int activeConnections = 0;
+        for (BackendSession backendSession: sessions.values()) {
+            if (backendSession==null) {
+                continue;
+            }
+            ConnectionsCounter connectionsCounter = backendSession.getSessionController();
+            if (connectionsCounter!=null) {
+                activeConnections += connectionsCounter.getActiveConnections();
+            }
         }
-        ConnectionsCounter connectionsCounter = backendSession.getSessionController();
-        if (connectionsCounter!=null) {
-            return backendSession.getSessionController().getActiveConnections();
-        } else {
-            return 0;
-        }
+        return activeConnections;
     }
 
     /**
@@ -455,11 +454,11 @@ public class Backend extends Entity {
      *
      * @return true, if is closed
      */
-    public boolean isClosed() {
-        if (backendSession==null) {
-            return true;
+    public boolean isClosed(RemoteUser remoteUser) {
+        if (!(remoteUser==null) && sessions.containsKey(remoteUser)) {
+            return sessions.get(remoteUser).isClosed();
         }
-        return backendSession.isClosed();
+        return true;
     }
 
     /* (non-Javadoc)
@@ -469,14 +468,17 @@ public class Backend extends Entity {
     public JsonObject toJson() {
         prepareJson();
         idObj.putString(Entity.PARENT_ID_FIELDNAME, virtualhostId);
+        idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, getActiveConnections());
 
-        ConnectionsCounter connectionsCounter = null;
-        if (backendSession!=null) {
-            connectionsCounter = backendSession.getSessionController();
-        }
-        if (connectionsCounter!=null) {
-            idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, connectionsCounter.getActiveConnections());
-        }
         return super.toJson();
+    }
+
+    /**
+     * Removes the session.
+     *
+     * @param remoteUser the remote user
+     */
+    public void removeSession(RemoteUser remoteUser) {
+        sessions.remove(remoteUser);
     }
 }

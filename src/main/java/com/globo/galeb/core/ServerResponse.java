@@ -15,6 +15,8 @@
  */
 package com.globo.galeb.core;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+
 import com.globo.galeb.exceptions.AbstractHttpException;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
@@ -186,6 +188,7 @@ public class ServerResponse {
 
         if (statusCode>=HttpCode.INTERNAL_SERVER_ERROR) {
             log.error(logMessage);
+            log.debug(getStackTrace(event));
         } else {
             log.warn(logMessage);
         }

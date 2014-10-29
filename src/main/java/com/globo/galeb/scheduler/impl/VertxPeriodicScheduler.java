@@ -21,7 +21,6 @@ import org.vertx.java.core.Vertx;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 
-
 /**
  * Class VertxPeriodicScheduler.
  *
@@ -42,6 +41,12 @@ public class VertxPeriodicScheduler implements IScheduler {
     /** The Scheduler id. */
     private Long id = 0L;
 
+    /** The cancel handler. */
+    private Handler<Void> cancelHandler;
+
+    /** The cancel failed handler. */
+    private Handler<Void> cancelFailedHandler;
+
     /**
      * Instantiates a new vertx delay scheduler.
      *
@@ -49,6 +54,17 @@ public class VertxPeriodicScheduler implements IScheduler {
      */
     public VertxPeriodicScheduler(Vertx vertx) {
         this.vertx = vertx;
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        if (id!=0L) {
+            vertx.cancelTimer(id);
+        }
     }
 
     /* (non-Javadoc)
@@ -91,11 +107,50 @@ public class VertxPeriodicScheduler implements IScheduler {
     @Override
     public IScheduler cancel() {
         if (id!=0L) {
-            vertx.cancelTimer(id);
-            id = 0L;
+            if (vertx.cancelTimer(id)) {
+                id = 0L;
+                handleCancel();
+            } else {
+                handleCancelFailed();
+            }
         }
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.scheduler.IScheduler#cancelHandler(org.vertx.java.core.Handler)
+     */
+    @Override
+    public IScheduler cancelHandler(Handler<Void> cancelHandler) {
+        this.cancelHandler = cancelHandler;
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.scheduler.IScheduler#cancelFailedHandler(org.vertx.java.core.Handler)
+     */
+    @Override
+    public IScheduler cancelFailedHandler(Handler<Void> cancelFailedHandler) {
+        this.cancelFailedHandler = cancelFailedHandler;
+        return this;
+    }
+
+    /**
+     * Handle cancel.
+     */
+    private void handleCancel() {
+        if (cancelHandler!=null) {
+            cancelHandler.handle(null);
+        }
+    }
+
+    /**
+     * Handle cancel failed.
+     */
+    private void handleCancelFailed() {
+        if (cancelHandler!=null) {
+            cancelFailedHandler.handle(null);
+        }
+    }
 
 }

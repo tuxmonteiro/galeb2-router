@@ -56,8 +56,7 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
-        HttpClient httpClient = backendTested.connect();
+        HttpClient httpClient = backendTested.connect(new RemoteUser("127.0.0.1", 0));
         assertThat(httpClient).isNotNull();
 
         testComplete();
@@ -68,10 +67,10 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
-        backendTested.connect();
+        RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
+        backendTested.connect(remoteUser);
 
-        assertThat(backendTested.isClosed()).isFalse();
+        assertThat(backendTested.isClosed(remoteUser)).isFalse();
 
         testComplete();
     }
@@ -81,11 +80,11 @@ public class BackendTest extends TestVerticle {
         Backend backendTested = new Backend(new JsonObject(), vertx);
         backendTested.setQueueService(queueService);
 
-        backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
-        backendTested.connect();
-        backendTested.close();
+        RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
+        backendTested.connect(remoteUser);
+        backendTested.close(remoteUser);
 
-        assertThat(backendTested.isClosed()).isTrue();
+        assertThat(backendTested.isClosed(remoteUser)).isTrue();
 
         testComplete();
     }
@@ -96,8 +95,7 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.setRemoteUser(new RemoteUser(String.format("%s", counter), 0));
-            backendTested.connect();
+            backendTested.connect(new RemoteUser(String.format("%s", counter), 0));
         }
 
         assertThat(backendTested.getActiveConnections()).isEqualTo(1000);
@@ -111,8 +109,7 @@ public class BackendTest extends TestVerticle {
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
-            backendTested.setRemoteUser(new RemoteUser("127.0.0.1", 0));
-            backendTested.connect();
+            backendTested.connect(new RemoteUser("127.0.0.1", 0));
         }
 
         assertThat(backendTested.getActiveConnections()).isEqualTo(1);

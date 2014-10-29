@@ -15,6 +15,9 @@
  */
 package com.globo.galeb.handlers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
@@ -42,6 +45,7 @@ import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxDelayScheduler;
+import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 import com.globo.galeb.streams.Pump;
 
 /**
@@ -73,14 +77,14 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     /** The queueService instance. */
     private final IQueueService queueService;
 
-    /** The last remote user. */
-    private RemoteUser lastRemoteUser = null;
+    /** The persist remote user to backend. */
+    private final Map<String, Backend> persistRemoteUserToBackend = new HashMap<>();
 
-    /** The last header host. */
-    private String lastHeaderHost = "";
+    /** The remote user last request. */
+    private final Map<String, Long> remoteUserLastRequest = new HashMap<>();
 
-    /** The last backend chosen. */
-    private Backend lastBackend = null;
+    /** The scheduler clean up dead sessions. */
+    private final IScheduler schedulerCleanUpDeadSessions;
 
     /**
      * Class GatewayTimeoutTaskHandler.
@@ -166,6 +170,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         public void handle(Throwable event) {
             scheduler.cancel();
             queueService.publishBackendFail(backendId.toString());
+            log.error(String.format("ClientRequestExceptionHandler: %s", event.getMessage()));
             sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                 .showErrorAndClose(event);
         }
@@ -198,6 +203,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             new ServerResponse(sRequest, log, counter, false).showErrorAndClose(new NotFoundException());
             return;
         }
+
         virtualhost.setQueue(queueService);
         Long requestTimeOut = virtualhost.getRequestTimeOut();
         Boolean enableChunked = virtualhost.isChunked();
@@ -207,6 +213,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         sRequest.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
+                log.error("HttpServerRequest fail");
                 sResponse.showErrorAndClose(event);
             }
         });
@@ -222,30 +229,40 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         final IScheduler schedulerTimeOut = new VertxDelayScheduler(vertx)
                         .setPeriod(requestTimeOut)
                         .setHandler(new GatewayTimeoutTaskHandler(sResponse, headerHost, backendId))
+                        .cancelHandler(new Handler<Void>() {
+                            @Override
+                            public void handle(Void event) {
+                                log.debug("scheduler canceled");
+                            }
+                        })
+                        .cancelFailedHandler(new Handler<Void>() {
+                            @Override
+                            public void handle(Void event) {
+                                log.debug("FAIL: scheduler NOT canceled");
+                            }
+                        })
                         .start();
+        log.debug("Scheduler started");
 
         RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
-        final HttpClient httpClient;
+        remoteUserLastRequest.put(remoteUser.toString(), System.currentTimeMillis());
+
+//        String persistRemoteUserToBackendId = String.format("%s:%s", virtualhost, remoteUser);
+        String persistRemoteUserToBackendId = remoteUser.toString();
+
         final Backend backend;
 
-        if (lastBackend!=null && remoteUser.equals(lastRemoteUser) && headerHost.equals(lastHeaderHost)) {
-
-            backend = lastBackend;
-            httpClient = backend.connect();
-            backendId = backend.toString();
-
+        if (persistRemoteUserToBackend.containsKey(persistRemoteUserToBackendId)) {
+            backend = persistRemoteUserToBackend.get(persistRemoteUserToBackendId);
         } else {
-
-            lastRemoteUser = remoteUser;
-            lastHeaderHost = headerHost;
-
             backend = virtualhost.getChoice(new RequestData(sRequest)).setCounter(counter);
-            backendId = backend.toString();
-            lastBackend = backend;
-
-            backend.setRemoteUser(remoteUser);
-            httpClient = backend.connect();
+            persistRemoteUserToBackend.put(persistRemoteUserToBackendId, backend);
+            log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
         }
+
+        backendId = backend.toString();
+
+        final HttpClient httpClient = backend.connect(remoteUser);
 
         final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
@@ -256,6 +273,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                                           sRequest.response(),
                                           sResponse,
                                           backend,
+                                          remoteUser,
                                           counter)
                         .setConnectionKeepalive(connectionKeepalive)
                         .setHeaderHost(headerHost)
@@ -266,6 +284,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         if (cRequest==null) {
             schedulerTimeOut.cancel();
+            log.error("FAIL: HttpClientRequest is null");
             sResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
@@ -290,12 +309,13 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             });
             pump.writeHandler(new Handler<Void>() {
                 @Override
-                public void handle(Void event) {
+                public void handle(Void v) {
                     schedulerTimeOut.cancel();
                     pump.writeHandler(null);
                 }
             });
             pump.start();
+            log.debug(String.format("PUMP Virtualhost: %s, Backend: %s >> pump started", virtualhost, backend));
 
         } else {
             sRequest.bodyHandler(new Handler<Buffer>() {
@@ -313,6 +333,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         sRequest.endHandler(new VoidHandler() {
             @Override
             public void handle() {
+                log.debug("sRequest endHandler");
                 cRequest.end();
             }
          });
@@ -338,6 +359,32 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         this.counter = counter;
         this.queueService = queueService;
         this.log = log;
+        this.schedulerCleanUpDeadSessions = new VertxPeriodicScheduler(vertx);
+        final Long lastRequestTimeout = 60000L;
+        schedulerCleanUpDeadSessions.setPeriod(lastRequestTimeout)
+            .setHandler(new ISchedulerHandler() {
+                @Override
+                public void handle() {
+                    Map<String, Long> tmpRemoteUserLastRequest = new HashMap<>(remoteUserLastRequest);
+                    for (String remoteUser: tmpRemoteUserLastRequest.keySet()) {
+                        Long lastRequest = tmpRemoteUserLastRequest.get(remoteUser);
+                        if (lastRequest+lastRequestTimeout<System.currentTimeMillis()) {
+                            remoteUserLastRequest.remove(remoteUser);
+                            persistRemoteUserToBackend.remove(remoteUser);
+                        }
+                    }
+                }
+            })
+            .start();
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        schedulerCleanUpDeadSessions.cancel();
     }
 
     /**

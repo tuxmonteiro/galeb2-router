@@ -118,7 +118,7 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
         RemoteUser remoteUser = new RemoteUser(serverWebSocket.remoteAddress());
 
-        final HttpClient httpClient = backend.setRemoteUser(remoteUser).connect();
+        final HttpClient httpClient = backend.connect(remoteUser);
         final BackendWebSocketHandler backendWebSocketHandler =
                 new BackendWebSocketHandler(vertx, log, backendId, serverWebSocket);
 

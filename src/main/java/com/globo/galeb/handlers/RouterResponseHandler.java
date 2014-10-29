@@ -16,6 +16,7 @@
 package com.globo.galeb.handlers;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
@@ -47,13 +48,15 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private final ServerResponse sResponse;
 
     /** The backend id. */
-    private final String backendId;
+    private final Backend backend;
 
     /** The counter. */
     private final ICounter counter;
 
     /** The log. */
     private final Logger log;
+
+    /** The queue service. */
     private final IQueueService queueService;
 
     /** The header host. */
@@ -64,6 +67,10 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     /** The connection keepalive. */
     private boolean connectionKeepalive = true;
+
+    /** The remote user. */
+    private  final RemoteUser remoteUser;
+
 
     /* (non-Javadoc)
      * @see org.vertx.java.core.Handler#handle(java.lang.Object)
@@ -104,7 +111,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         cResponse.endHandler(new VoidHandler() {
             @Override
             public void handle() {
-
+                String backendId = backend.toString();
                 if (!"UNDEF".equals(headerHost) && initialRequestTime!=null) {
                     counter.requestTime(headerHost, backendId, initialRequestTime);
                 }
@@ -113,6 +120,8 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     .setHeaderHost(headerHost)
                     .setBackendId(backendId)
                     .endResponse();
+
+                backend.removeSession(remoteUser);
 
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
@@ -123,10 +132,14 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         cResponse.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
+                String backendId = backend.toString();
+
                 log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
                 queueService.publishBackendFail(backendId);
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
+
+                backend.removeSession(remoteUser);
             }
         });
 
@@ -199,8 +212,9 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             final Logger log,
             final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
-            final Backend backend) {
-        this(scheduler, queueService, log, httpServerResponse, sResponse, backend, null);
+            final Backend backend,
+            final RemoteUser remoteUser) {
+        this(scheduler, queueService, log, httpServerResponse, sResponse, backend, remoteUser, null);
     }
 
     /**
@@ -221,12 +235,14 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             final HttpServerResponse httpServerResponse,
             final ServerResponse sResponse,
             final Backend backend,
+            final RemoteUser remoteUser,
             final ICounter counter) {
         this.scheduler = scheduler;
         this.queueService = queueService;
         this.httpServerResponse = httpServerResponse;
         this.sResponse = sResponse;
-        this.backendId = backend.toString();
+        this.backend = backend;
+        this.remoteUser = remoteUser;
         this.log = log;
         this.counter = counter;
     }

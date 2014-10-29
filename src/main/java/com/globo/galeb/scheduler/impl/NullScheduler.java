@@ -15,6 +15,8 @@
  */
 package com.globo.galeb.scheduler.impl;
 
+import org.vertx.java.core.Handler;
+
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 
@@ -56,6 +58,22 @@ public class NullScheduler implements IScheduler {
      */
     @Override
     public IScheduler cancel() {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.scheduler.IScheduler#cancelHandler(org.vertx.java.core.Handler)
+     */
+    @Override
+    public IScheduler cancelHandler(Handler<Void> cancelHandler) {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.scheduler.IScheduler#cancelFailedHandler(org.vertx.java.core.Handler)
+     */
+    @Override
+    public IScheduler cancelFailedHandler(Handler<Void> cancelFailedHandler) {
         return this;
     }
 

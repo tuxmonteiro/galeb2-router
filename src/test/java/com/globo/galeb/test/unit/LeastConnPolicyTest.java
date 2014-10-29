@@ -51,8 +51,7 @@ public class LeastConnPolicyTest extends TestVerticle {
             virtualhost.setQueue(mock(IQueueService.class));
             Backend backend = virtualhost.getBackends(true).get(x);
             for (int c = 1; c <= x+1; c++) {
-                backend.setRemoteUser(new RemoteUser("0",c));
-                backend.connect();
+                backend.connect(new RemoteUser("0",c));
             }
         }
 

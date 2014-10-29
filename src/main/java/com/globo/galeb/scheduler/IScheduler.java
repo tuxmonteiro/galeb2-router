@@ -15,6 +15,8 @@
  */
 package com.globo.galeb.scheduler;
 
+import org.vertx.java.core.Handler;
+
 /**
  * Interface IScheduler.
  *
@@ -52,5 +54,21 @@ public interface IScheduler {
      * @return IScheduler
      */
     public IScheduler cancel();
+
+    /**
+     * Cancel handler.
+     *
+     * @param cancelHandler the cancel handler
+     * @return this
+     */
+    public IScheduler cancelHandler(Handler<Void> cancelHandler);
+
+    /**
+     * Cancel failed handler.
+     *
+     * @param cancelFailedHandler the cancel failed handler
+     * @return this
+     */
+    public IScheduler cancelFailedHandler(Handler<Void> cancelFailedHandler);
 
 }

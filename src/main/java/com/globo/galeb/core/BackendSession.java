@@ -164,7 +164,7 @@ public class BackendSession {
      * Process properties.
      */
     private void processProperties() {
-        keepAlive           = backendProperties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
+        keepAlive = backendProperties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
     }
 
     /**
@@ -218,27 +218,36 @@ public class BackendSession {
      * Sets the queue service.
      *
      * @param queueService the new queue service
+     * @return this
+     *
      */
-    public void setQueueService(IQueueService queueService) {
+    public BackendSession setQueueService(IQueueService queueService) {
         this.queueService = queueService;
+        return this;
     }
 
     /**
      * Sets the remote user.
      *
      * @param remoteUser the new remote user
+     * @return this
+     *
      */
-    public void setRemoteUser(RemoteUser remoteUser) {
+    public BackendSession setRemoteUser(RemoteUser remoteUser) {
         this.remoteUser = remoteUser;
+        return this;
     }
 
     /**
      * Sets the max pool size.
      *
      * @param maxPoolSize the new max pool size
+     * @return this
+     *
      */
-    public void setMaxPoolSize(int maxPoolSize) {
+    public BackendSession setMaxPoolSize(int maxPoolSize) {
         this.maxPoolSize = maxPoolSize;
+        return this;
     }
 
 }
