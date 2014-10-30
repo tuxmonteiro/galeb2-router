@@ -206,7 +206,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         virtualhost.setQueue(queueService);
         Long requestTimeOut = virtualhost.getRequestTimeOut();
-        Boolean enableChunked = virtualhost.isChunked();
+//        Boolean enableChunked = virtualhost.isChunked();
+        Boolean enableChunked = true;
         Boolean enableAccessLog = virtualhost.hasAccessLog();
 
         final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
@@ -297,6 +298,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         cRequest.headers().set(httpHeaderConnection, "keep-alive");
 
         if (enableChunked) {
+
             // Pump sRequest => cRequest
 
             final Pump pump = new Pump(sRequest, cRequest);
@@ -372,11 +374,13 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                         if (lastRequest+lastRequestTimeout<System.currentTimeMillis()) {
                             remoteUserLastRequest.remove(remoteUser);
                             persistRemoteUserToBackend.remove(remoteUser);
+                            log.debug("schedulerCleanUpDeadSessions executed");
                         }
                     }
                 }
             })
             .start();
+        log.debug("schedulerCleanUpDeadSessions started");
     }
 
     /* (non-Javadoc)
