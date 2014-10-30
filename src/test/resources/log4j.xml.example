@@ -12,7 +12,7 @@
   </Appenders>
   <Loggers>
     <Root level="trace">
-      <AppenderRef ref="Async" level="INFO"/>
+      <AppenderRef ref="Async" level="DEBUG"/>
     </Root>
   </Loggers>
 </Configuration>
