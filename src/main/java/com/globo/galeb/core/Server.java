@@ -87,7 +87,7 @@ public class Server {
         this.log = container.logger();
         this.httpServer = vertx.createHttpServer();
 
-        this.httpServer.setCompressionSupported(this.conf.getBoolean("serverSupportCompression", true));
+//        this.httpServer.setCompressionSupported(this.conf.getBoolean("serverSupportCompression", true));
 
         if (this.conf.containsField("serverTCPKeepAlive")) {
             this.httpServer.setTCPKeepAlive(this.conf.getBoolean("serverTCPKeepAlive",true));

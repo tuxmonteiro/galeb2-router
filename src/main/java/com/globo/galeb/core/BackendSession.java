@@ -131,7 +131,7 @@ public class BackendSession {
                 client.setKeepAlive(keepAlive);
                 client.setTCPKeepAlive(keepAlive);
                 client.setMaxPoolSize(maxPoolSize);
-                client.setTryUseCompression(true);
+//                client.setTryUseCompression(true);
             }
 
             if (!"".equals(host) || port!=-1) {
