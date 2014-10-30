@@ -80,10 +80,10 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
         scheduler.cancel();
 
-        // Define statusCode and Headers
         final int statusCode = cResponse.statusCode();
         sResponse.setStatusCode(statusCode);
         sResponse.setHeaders(cResponse.headers());
+
         if (!connectionKeepalive) {
             httpServerResponse.headers().set("Connection", "close");
         }
@@ -107,17 +107,16 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         });
         pump.start();
 
-
         cResponse.endHandler(new VoidHandler() {
             @Override
             public void handle() {
+
                 String backendId = backend.toString();
                 if (!"UNDEF".equals(headerHost) && initialRequestTime!=null) {
                     counter.requestTime(headerHost, backendId, initialRequestTime);
                 }
 
-                sResponse.setStatusCode(statusCode)
-                    .setHeaderHost(headerHost)
+                sResponse.setHeaderHost(headerHost)
                     .setBackendId(backendId)
                     .endResponse();
 
@@ -126,6 +125,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
                 }
+                log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }
         });
 
