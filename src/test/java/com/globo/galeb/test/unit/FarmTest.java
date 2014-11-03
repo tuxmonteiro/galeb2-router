@@ -21,21 +21,21 @@ import static org.vertx.testtools.VertxAssert.testComplete;
 import java.io.UnsupportedEncodingException;
 
 import org.junit.Test;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 
 public class FarmTest extends TestVerticle {
 
-    private SafeJsonObject virtualhostJson = new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, "test.virtualhost.com");
+    private JsonObject virtualhostJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "test.virtualhost.com");
     private String virtualhostId = "test.virtualhost.com";
-    private SafeJsonObject backendJson = new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, "0.0.0.0:00");
+    private JsonObject backendJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "0.0.0.0:00");
     private IQueueService queueService = mock(IQueueService.class);
 
     @Test
@@ -43,8 +43,8 @@ public class FarmTest extends TestVerticle {
         Farm farm = new Farm(this, queueService);
 
         for (int x=0; x<10;x++) {
-            SafeJsonObject virtualhostJson =
-                    new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, String.valueOf(x));
+            JsonObject virtualhostJson =
+                    new JsonObject().putString(IJsonable.ID_FIELDNAME, String.valueOf(x));
             String message = new MessageBus()
                                     .setEntity(virtualhostJson)
                                     .setUri("/virtualhost")
@@ -63,8 +63,8 @@ public class FarmTest extends TestVerticle {
         Farm farm = new Farm(this, queueService);
 
         String message = "";
-        SafeJsonObject virtualhostJson =
-                new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, "test.localdomain");
+        JsonObject virtualhostJson =
+                new JsonObject().putString(IJsonable.ID_FIELDNAME, "test.localdomain");
         message = new MessageBus().setEntity(virtualhostJson)
                                   .setUri("/virtualhost")
                                   .make()
@@ -73,8 +73,8 @@ public class FarmTest extends TestVerticle {
         farm.addToMap(message);
 
         for (int x=0; x<10;x++) {
-            SafeJsonObject backendJson =
-                    new SafeJsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%d", x));
+            JsonObject backendJson =
+                    new JsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%d", x));
             message = new MessageBus().setEntity(backendJson)
                                       .setParentId("test.localdomain")
                                       .setUri("/backend")

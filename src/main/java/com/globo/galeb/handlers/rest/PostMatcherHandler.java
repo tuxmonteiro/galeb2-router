@@ -18,11 +18,11 @@ package com.globo.galeb.handlers.rest;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServerRequest;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
-import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
 
@@ -78,7 +78,7 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.OK) {
-                    SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
+                    JsonObject bodyJson = new JsonObject(bodyStr);
                     queueService.queueToAdd(bodyJson, uri);
                 }
 

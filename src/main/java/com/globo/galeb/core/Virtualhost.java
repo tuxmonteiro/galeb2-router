@@ -69,22 +69,28 @@ public class Virtualhost extends Entity {
     private final Vertx                    vertx;
 
     /** The queue service. */
-    private IQueueService                  queueService      = null;
+    private IQueueService                  queueService        = null;
 
     /** The loadbalance policy. */
-    private ILoadBalancePolicy             loadbalancePolicy = null;
+    private ILoadBalancePolicy             loadbalancePolicy   = null;
 
     /** The request time out. */
-    private Long                           requestTimeOut    = 60000L;
+    private Long                           requestTimeOut      = 60000L;
 
     /** The max pool size. */
-    private int                            maxPoolSize       = 1;
+    private int                            maxPoolSize         = 1;
+
+    /** The keep alive max request. */
+    private long                           keepAliveMaxRequest = Long.MAX_VALUE;
+
+    /** The keep alive time out. */
+    private long                           keepAliveTimeOut    = 86400000L;
 
     /** The enable chunked. */
-    private boolean                        enableChunked     = true;
+    private boolean                        enableChunked       = true;
 
     /** The enable access log. */
-    private boolean                        enableAccessLog   = false;
+    private boolean                        enableAccessLog     = false;
 
     /**
      * Instantiates a new virtualhost.
@@ -158,6 +164,8 @@ public class Virtualhost extends Entity {
         Backend backend = new Backend(backendJson, vertx);
         backend.setQueueService(queueService);
         backend.setMaxPoolSize(maxPoolSize);
+        backend.setKeepAliveMaxRequest(keepAliveMaxRequest);
+        backend.setKeepAliveTimeOut(keepAliveTimeOut);
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
@@ -320,6 +328,8 @@ public class Virtualhost extends Entity {
     public JsonObject toJson() {
         properties.putNumber(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
         properties.putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+        properties.putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
+        properties.putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
 
         prepareJson();
 
@@ -379,6 +389,8 @@ public class Virtualhost extends Entity {
         super.setStaticConf(staticConf);
         requestTimeOut = this.staticConf.getLong(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
         maxPoolSize = this.staticConf.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+        keepAliveMaxRequest = this.staticConf.getLong(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
+        keepAliveTimeOut = this.staticConf.getLong(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
         enableChunked = this.staticConf.getBoolean(ENABLE_CHUNCKED_FIELDNAME, enableChunked);
         enableAccessLog = this.staticConf.getBoolean(ENABLE_ACCESSLOG_FIELDNAME, enableAccessLog);
 

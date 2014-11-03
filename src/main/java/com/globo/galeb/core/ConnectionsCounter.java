@@ -139,18 +139,6 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     }
 
     /**
-     * Adds the connection to map.
-     *
-     * @param host the host
-     * @param port the port
-     * @return true, if successful
-     */
-    public boolean addConnection(String host, Integer port) {
-        RemoteUser remoteUser = new RemoteUser(host, port);
-        return addConnection(remoteUser);
-    }
-
-    /**
      * Removes the connection from map.
      *
      * @param remoteUserId the remote user id
@@ -247,7 +235,7 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
     private void notifyNumConnections() {
         Integer localConnections = getInstanceActiveConnections();
         if (localConnections>0 && queueService!=null) {
-            SafeJsonObject myConnections = new SafeJsonObject();
+            JsonObject myConnections = new JsonObject();
             myConnections.putString(UUID_FIELDNAME, myUUID);
             myConnections.putNumber(NUM_CONNECTIONS_FIELDNAME, localConnections);
             queueService.publishBackendConnections(queueActiveConnections, myConnections);
@@ -296,7 +284,7 @@ public class ConnectionsCounter implements ICallbackConnectionCounter {
      */
     public void publishZero() {
         if (queueService!=null) {
-            SafeJsonObject myConnections = new SafeJsonObject();
+            JsonObject myConnections = new JsonObject();
             myConnections.putString(UUID_FIELDNAME, myUUID);
             myConnections.putNumber(NUM_CONNECTIONS_FIELDNAME, 0);
             queueService.publishActiveConnections(queueActiveConnections, myConnections);

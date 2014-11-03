@@ -18,11 +18,11 @@ package com.globo.galeb.handlers.rest;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServerRequest;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.ManagerService;
-import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
 
@@ -83,7 +83,7 @@ public class PutMatcherHandler implements Handler<HttpServerRequest> {
                     id = req.params().contains("param1") ? req.params().get("param1") : "";
                 }
 
-                SafeJsonObject bodyJson = new SafeJsonObject(bodyStr);
+                JsonObject bodyJson = new JsonObject(bodyStr);
 
                 if (!managerService.checkIdConsistency(bodyJson, id)) {
                     return;

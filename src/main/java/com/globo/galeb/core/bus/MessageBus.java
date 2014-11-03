@@ -15,8 +15,9 @@
  */
 package com.globo.galeb.core.bus;
 
+import org.vertx.java.core.json.JsonObject;
+
 import com.globo.galeb.core.IJsonable;
-import com.globo.galeb.core.SafeJsonObject;
 
 /**
  * Class MessageBus.
@@ -60,7 +61,7 @@ public class MessageBus {
      * @param message the message
      */
     public MessageBus(String message) {
-        SafeJsonObject json = new SafeJsonObject(message);
+        JsonObject json = new JsonObject(message);
         setEntity(json.getString(ENTITY_FIELDNAME,"{}"));
         setParentId(json.getString(PARENT_ID_FIELDNAME, ""));
         setUri(json.getString(URI_FIELDNAME, ""));
@@ -94,8 +95,8 @@ public class MessageBus {
      *
      * @return the entity
      */
-    public SafeJsonObject getEntity() {
-        return new SafeJsonObject(entityStr);
+    public JsonObject getEntity() {
+        return new JsonObject(entityStr);
     }
 
     /**
@@ -114,7 +115,7 @@ public class MessageBus {
      * @return this
      */
     public MessageBus setEntity(String entityStr) {
-        this.entityStr = new SafeJsonObject(entityStr).encode();
+        this.entityStr = new JsonObject(entityStr).encode();
         return this;
     }
 
@@ -124,7 +125,7 @@ public class MessageBus {
      * @param entityJson the entity json
      * @return this
      */
-    public MessageBus setEntity(SafeJsonObject entityJson) {
+    public MessageBus setEntity(JsonObject entityJson) {
         if (entityJson!=null) {
             this.entityStr = entityJson.encode();
         } else {
@@ -172,7 +173,7 @@ public class MessageBus {
      */
     public MessageBus make() {
 
-        messageBus = new SafeJsonObject()
+        messageBus = new JsonObject()
                             .putString(URI_FIELDNAME, uriStr)
                             .putString(PARENT_ID_FIELDNAME, parentId)
                             .putString(ENTITY_FIELDNAME, getEntity().encode())
@@ -193,8 +194,8 @@ public class MessageBus {
      *
      * @return the safe json object
      */
-    public SafeJsonObject toJson() {
-        return new SafeJsonObject(messageBus);
+    public JsonObject toJson() {
+        return new JsonObject(messageBus);
     }
 
 }

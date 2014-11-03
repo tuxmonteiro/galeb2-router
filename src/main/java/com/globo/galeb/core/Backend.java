@@ -17,6 +17,8 @@ package com.globo.galeb.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
@@ -24,6 +26,9 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
 /**
  * Class Backend.
@@ -114,6 +119,37 @@ public class Backend extends Entity {
     /** The map of sessions. */
     private final Map<RemoteUser, BackendSession> sessions = new HashMap<>();
 
+    private IScheduler cleanupSessionScheduler = null;
+
+    private java.util.concurrent.atomic.AtomicBoolean isLocked = new AtomicBoolean(false);
+
+    class CleanUpSessionHandler implements ISchedulerHandler {
+
+        private final Backend backend;
+
+        public CleanUpSessionHandler(Backend backend) {
+            this.backend = backend;
+        }
+
+        @Override
+        public void handle() {
+
+            if (!backend.sessions.isEmpty() && !backend.isLocked.get()) {
+                backend.isLocked.set(true);
+                Map<RemoteUser, BackendSession> tmpSessions = new HashMap<>(backend.sessions);
+                for (Entry<RemoteUser, BackendSession> entry : tmpSessions.entrySet()) {
+                    RemoteUser remoteUser = entry.getKey();
+                    BackendSession backendSession = entry.getValue();
+                    if (backendSession.isClosed()) {
+                        backend.removeSession(remoteUser);
+                    }
+                }
+                backend.isLocked.set(false);
+            }
+
+        }
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
@@ -185,9 +221,15 @@ public class Backend extends Entity {
         }
 
         if (json.containsField(IJsonable.PROPERTIES_FIELDNAME)) {
-            JsonObject jsonProperties = json.getObject(PROPERTIES_FIELDNAME, new SafeJsonObject());
+            JsonObject jsonProperties = json.getObject(PROPERTIES_FIELDNAME, new JsonObject());
             properties.mergeIn(jsonProperties);
         }
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        cleanupSessionScheduler.cancel();
     }
 
     /**
@@ -404,20 +446,35 @@ public class Backend extends Entity {
         if (remoteUser==null) {
             return null;
         }
+
+        BackendSession backendSession;
+
+        if (cleanupSessionScheduler==null) {
+            cleanupSessionScheduler = new VertxPeriodicScheduler(vertx)
+                                            .setPeriod(10000L)
+                                            .setHandler(new CleanUpSessionHandler(this))
+                                            .start();
+        }
+
         if (sessions.containsKey(remoteUser)) {
             return sessions.get(remoteUser).connect();
         } else {
-            BackendSession backendSession = new BackendSession(vertx, virtualhostId, id);
+
+            backendSession = new BackendSession(vertx, virtualhostId, id);
 
             backendSession.setQueueService(queueService)
                 .setMaxPoolSize(getMaxPoolSize())
                 .setCounter(counter)
-                .setBackendProperties(new SafeJsonObject(properties))
-                .setRemoteUser(remoteUser);
+                .setBackendProperties(properties)
+                .setRemoteUser(remoteUser)
+                .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
+                .setKeepAliveTimeOut(getKeepAliveTimeOut());
+
             sessions.put(remoteUser, backendSession);
 
-            return backendSession.connect();
         }
+        return backendSession.connect();
+
     }
 
     /**
@@ -469,6 +526,8 @@ public class Backend extends Entity {
         prepareJson();
         idObj.putString(Entity.PARENT_ID_FIELDNAME, virtualhostId);
         idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, getActiveConnections());
+        idObj.putNumber(KEEPALIVE_MAXREQUEST_FIELDNAME, getKeepAliveMaxRequest());
+        idObj.putNumber(KEEPALIVE_TIMEOUT_FIELDNAME, getKeepAliveTimeOut());
 
         return super.toJson();
     }

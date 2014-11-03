@@ -19,9 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
-
-import com.globo.galeb.core.SafeJsonObject;
 
 /**
  * Class MessageToMap.
@@ -36,7 +35,7 @@ public abstract class MessageToMap<T> {
     protected String uriBase        = "";
 
     /** The entity. */
-    protected SafeJsonObject entity = new SafeJsonObject();
+    protected JsonObject entity = new JsonObject();
 
     /** The entity id. */
     protected String entityId       = "";

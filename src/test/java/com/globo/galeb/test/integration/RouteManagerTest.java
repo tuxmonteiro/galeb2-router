@@ -93,7 +93,9 @@ public class RouteManagerTest extends UtilTestVerticle {
             .putObject(IJsonable.PROPERTIES_FIELDNAME,
                     new JsonObject().putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, new DefaultLoadBalancePolicy().toString())
                         .putNumber(Virtualhost.REQUEST_TIMEOUT_FIELDNAME, 1000)
-                        .putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, 1))
+                        .putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, 1)
+                        .putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, Long.MAX_VALUE)
+                        .putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, 60*60*24*1000))
             .putObject(Virtualhost.BACKENDS_FIELDNAME, new JsonObject()
                     .putArray(Virtualhost.BACKENDS_ELIGIBLE_FIELDNAME, new JsonArray())
                     .putArray(Virtualhost.BACKENDS_FAILED_FIELDNAME, new JsonArray()));

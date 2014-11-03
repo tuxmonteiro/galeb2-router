@@ -27,8 +27,6 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
-import com.globo.galeb.core.SafeJsonObject;
-
 /**
  * Class VertxQueueService.
  *
@@ -58,7 +56,7 @@ public class VertxQueueService implements IQueueService {
      * @see com.globo.galeb.core.bus.IQueueService#queueToAdd(com.globo.galeb.core.SafeJsonObject, java.lang.String)
      */
     @Override
-    public void queueToAdd(SafeJsonObject json, final String uri) {
+    public void queueToAdd(JsonObject json, final String uri) {
         putMessageToQueue(json, IQueueService.ACTION.ADD, uri);
     }
 
@@ -66,7 +64,7 @@ public class VertxQueueService implements IQueueService {
      * @see com.globo.galeb.core.bus.IQueueService#queueToDel(com.globo.galeb.core.SafeJsonObject, java.lang.String)
      */
     @Override
-    public void queueToDel(SafeJsonObject json, final String uri) {
+    public void queueToDel(JsonObject json, final String uri) {
         putMessageToQueue(json, IQueueService.ACTION.DEL, uri);
     }
 
@@ -74,7 +72,7 @@ public class VertxQueueService implements IQueueService {
      * @see com.globo.galeb.core.bus.IQueueService#queueToChange(com.globo.galeb.core.SafeJsonObject, java.lang.String)
      */
     @Override
-    public void queueToChange(SafeJsonObject json, final String uri) {
+    public void queueToChange(JsonObject json, final String uri) {
         // putMessageToQueue(json, ACTION.CHANGE, uri);
         String messageLog = String.format("%s: Change not implemented", this.toString());
         if (log!=null) {
@@ -91,7 +89,7 @@ public class VertxQueueService implements IQueueService {
      * @param action the action
      * @param uri the uri
      */
-    private void putMessageToQueue(SafeJsonObject json, IQueueService.ACTION action, final String uri) {
+    private void putMessageToQueue(JsonObject json, IQueueService.ACTION action, final String uri) {
         Long version = 0L;
 
         try {
@@ -207,7 +205,7 @@ public class VertxQueueService implements IQueueService {
      * @see com.globo.galeb.core.bus.IQueueService#publishBackendConnections(java.lang.String, com.globo.galeb.core.SafeJsonObject)
      */
     @Override
-    public void publishBackendConnections(String queueActiveConnections, SafeJsonObject myConnections) {
+    public void publishBackendConnections(String queueActiveConnections, JsonObject myConnections) {
         eb.publish(queueActiveConnections, myConnections);
     }
 
@@ -246,7 +244,7 @@ public class VertxQueueService implements IQueueService {
      */
     @Override
     public void publishActiveConnections(String queueActiveConnections,
-            SafeJsonObject myConnections) {
+            JsonObject myConnections) {
         if (eb==null) {
             return;
         }

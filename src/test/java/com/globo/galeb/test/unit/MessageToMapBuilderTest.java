@@ -19,9 +19,9 @@ import static org.mockito.Mockito.*;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.bus.BackendMap;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
@@ -40,7 +40,7 @@ public class MessageToMapBuilderTest {
 
     @Test
     public void instanceIsVirtualhostMap() {
-        message = new SafeJsonObject()
+        message = new JsonObject()
                         .putString(MessageBus.URI_FIELDNAME, "/virtualhost")
                         .encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
@@ -49,7 +49,7 @@ public class MessageToMapBuilderTest {
 
     @Test
     public void instanceIsBackendMap() {
-        message = new SafeJsonObject()
+        message = new JsonObject()
                         .putString(MessageBus.URI_FIELDNAME, "/backend")
                         .encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
@@ -58,7 +58,7 @@ public class MessageToMapBuilderTest {
 
     @Test
     public void messageWithoutUri() {
-        message = new SafeJsonObject().encode();
+        message = new JsonObject().encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
             .as("messageWithoutUri").isEqualTo(NullMap.class);
 
@@ -66,7 +66,7 @@ public class MessageToMapBuilderTest {
 
     @Test
     public void messageWithUriInvalid() {
-        message = new SafeJsonObject()
+        message = new JsonObject()
             .putString(MessageBus.URI_FIELDNAME, "/invalid")
             .encode();
         assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
@@ -75,7 +75,7 @@ public class MessageToMapBuilderTest {
 
     @Test
     public void farmIsNull() {
-        message = new SafeJsonObject()
+        message = new JsonObject()
             .putString(MessageBus.URI_FIELDNAME, "/virtualhost")
             .encode();
         assertThat(MessageToMapBuilder.getInstance(message, null).getClass())

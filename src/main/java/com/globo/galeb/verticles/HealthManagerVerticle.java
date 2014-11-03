@@ -26,7 +26,6 @@ import java.util.Set;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.SafeJsonObject;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.ICallbackHealthcheck;
 import com.globo.galeb.core.bus.IEventObserver;
@@ -213,12 +212,12 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
             while (it.hasNext()) {
                 Virtualhost virtualhost = farm.getVirtualhost(it.next());
 
-                SafeJsonObject backendJson = null;
+                JsonObject backendJson = null;
                 if (virtualhost!=null) {
 
                     for (Backend backendSearched: virtualhost.getBackends(!elegible)) {
                         if (backend.equals(backendSearched.toString())) {
-                            backendJson = new SafeJsonObject(backendSearched.toJson());
+                            backendJson = backendSearched.toJson();
                             break;
                         }
                     }

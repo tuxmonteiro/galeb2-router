@@ -63,7 +63,7 @@ public abstract class Entity implements IJsonable {
      */
     protected Entity prepareJson() {
         idObj.putString(IJsonable.ID_FIELDNAME, id);
-        idObj.putObject(LINKS_FIELDNAME, new SafeJsonObject()
+        idObj.putObject(LINKS_FIELDNAME, new JsonObject()
             .putString(LINKS_REL_FIELDNAME, "self")
             .putString(LINKS_HREF_FIELDNAME, String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
         );

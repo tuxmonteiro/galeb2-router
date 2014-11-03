@@ -120,10 +120,9 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     .setBackendId(backendId)
                     .endResponse();
 
-                backend.removeSession(remoteUser);
-
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
+                    backend.close(remoteUser);
                 }
                 log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }

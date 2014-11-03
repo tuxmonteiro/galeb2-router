@@ -15,9 +15,6 @@
  */
 package com.globo.galeb.handlers;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
@@ -76,12 +73,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     /** The queueService instance. */
     private final IQueueService queueService;
-
-    /** The persist remote user to backend. */
-    private final Map<RemoteUser, Backend> persistRemoteUserToBackend = new HashMap<>();
-
-    /** The remote user last request. */
-    private final Map<RemoteUser, Long> remoteUserLastRequest = new HashMap<>();
 
     /** The scheduler clean up dead sessions. */
     private final IScheduler schedulerCleanUpDeadSessions;
@@ -183,8 +174,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     @Override
     public void handle(final HttpServerRequest sRequest) throws RuntimeException {
 
-        cleanDeadSession(2000L);
-
         String headerHost = "UNDEF";
         String backendId = "UNDEF";
 
@@ -248,25 +237,21 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         log.debug("Scheduler started");
 
         RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
-        remoteUserLastRequest.put(remoteUser, System.currentTimeMillis());
 
 //        String persistRemoteUserToBackendId = String.format("%s:%s", virtualhost, remoteUser);
 
-        final Backend backend;
+        final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
-        if (persistRemoteUserToBackend.containsKey(remoteUser)) {
-            backend = persistRemoteUserToBackend.get(remoteUser);
-        } else {
-            backend = virtualhost.getChoice(new RequestData(sRequest)).setCounter(counter);
-            persistRemoteUserToBackend.put(remoteUser, backend);
-            log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
-        }
+        final Backend backend = virtualhost.getChoice(new RequestData(sRequest))
+                                                .setCounter(counter)
+                                                .setKeepAlive(connectionKeepalive);
+
+        log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
 
         backendId = backend.toString();
 
         final HttpClient httpClient = backend.connect(remoteUser);
 
-        final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
         final Handler<HttpClientResponse> handlerHttpClientResponse =
                 new RouterResponseHandler(schedulerTimeOut,
@@ -434,34 +419,5 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                 !"close".equalsIgnoreCase(headers.get(httpHeaderConnection)) :
                 httpVersion.equals(HttpVersion.HTTP_1_1);
     }
-
-    public void cleanDeadSession(Long lastRequestTimeout) {
-        Map<RemoteUser, Long> tmpRemoteUserLastRequest = new HashMap<>(remoteUserLastRequest);
-        if (remoteUserLastRequest.isEmpty()) {
-            log.debug("remoteUserLastRequest is empty");
-            return;
-        }
-        int remoteUserLastRequestSize = remoteUserLastRequest.size();
-        log.debug(String.format("remoteUserLastRequest before :%d remotesUsers", remoteUserLastRequestSize));
-        int persistRemoteUserToBackendSize = persistRemoteUserToBackend.size();
-        log.debug(String.format("persistRemoteUserToBackendSize before :%d remotesUsers", persistRemoteUserToBackendSize));
-
-        for (RemoteUser remoteUser: tmpRemoteUserLastRequest.keySet()) {
-            Long lastRequest = tmpRemoteUserLastRequest.get(remoteUser);
-
-            if (lastRequest+lastRequestTimeout<System.currentTimeMillis()) {
-                remoteUserLastRequest.remove(remoteUser);
-                Backend  backend = persistRemoteUserToBackend.get(remoteUser);
-                if (backend!=null && !backend.isClosed(remoteUser)) {
-                    backend.close(remoteUser);
-                }
-                persistRemoteUserToBackend.remove(remoteUser);
-            }
-        }
-
-        log.debug(String.format("remoteUserLastRequest: removed %d remotesUsers", remoteUserLastRequestSize-remoteUserLastRequest.size()));
-        log.debug(String.format("persistRemoteUserToBackendSize: removed %d remotesUsers", persistRemoteUserToBackendSize-persistRemoteUserToBackend.size()));
-    }
-
 
 }

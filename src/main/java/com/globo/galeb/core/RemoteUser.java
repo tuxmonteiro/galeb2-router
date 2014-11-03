@@ -15,6 +15,7 @@
  */
 package com.globo.galeb.core;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
@@ -26,7 +27,7 @@ import java.net.InetSocketAddress;
 public class RemoteUser {
 
     /** The remote ip. */
-    private final String remoteIP;
+    private InetAddress remoteIP;
 
     /** The remote port. */
     private final Integer remotePort;
@@ -34,16 +35,15 @@ public class RemoteUser {
     /** The remote user id. */
     private String remoteUserId;
 
+
     /**
      * Instantiates a new remote user.
      *
      * @param remoteIP the remote ip
      * @param remotePort the remote port
      */
-    public RemoteUser(String remoteIP, Integer remotePort) {
-        this.remoteIP = remoteIP;
-        this.remotePort = remotePort;
-        this.remoteUserId = String.format("%s:%d", remoteIP, remotePort);
+    public RemoteUser(String ip, int port) {
+        this(new InetSocketAddress(ip, port));
     }
 
     /**
@@ -52,7 +52,9 @@ public class RemoteUser {
      * @param remoteAddress the remote address
      */
     public RemoteUser(InetSocketAddress remoteAddress) {
-        this(remoteAddress.getAddress().getHostAddress(), remoteAddress.getPort());
+        this.remoteIP = remoteAddress.getAddress();
+        this.remotePort = remoteAddress.getPort();
+        this.remoteUserId = String.format("%s:%d", remoteIP, remotePort);
     }
 
     /**
@@ -61,7 +63,7 @@ public class RemoteUser {
      * @return the remote ip
      */
     public String getRemoteIP() {
-        return remoteIP;
+        return remoteIP.getHostAddress();
     }
 
     /**
@@ -73,12 +75,26 @@ public class RemoteUser {
         return remotePort;
     }
 
+    /**
+     * Convert IP Address to long.
+     *
+     * @param ipAddress the ip address
+     * @return the long
+     */
+    private Long ipToLong(byte[] ipAddress) {
+        return
+            ((ipAddress [0] & 0xFFl) << (3*8)) +
+            ((ipAddress [1] & 0xFFl) << (2*8)) +
+            ((ipAddress [2] & 0xFFl) << (1*8)) +
+            (ipAddress [3] &  0xFFl);
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
     @Override
     public int hashCode() {
-        return remoteUserId.hashCode();
+        return (ipToLong(remoteIP.getAddress()).intValue()*100000)+remotePort;
     }
 
     /* (non-Javadoc)

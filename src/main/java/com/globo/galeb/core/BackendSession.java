@@ -15,12 +15,18 @@
  */
 package com.globo.galeb.core;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
 /**
  * Class BackendSession.
@@ -49,7 +55,7 @@ public class BackendSession {
     private IQueueService      queueService       = null;
 
     /** The backend properties. */
-    private SafeJsonObject backendProperties = new SafeJsonObject();
+    private JsonObject backendProperties    = new JsonObject();
 
     /** The counter. */
     private ICounter   counter              = null;
@@ -58,10 +64,43 @@ public class BackendSession {
     private RemoteUser remoteUser           = null;
 
     /** The keep alive. */
-    private Boolean    keepAlive            = true;
+    private boolean    keepAlive            = true;
 
     /** The max pool size. */
     private int        maxPoolSize          = 1;
+
+    private IScheduler keepAliveLimitScheduler = null;
+
+    private long requestCount = 0L;
+
+    private long keepAliveTimeMark = System.currentTimeMillis();
+
+    private long keepAliveMaxRequest = Long.MAX_VALUE;
+
+    private long keepAliveTimeOut = 86400000L; // One day
+
+    private AtomicBoolean isLocked = new AtomicBoolean(false);
+
+    class KeepAliveCheckLimitHandler implements ISchedulerHandler {
+
+        private BackendSession backendSession;
+
+        public KeepAliveCheckLimitHandler(final BackendSession backendSession) {
+            this.backendSession = backendSession;
+        }
+
+        @Override
+        public void handle() {
+            if (isLocked.get()) {
+                return;
+            }
+            isLocked.set(true);
+            if (backendSession.isKeepAliveLimit() && !backendSession.isClosed()) {
+                backendSession.close();
+            }
+            isLocked.compareAndSet(true, false);
+        }
+    }
 
     /**
      * Instantiates a new backend session.
@@ -74,6 +113,36 @@ public class BackendSession {
         this.vertx = vertx;
         this.serverHost = serverHost;
         this.backendId = backendId;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        super.finalize();
+        keepAliveLimitScheduler.cancel();
+    }
+
+    public BackendSession setKeepAliveMaxRequest(long keepAliveMaxRequest) {
+        this.keepAliveMaxRequest = keepAliveMaxRequest;
+        return this;
+    }
+
+    public BackendSession setKeepAliveTimeOut(long keepAliveTimeOut) {
+        this.keepAliveTimeOut = keepAliveTimeOut;
+        return this;
+    }
+
+    public boolean isKeepAliveLimit() {
+        Long now = System.currentTimeMillis();
+        if (requestCount<keepAliveMaxRequest) {
+            requestCount++;
+        }
+        if ((requestCount==Long.MAX_VALUE) || (requestCount>=keepAliveMaxRequest) ||
+                (now-keepAliveTimeMark)>keepAliveTimeOut) {
+            keepAliveTimeMark = now;
+            requestCount = 0L;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -93,7 +162,7 @@ public class BackendSession {
      * @param backendProperties the backend properties
      * @return the backend session
      */
-    public BackendSession setBackendProperties(SafeJsonObject backendProperties) {
+    public BackendSession setBackendProperties(JsonObject backendProperties) {
         this.backendProperties = backendProperties;
         return this;
     }
@@ -106,7 +175,14 @@ public class BackendSession {
      */
     public HttpClient connect() {
 
-        processProperties();
+        if (keepAlive && keepAliveLimitScheduler==null) {
+            keepAliveLimitScheduler = new VertxPeriodicScheduler(vertx)
+                                                .setHandler(new KeepAliveCheckLimitHandler(this))
+                                                .setPeriod(1000L)
+                                                .start();
+        }
+
+        setKeepAliveFromProperties();
 
         String[] hostWithPortArray = backendId!=null ? backendId.split(":") : null;
         String host = "";
@@ -123,16 +199,17 @@ public class BackendSession {
             port = 80;
         }
 
+        if (isKeepAliveLimit() && !isClosed()) {
+            close();
+        }
+
         if (client==null) {
             connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
 
             client = vertx.createHttpClient();
-            if (keepAlive!=null) {
-                client.setKeepAlive(keepAlive);
-                client.setTCPKeepAlive(keepAlive);
-                client.setMaxPoolSize(maxPoolSize);
-//                client.setTryUseCompression(true);
-            }
+            client.setKeepAlive(keepAlive);
+            client.setTCPKeepAlive(keepAlive);
+            client.setMaxPoolSize(maxPoolSize);
 
             if (!"".equals(host) || port!=-1) {
                 client.setHost(host)
@@ -161,9 +238,9 @@ public class BackendSession {
     }
 
     /**
-     * Process properties.
+     * Sets keepalive attribute from properties.
      */
-    private void processProperties() {
+    private void setKeepAliveFromProperties() {
         keepAlive = backendProperties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
     }
 
@@ -180,11 +257,17 @@ public class BackendSession {
      * Close connection and destroy http client instance.
      */
     public void close() {
+
+        if (keepAliveLimitScheduler!=null) {
+            keepAliveLimitScheduler.cancel();
+        }
+
         if (connectionsCounter!=null) {
             connectionsCounter.unregisterConnectionsCounter();
             connectionsCounter.clearConnectionsMap();
             connectionsCounter = null;
         }
+
         if (client!=null) {
             try {
                 client.close();

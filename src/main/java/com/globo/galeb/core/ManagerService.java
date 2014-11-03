@@ -225,7 +225,7 @@ public class ManagerService {
      */
     public int statusFromMessageSchema(String message, String uri, boolean registerLog) {
 
-        SafeJsonObject json = new SafeJsonObject(message);
+        JsonObject json = new JsonObject(message);
         if ("{}".equals(json.encode())) {
             if (registerLog) {
                 log.error(String.format("Json decode error: %s", message));

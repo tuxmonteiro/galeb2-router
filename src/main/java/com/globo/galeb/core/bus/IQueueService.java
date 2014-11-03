@@ -15,7 +15,7 @@
  */
 package com.globo.galeb.core.bus;
 
-import com.globo.galeb.core.SafeJsonObject;
+import org.vertx.java.core.json.JsonObject;
 
 /**
  * Interface IQueueService.
@@ -81,7 +81,7 @@ public interface IQueueService {
      * @param json the json
      * @param uri the uri
      */
-    public void queueToAdd(SafeJsonObject json, String uri);
+    public void queueToAdd(JsonObject json, String uri);
 
     /**
      * Queue to del.
@@ -89,7 +89,7 @@ public interface IQueueService {
      * @param json the json
      * @param uri the uri
      */
-    public void queueToDel(SafeJsonObject json, String uri);
+    public void queueToDel(JsonObject json, String uri);
 
     /**
      * Queue to change.
@@ -97,7 +97,7 @@ public interface IQueueService {
      * @param json the json
      * @param uri the uri
      */
-    public void queueToChange(SafeJsonObject json, String uri);
+    public void queueToChange(JsonObject json, String uri);
 
     /**
      * Register healthcheck.
@@ -127,7 +127,7 @@ public interface IQueueService {
      * @param myConnections the local connections
      */
     public void publishBackendConnections(String queueActiveConnections,
-            SafeJsonObject myConnections);
+            JsonObject myConnections);
 
     /**
      * Register connections counter.
@@ -146,7 +146,7 @@ public interface IQueueService {
      * @param myConnections the local connections
      */
     public void publishActiveConnections(String queueActiveConnections,
-            SafeJsonObject myConnections);
+            JsonObject myConnections);
 
     /**
      * Unregister connections counter.
