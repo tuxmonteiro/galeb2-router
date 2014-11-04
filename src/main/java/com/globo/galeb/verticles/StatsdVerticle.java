@@ -39,6 +39,18 @@ import org.vertx.java.platform.Verticle;
  */
 public class StatsdVerticle extends Verticle {
 
+    /** The Constant QUEUE_COUNTER. */
+    public final static String QUEUE_COUNTER = "statsd.counter";
+
+    /** The Constant QUEUE_TIMER. */
+    public final static String QUEUE_TIMER   = "statsd.timer";
+
+    /** The Constant QUEUE_GAUGE. */
+    public final static String QUEUE_GAUGE   = "statsd.gauge";
+
+    /** The Constant QUEUE_SET. */
+    public final static String QUEUE_SET     = "statsd.set";
+
     /** The statsd client instance. */
     private StatsdClient statsdClient;
 
@@ -70,10 +82,10 @@ public class StatsdVerticle extends Verticle {
         /*
          * Receive from EventBus. Format => tag:num
          */
-        eb.registerLocalHandler("statsd.counter", getHandler(TypeStatsdMessage.COUNT));
-        eb.registerLocalHandler("statsd.timer", getHandler(TypeStatsdMessage.TIME));
-        eb.registerLocalHandler("statsd.gauge", getHandler(TypeStatsdMessage.GAUGE));
-        eb.registerLocalHandler("statsd.set", getHandler(TypeStatsdMessage.SET));
+        eb.registerLocalHandler(QUEUE_COUNTER, getHandler(TypeStatsdMessage.COUNT));
+        eb.registerLocalHandler(QUEUE_TIMER, getHandler(TypeStatsdMessage.TIME));
+        eb.registerLocalHandler(QUEUE_GAUGE, getHandler(TypeStatsdMessage.GAUGE));
+        eb.registerLocalHandler(QUEUE_SET, getHandler(TypeStatsdMessage.SET));
 
         log.info(String.format("Instance %s started", this.toString()));
 

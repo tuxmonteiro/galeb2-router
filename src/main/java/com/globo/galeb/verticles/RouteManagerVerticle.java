@@ -26,7 +26,7 @@ import com.globo.galeb.handlers.rest.DeleteMatcherHandler;
 import com.globo.galeb.handlers.rest.GetMatcherHandler;
 import com.globo.galeb.handlers.rest.PostMatcherHandler;
 import com.globo.galeb.handlers.rest.PutMatcherHandler;
-import com.globo.galeb.metrics.CounterWithStatsd;
+import com.globo.galeb.metrics.CounterWithEventBus;
 import com.globo.galeb.metrics.ICounter;
 
 import org.vertx.java.core.Handler;
@@ -73,7 +73,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     public void start() {
         log = container.logger();
         final JsonObject conf = container.config();
-        final ICounter counter = new CounterWithStatsd(conf, vertx, log);
+        final ICounter counter = new CounterWithEventBus(vertx.eventBus());
         server = new Server(vertx, container, counter);
         queueService = new VertxQueueService(vertx.eventBus(), log);
         farm = new Farm(this, queueService);
