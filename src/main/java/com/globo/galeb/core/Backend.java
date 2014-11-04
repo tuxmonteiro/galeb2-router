@@ -17,6 +17,7 @@ package com.globo.galeb.core;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -24,6 +25,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
@@ -36,7 +38,7 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Backend extends Entity {
+public class Backend extends Entity implements ICallbackConnectionCounter {
 
     /** The Constant KEEPALIVE_FIELDNAME. */
     public static final String KEEPALIVE_FIELDNAME             = "keepalive";
@@ -71,6 +73,12 @@ public class Backend extends Entity {
     /** The Constant ACTIVE_CONNECTIONS_FIELDNAME. */
     public static final String ACTIVE_CONNECTIONS_FIELDNAME    = "_activeConnections";
 
+    /** The Constant NUM_CONNECTIONS_FIELDNAME. */
+    public static final String NUM_CONNECTIONS_FIELDNAME       = "numConnections";
+
+    /** The Constant UUID_FIELDNAME. */
+    public static final String UUID_FIELDNAME                  = "uuid";
+
     /** The vertx. */
     private final Vertx vertx;
 
@@ -80,6 +88,12 @@ public class Backend extends Entity {
     /** The port. */
     private final Integer port;
 
+    /** The my uuid. */
+    private final String myUUID;
+
+    /** The queue active connections. */
+    private final String queueActiveConnections;
+
     /** The ICounter. */
     private ICounter           counter            = null;
 
@@ -87,50 +101,73 @@ public class Backend extends Entity {
     private IQueueService queueService            = null;
 
     /** The virtualhost id. */
-    private String     virtualhostId = "";
+    private String     virtualhostId              = "";
 
     /** The default keep alive. */
-    private Boolean defaultKeepAlive           = true;
+    private Boolean defaultKeepAlive              = true;
 
     /** The default connection timeout. */
-    private Integer defaultConnectionTimeout   = 60000; // 10 minutes
+    private Integer defaultConnectionTimeout      = 60000; // 10 minutes
 
     /** The default keepalive max request. */
-    private Long    defaultKeepaliveMaxRequest = Long.MAX_VALUE-1;
+    private Long    defaultKeepaliveMaxRequest    = Long.MAX_VALUE-1;
 
     /** The default keep alive time out. */
-    private Long    defaultKeepAliveTimeOut    = 86400000L; // One day
+    private Long    defaultKeepAliveTimeOut       = 86400000L; // One day
 
     /** The default max pool size. */
-    private Integer defaultMaxPoolSize         = 1;
+    private Integer defaultMaxPoolSize            = 1;
 
     /** The default use pooled buffers. */
-    private Boolean defaultUsePooledBuffers    = false;
+    private Boolean defaultUsePooledBuffers       = false;
 
     /** The default send buffer size. */
-    private Integer defaultSendBufferSize      = Constants.TCP_SEND_BUFFER_SIZE;
+    private Integer defaultSendBufferSize         = Constants.TCP_SEND_BUFFER_SIZE;
 
     /** The default receive buffer size. */
-    private Integer defaultReceiveBufferSize   = Constants.TCP_RECEIVED_BUFFER_SIZE;
+    private Integer defaultReceiveBufferSize      = Constants.TCP_RECEIVED_BUFFER_SIZE;
 
     /** The default pipelining. */
-    private Boolean defaultPipelining          = false;
+    private Boolean defaultPipelining             = false;
 
     /** The map of sessions. */
     private final Map<RemoteUser, BackendSession> sessions = new HashMap<>();
 
-    private IScheduler cleanupSessionScheduler = null;
+    /** The cleanup session scheduler. */
+    private IScheduler cleanupSessionScheduler    = null;
 
+    /** The is locked. */
     private java.util.concurrent.atomic.AtomicBoolean isLocked = new AtomicBoolean(false);
 
+    /** The registered. */
+    private boolean registered = false;
+
+    /** The num external sessions. */
+    private int numExternalSessions = 0;
+
+    /**
+     * Class CleanUpSessionHandler.
+     *
+     * @author See AUTHORS file.
+     * @version 1.0.0, Nov 4, 2014.
+     */
     class CleanUpSessionHandler implements ISchedulerHandler {
 
+        /** The backend. */
         private final Backend backend;
 
+        /**
+         * Instantiates a new clean up session handler.
+         *
+         * @param backend the backend
+         */
         public CleanUpSessionHandler(Backend backend) {
             this.backend = backend;
         }
 
+        /* (non-Javadoc)
+         * @see com.globo.galeb.scheduler.ISchedulerHandler#handle()
+         */
         @Override
         public void handle() {
 
@@ -146,6 +183,9 @@ public class Backend extends Entity {
                 }
                 backend.isLocked.set(false);
             }
+
+            publishConnection(sessions.size());
+            numExternalSessions = 0;
 
         }
     }
@@ -224,8 +264,15 @@ public class Backend extends Entity {
             JsonObject jsonProperties = json.getObject(PROPERTIES_FIELDNAME, new JsonObject());
             properties.mergeIn(jsonProperties);
         }
+        this.queueActiveConnections = String.format("%s%s", IQueueService.QUEUE_BACKEND_CONNECTIONS_PREFIX, this);
+        this.myUUID = UUID.randomUUID().toString();
+        registerConnectionsCounter();
+        publishConnection(0);
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
@@ -447,7 +494,7 @@ public class Backend extends Entity {
             return null;
         }
 
-        BackendSession backendSession;
+        final BackendSession backendSession;
 
         if (cleanupSessionScheduler==null) {
             cleanupSessionScheduler = new VertxPeriodicScheduler(vertx)
@@ -457,24 +504,28 @@ public class Backend extends Entity {
         }
 
         if (sessions.containsKey(remoteUser)) {
-            return sessions.get(remoteUser).connect();
+            backendSession = sessions.get(remoteUser);
         } else {
 
-            backendSession = new BackendSession(vertx, virtualhostId, id);
+            backendSession = new BackendSession(vertx, id);
 
             backendSession.setQueueService(queueService)
                 .setMaxPoolSize(getMaxPoolSize())
-                .setCounter(counter)
                 .setBackendProperties(properties)
-                .setRemoteUser(remoteUser)
                 .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
                 .setKeepAliveTimeOut(getKeepAliveTimeOut());
 
             sessions.put(remoteUser, backendSession);
 
-        }
-        return backendSession.connect();
+            String backendId = this.toString();
+            if (!"".equals(virtualhostId) && !"UNDEF".equals(virtualhostId) &&
+                    !"".equals(backendId) && !"UNDEF".equals(backendId)) {
+                counter.sendActiveSessions(virtualhostId, backendId, 1L);
+            }
 
+        }
+
+        return backendSession.connect();
     }
 
     /**
@@ -493,17 +544,7 @@ public class Backend extends Entity {
      * @return the active connections
      */
     public int getActiveConnections() {
-        int activeConnections = 0;
-        for (BackendSession backendSession: sessions.values()) {
-            if (backendSession==null) {
-                continue;
-            }
-            ConnectionsCounter connectionsCounter = backendSession.getSessionController();
-            if (connectionsCounter!=null) {
-                activeConnections += connectionsCounter.getActiveConnections();
-            }
-        }
-        return activeConnections;
+        return sessions.size() + numExternalSessions;
     }
 
     /**
@@ -539,5 +580,78 @@ public class Backend extends Entity {
      */
     public void removeSession(RemoteUser remoteUser) {
         sessions.remove(remoteUser);
+    }
+
+    /**
+     * Register connections counter.
+     */
+    public void registerConnectionsCounter() {
+        if (queueService!=null) {
+            queueService.registerConnectionsCounter(this, queueActiveConnections);
+        }
+    }
+
+    /**
+     * Unregister connections counter.
+     */
+    public void unregisterConnectionsCounter() {
+        if (queueService!=null) {
+            publishConnection(0);
+            queueService.unregisterConnectionsCounter(this, queueActiveConnections);
+        }
+    }
+
+    /**
+     * Publish zero to all instances.
+     */
+    public void publishConnection(int numConnections) {
+        if (queueService!=null) {
+            queueService.publishActiveConnections(queueActiveConnections, makeConnectionInfoMessage(numConnections));
+        }
+    }
+
+    /**
+     * Make connection info message.
+     *
+     * @param numConnection the num connection
+     * @return the json object
+     */
+    public JsonObject makeConnectionInfoMessage(int numConnection) {
+        JsonObject myConnections = new JsonObject();
+        myConnections.putString(UUID_FIELDNAME, myUUID);
+        myConnections.putNumber(NUM_CONNECTIONS_FIELDNAME, numConnection);
+        return myConnections;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#setRegistered(boolean)
+     */
+    @Override
+    public void setRegistered(boolean registered) {
+        this.registered = registered;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#isRegistered()
+     */
+    @Override
+    public boolean isRegistered() {
+        return registered;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#callbackGlobalConnectionsInfo(org.vertx.java.core.json.JsonObject)
+     */
+    @Override
+    public void callbackGlobalConnectionsInfo(JsonObject message) {
+        String uuid = message.getString(UUID_FIELDNAME);
+        if (uuid != myUUID) {
+            int numConnections = message.getInteger(NUM_CONNECTIONS_FIELDNAME);
+            if (numConnections>=0) {
+                numExternalSessions += numConnections;
+            } else {
+                numExternalSessions = 0;
+            }
+        }
     }
 }

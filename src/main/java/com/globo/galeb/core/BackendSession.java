@@ -23,7 +23,6 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
@@ -39,17 +38,11 @@ public class BackendSession {
     /** The vertx. */
     private final Vertx vertx;
 
-    /** The server host. */
-    private final String serverHost;
-
     /** The backend id. */
     private final String backendId;
 
     /** The http client instance. */
     private HttpClient         client             = null;
-
-    /** The connections counter. */
-    private ConnectionsCounter connectionsCounter = null;
 
     /** The queue service. */
     private IQueueService      queueService       = null;
@@ -57,38 +50,53 @@ public class BackendSession {
     /** The backend properties. */
     private JsonObject backendProperties    = new JsonObject();
 
-    /** The counter. */
-    private ICounter   counter              = null;
-
-    /** The remote user. */
-    private RemoteUser remoteUser           = null;
-
     /** The keep alive. */
     private boolean    keepAlive            = true;
 
     /** The max pool size. */
     private int        maxPoolSize          = 1;
 
+    /** The keep alive limit scheduler. */
     private IScheduler keepAliveLimitScheduler = null;
 
+    /** The request count. */
     private long requestCount = 0L;
 
+    /** The keep alive time mark. */
     private long keepAliveTimeMark = System.currentTimeMillis();
 
+    /** The keep alive max request. */
     private long keepAliveMaxRequest = Long.MAX_VALUE;
 
+    /** The keep alive time out. */
     private long keepAliveTimeOut = 86400000L; // One day
 
+    /** The is locked. */
     private AtomicBoolean isLocked = new AtomicBoolean(false);
 
+    /**
+     * Class KeepAliveCheckLimitHandler.
+     *
+     * @author See AUTHORS file.
+     * @version 1.0.0, Nov 4, 2014.
+     */
     class KeepAliveCheckLimitHandler implements ISchedulerHandler {
 
+        /** The backend session. */
         private BackendSession backendSession;
 
+        /**
+         * Instantiates a new keep alive check limit handler.
+         *
+         * @param backendSession the backend session
+         */
         public KeepAliveCheckLimitHandler(final BackendSession backendSession) {
             this.backendSession = backendSession;
         }
 
+        /* (non-Javadoc)
+         * @see com.globo.galeb.scheduler.ISchedulerHandler#handle()
+         */
         @Override
         public void handle() {
             if (isLocked.get()) {
@@ -109,28 +117,47 @@ public class BackendSession {
      * @param serverHost the server host
      * @param backendId the backend id
      */
-    public BackendSession(final Vertx vertx, String serverHost, String backendId) {
+    public BackendSession(final Vertx vertx, String backendId) {
         this.vertx = vertx;
-        this.serverHost = serverHost;
         this.backendId = backendId;
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#finalize()
+     */
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
         keepAliveLimitScheduler.cancel();
     }
 
+    /**
+     * Sets the keep alive max request.
+     *
+     * @param keepAliveMaxRequest the keep alive max request
+     * @return the backend session
+     */
     public BackendSession setKeepAliveMaxRequest(long keepAliveMaxRequest) {
         this.keepAliveMaxRequest = keepAliveMaxRequest;
         return this;
     }
 
+    /**
+     * Sets the keep alive time out.
+     *
+     * @param keepAliveTimeOut the keep alive time out
+     * @return the backend session
+     */
     public BackendSession setKeepAliveTimeOut(long keepAliveTimeOut) {
         this.keepAliveTimeOut = keepAliveTimeOut;
         return this;
     }
 
+    /**
+     * Checks if is keep alive limit.
+     *
+     * @return true, if is keep alive limit
+     */
     public boolean isKeepAliveLimit() {
         Long now = System.currentTimeMillis();
         if (requestCount<keepAliveMaxRequest) {
@@ -143,17 +170,6 @@ public class BackendSession {
             return true;
         }
         return false;
-    }
-
-    /**
-     * Sets the counter.
-     *
-     * @param counter the counter
-     * @return the backend session
-     */
-    public BackendSession setCounter(ICounter counter) {
-        this.counter = counter;
-        return this;
     }
 
     /**
@@ -204,8 +220,6 @@ public class BackendSession {
         }
 
         if (client==null) {
-            connectionsCounter = new ConnectionsCounter(this.toString(), vertx, queueService);
-
             client = vertx.createHttpClient();
             client.setKeepAlive(keepAlive);
             client.setTCPKeepAlive(keepAlive);
@@ -220,18 +234,9 @@ public class BackendSession {
                 public void handle(Throwable e) {
                     if (queueService!=null) {
                         queueService.publishBackendFail(backendId);
-                        connectionsCounter.publishZero();
                     }
                 }
             });
-            connectionsCounter.registerConnectionsCounter();
-        }
-        connectionsCounter.addConnection(remoteUser);
-
-        if (counter!=null && client!=null && getSessionController().isNewConnection() &&
-                !"".equals(serverHost) && !"UNDEF".equals(serverHost) &&
-                !"".equals(backendId) && !"UNDEF".equals(backendId)) {
-            counter.sendActiveSessions(serverHost, backendId, 1L);
         }
 
         return client;
@@ -245,27 +250,12 @@ public class BackendSession {
     }
 
     /**
-     * Gets the session controller.
-     *
-     * @return the session controller
-     */
-    public ConnectionsCounter getSessionController() {
-        return connectionsCounter;
-    }
-
-    /**
      * Close connection and destroy http client instance.
      */
     public void close() {
 
         if (keepAliveLimitScheduler!=null) {
             keepAliveLimitScheduler.cancel();
-        }
-
-        if (connectionsCounter!=null) {
-            connectionsCounter.unregisterConnectionsCounter();
-            connectionsCounter.clearConnectionsMap();
-            connectionsCounter = null;
         }
 
         if (client!=null) {
@@ -306,18 +296,6 @@ public class BackendSession {
      */
     public BackendSession setQueueService(IQueueService queueService) {
         this.queueService = queueService;
-        return this;
-    }
-
-    /**
-     * Sets the remote user.
-     *
-     * @param remoteUser the new remote user
-     * @return this
-     *
-     */
-    public BackendSession setRemoteUser(RemoteUser remoteUser) {
-        this.remoteUser = remoteUser;
         return this;
     }
 
