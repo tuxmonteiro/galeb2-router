@@ -31,6 +31,7 @@ import com.globo.galeb.loadbalance.impl.HashPolicy;
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 
@@ -42,6 +43,8 @@ public class HashPolicyTest {
     @Before
     public void setUp() throws Exception {
         Vertx vertx = mock(DefaultVertx.class);
+        HttpClient httpClient = mock(HttpClient.class);
+        when(vertx.createHttpClient()).thenReturn(httpClient);
 
         JsonObject virtualhostProperties = new JsonObject()
             .putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, HashPolicy.class.getSimpleName());

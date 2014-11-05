@@ -16,12 +16,16 @@ package com.globo.galeb.test.unit;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.vertx.java.core.Vertx;
+import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.impl.LogDelegate;
 
@@ -41,6 +45,10 @@ public class BackendMapTest {
 
     @Before
     public void setUp() throws Exception {
+        Vertx vertx = mock(DefaultVertx.class);
+        HttpClient httpClient = mock(HttpClient.class);
+        when(vertx.createHttpClient()).thenReturn(httpClient);
+
         LogDelegate logDelegate = mock(LogDelegate.class);
         FakeLogger logger = new FakeLogger(logDelegate);
         logger.setQuiet(false);

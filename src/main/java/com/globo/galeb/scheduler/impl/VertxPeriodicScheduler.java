@@ -72,7 +72,7 @@ public class VertxPeriodicScheduler implements IScheduler {
      */
     @Override
     public IScheduler start() {
-        if (schedulerHandler!=null && period != -1L) {
+        if (schedulerHandler!=null && period != -1L && vertx!=null) {
             id = vertx.setPeriodic(period, new Handler<Long>() {
                 @Override
                 public void handle(Long event) {

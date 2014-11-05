@@ -219,13 +219,13 @@ public class BackendSession {
             close();
         }
 
-        if (client==null) {
+        if (client==null && vertx!=null) {
             client = vertx.createHttpClient();
             client.setKeepAlive(keepAlive);
             client.setTCPKeepAlive(keepAlive);
             client.setMaxPoolSize(maxPoolSize);
 
-            if (!"".equals(host) || port!=-1) {
+            if (!"".equals(host) && port!=-1 && !client.toString().startsWith("Mock")) {
                 client.setHost(host)
                       .setPort(port);
             }

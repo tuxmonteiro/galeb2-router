@@ -16,7 +16,9 @@
 package com.globo.galeb.core;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,6 +69,9 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     /** The Constant USE_POOLED_BUFFERS_FIELDNAME. */
     public static final String USE_POOLED_BUFFERS_FIELDNAME    = "usePooledBuffers";
 
+    /** The Constant MIN_SESSION_POOL_SIZE_FIELDNAME. */
+    public static final String MIN_SESSION_POOL_SIZE_FIELDNAME = "minSessionPoolSize";
+
     /** The Constant ELEGIBLE_FIELDNAME. */
     public static final String ELEGIBLE_FIELDNAME              = "_elegible";
 
@@ -78,6 +83,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
 
     /** The Constant UUID_FIELDNAME. */
     public static final String UUID_FIELDNAME                  = "uuid";
+
 
     /** The vertx. */
     private final Vertx vertx;
@@ -132,6 +138,15 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
 
     /** The map of sessions. */
     private final Map<RemoteUser, BackendSession> sessions = new HashMap<>();
+
+    /** The min session pool size. */
+    private int minSessionPoolSize = 1;
+
+    /** The pool avaliable. */
+    private final Set<BackendSession> poolAvaliable = new HashSet<>();
+
+    /** The pool unavaliable. */
+    private final Set<BackendSession> poolUnavaliable = new HashSet<>();
 
     /** The cleanup session scheduler. */
     private IScheduler cleanupSessionScheduler    = null;
@@ -268,6 +283,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         this.myUUID = UUID.randomUUID().toString();
         registerConnectionsCounter();
         publishConnection(0);
+
     }
 
     /* (non-Javadoc)
@@ -484,6 +500,25 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         return this;
     }
 
+
+    /**
+     * Gets the min session pool size.
+     *
+     * @return the min session pool size
+     */
+    public int getMinSessionPoolSize() {
+        return minSessionPoolSize;
+    }
+
+    /**
+     * Sets the min session pool size.
+     *
+     * @param minPoolSize the new min session pool size
+     */
+    public void setMinSessionPoolSize(int minPoolSize) {
+        this.minSessionPoolSize = minPoolSize;
+    }
+
     /**
      * Connect and gets HttpClient instance (through BackendSession).
      *
@@ -507,13 +542,24 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
             backendSession = sessions.get(remoteUser);
         } else {
 
-            backendSession = new BackendSession(vertx, id);
+            if (!poolAvaliable.isEmpty()) {
 
-            backendSession.setQueueService(queueService)
-                .setMaxPoolSize(getMaxPoolSize())
-                .setBackendProperties(properties)
-                .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
-                .setKeepAliveTimeOut(getKeepAliveTimeOut());
+                backendSession = poolAvaliable.iterator().next();
+                poolAvaliable.remove(backendSession);
+                poolUnavaliable.add(backendSession);
+
+            } else {
+
+                backendSession = new BackendSession(vertx, id)
+                                        .setQueueService(queueService)
+                                        .setMaxPoolSize(getMaxPoolSize())
+                                        .setBackendProperties(properties)
+                                        .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
+                                        .setKeepAliveTimeOut(getKeepAliveTimeOut());
+
+                poolUnavaliable.add(backendSession);
+
+            }
 
             sessions.put(remoteUser, backendSession);
 
@@ -533,7 +579,15 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      */
     public void close(RemoteUser remoteUser) {
         if (!(remoteUser==null) && sessions.containsKey(remoteUser)) {
-            sessions.get(remoteUser).close();
+            BackendSession backendSession = sessions.get(remoteUser);
+            poolUnavaliable.remove(backendSession);
+
+            if (poolAvaliable.size()>=minSessionPoolSize) {
+                backendSession.close();
+            } else {
+                poolAvaliable.add(backendSession);
+            }
+
             sessions.remove(remoteUser);
         }
     }
@@ -567,8 +621,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         prepareJson();
         idObj.putString(Entity.PARENT_ID_FIELDNAME, virtualhostId);
         idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, getActiveConnections());
-        idObj.putNumber(KEEPALIVE_MAXREQUEST_FIELDNAME, getKeepAliveMaxRequest());
-        idObj.putNumber(KEEPALIVE_TIMEOUT_FIELDNAME, getKeepAliveTimeOut());
 
         return super.toJson();
     }
@@ -653,5 +705,26 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
                 numExternalSessions = 0;
             }
         }
+    }
+
+    /**
+     * Start pool.
+     *
+     * @return the backend
+     */
+    public Backend startPool() {
+
+        for (int i=0 ; i<minSessionPoolSize ; i++) {
+            BackendSession backendSession = new BackendSession(vertx, id)
+                                                .setQueueService(queueService)
+                                                .setMaxPoolSize(getMaxPoolSize())
+                                                .setBackendProperties(properties)
+                                                .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
+                                                .setKeepAliveTimeOut(getKeepAliveTimeOut());
+            backendSession.connect();
+            poolAvaliable.add(backendSession);
+        }
+
+        return this;
     }
 }

@@ -16,6 +16,7 @@ package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
 
 import com.globo.galeb.core.IJsonable;
@@ -28,6 +29,7 @@ import com.globo.galeb.loadbalance.impl.RandomPolicy;
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 
@@ -41,6 +43,8 @@ public class VirtualhostTest {
     @Before
     public void setUp(){
         Vertx vertx = mock(DefaultVertx.class);
+        HttpClient httpClient = mock(HttpClient.class);
+        when(vertx.createHttpClient()).thenReturn(httpClient);
 
         virtualhostName = "virtualhost1";
         requestData = new RequestData();

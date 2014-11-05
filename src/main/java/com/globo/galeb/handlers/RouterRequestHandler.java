@@ -252,7 +252,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
         final HttpClient httpClient = backend.connect(remoteUser);
 
-
         final Handler<HttpClientResponse> handlerHttpClientResponse =
                 new RouterResponseHandler(schedulerTimeOut,
                                           queueService,

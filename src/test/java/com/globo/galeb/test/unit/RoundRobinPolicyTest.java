@@ -27,6 +27,7 @@ import org.junit.Test;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.CaseInsensitiveMultiMap;
+import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
@@ -43,6 +44,9 @@ public class RoundRobinPolicyTest {
     @Before
     public void setUp() throws Exception {
         vertx = mock(DefaultVertx.class);
+        HttpClient httpClient = mock(HttpClient.class);
+        when(vertx.createHttpClient()).thenReturn(httpClient);
+
         SharedData sharedData = new SharedData();
         when(vertx.sharedData()).thenReturn(sharedData);
 

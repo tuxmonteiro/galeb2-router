@@ -92,6 +92,9 @@ public class Virtualhost extends Entity {
     /** The enable access log. */
     private boolean                        enableAccessLog     = false;
 
+    /** The min session pool size. */
+    private int                            minSessionPoolSize  =  1;
+
     /**
      * Instantiates a new virtualhost.
      *
@@ -166,6 +169,8 @@ public class Virtualhost extends Entity {
         backend.setMaxPoolSize(maxPoolSize);
         backend.setKeepAliveMaxRequest(keepAliveMaxRequest);
         backend.setKeepAliveTimeOut(keepAliveTimeOut);
+        backend.setMinSessionPoolSize(minSessionPoolSize);
+        backend.startPool();
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
@@ -330,6 +335,7 @@ public class Virtualhost extends Entity {
         properties.putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
         properties.putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
         properties.putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
+        properties.putNumber(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
 
         prepareJson();
 
@@ -389,6 +395,7 @@ public class Virtualhost extends Entity {
         super.setStaticConf(staticConf);
         requestTimeOut = this.staticConf.getLong(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
         maxPoolSize = this.staticConf.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+        minSessionPoolSize = this.staticConf.getInteger(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
         keepAliveMaxRequest = this.staticConf.getLong(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
         keepAliveTimeOut = this.staticConf.getLong(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
         enableChunked = this.staticConf.getBoolean(ENABLE_CHUNCKED_FIELDNAME, enableChunked);

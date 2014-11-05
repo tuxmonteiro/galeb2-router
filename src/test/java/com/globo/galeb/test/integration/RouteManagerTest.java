@@ -50,7 +50,7 @@ public class RouteManagerTest extends UtilTestVerticle {
     public void testWhenEmptyGetVHostId() {
         // Test GET /virtualhost/id
         // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9000).atUri("/virtualhost/1234").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();;
+        newGet().onPort(9000).atUri("/virtualhost/1234").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
     }
 
     @Ignore // TODO: Ignore "properties"
@@ -95,7 +95,9 @@ public class RouteManagerTest extends UtilTestVerticle {
                         .putNumber(Virtualhost.REQUEST_TIMEOUT_FIELDNAME, 1000)
                         .putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, 1)
                         .putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, Long.MAX_VALUE)
-                        .putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, 60*60*24*1000))
+                        .putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, 60*60*24*1000)
+                        .putNumber(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, 1))
+
             .putObject(Virtualhost.BACKENDS_FIELDNAME, new JsonObject()
                     .putArray(Virtualhost.BACKENDS_ELIGIBLE_FIELDNAME, new JsonArray())
                     .putArray(Virtualhost.BACKENDS_FAILED_FIELDNAME, new JsonArray()));
