@@ -19,11 +19,11 @@ import static org.vertx.testtools.VertxAssert.testComplete;
 import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.impl.LeastConnPolicy;
 

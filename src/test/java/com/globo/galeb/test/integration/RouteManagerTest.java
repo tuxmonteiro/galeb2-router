@@ -17,8 +17,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;

@@ -19,6 +19,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
@@ -135,13 +137,6 @@ public class Virtualhost extends Entity {
                 badbackend.setQueueService(queueService);
             }
         }
-    }
-
-    /**
-     * Update modified timestamp.
-     */
-    private void updateModifiedTimestamp() {
-        modifiedAt = System.currentTimeMillis();
     }
 
     /**

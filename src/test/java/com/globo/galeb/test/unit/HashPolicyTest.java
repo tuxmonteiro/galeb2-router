@@ -23,9 +23,9 @@ import java.util.Set;
 
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.loadbalance.impl.HashPolicy;
 
 import org.junit.Before;

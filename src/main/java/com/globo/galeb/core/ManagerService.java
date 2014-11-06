@@ -22,6 +22,8 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
+import com.globo.galeb.core.entity.IJsonable;
+
 /**
  * Class ManagerService.
  *

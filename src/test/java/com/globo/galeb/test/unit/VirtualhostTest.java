@@ -19,9 +19,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
 
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.RandomPolicy;

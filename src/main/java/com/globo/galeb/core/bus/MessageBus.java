@@ -16,8 +16,7 @@
 package com.globo.galeb.core.bus;
 
 import org.vertx.java.core.json.JsonObject;
-
-import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.entity.IJsonable;
 
 /**
  * Class MessageBus.

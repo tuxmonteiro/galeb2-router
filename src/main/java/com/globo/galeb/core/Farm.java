@@ -34,6 +34,8 @@ import com.globo.galeb.core.bus.ICallbackSharedData;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageToMap;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
+import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.verticles.RouterVerticle;
 
 /**

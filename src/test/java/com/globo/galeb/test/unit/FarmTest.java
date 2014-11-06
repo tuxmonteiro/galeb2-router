@@ -26,10 +26,10 @@ import org.vertx.testtools.TestVerticle;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
+import com.globo.galeb.core.entity.IJsonable;
 
 public class FarmTest extends TestVerticle {
 

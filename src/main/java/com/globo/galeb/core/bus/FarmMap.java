@@ -21,8 +21,8 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.entity.IJsonable;
 
 /**
  * Class FarmMap.

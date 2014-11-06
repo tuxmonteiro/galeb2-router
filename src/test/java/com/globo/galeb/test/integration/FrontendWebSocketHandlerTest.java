@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.test.integration;
 
-import com.globo.galeb.core.IJsonable;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 

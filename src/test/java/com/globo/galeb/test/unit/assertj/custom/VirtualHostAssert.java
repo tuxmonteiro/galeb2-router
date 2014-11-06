@@ -15,8 +15,9 @@
 package com.globo.galeb.test.unit.assertj.custom;
 
 import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IJsonable;
 import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.entity.IJsonable;
+
 import org.assertj.core.api.AbstractAssert;
 import org.vertx.java.core.json.JsonObject;
 

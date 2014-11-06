@@ -29,6 +29,8 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
@@ -299,8 +301,9 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * Sets the queue service.
      *
      * @param queueService the queue service
-     * @return the backend
+     * @return this
      */
+    @Override
     public Backend setQueueService(IQueueService queueService) {
         this.queueService = queueService;
         return this;
@@ -325,14 +328,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     }
 
     /**
-     * Update modified timestamp.
-     */
-    private void updateModifiedTimestamp() {
-        modifiedAt = System.currentTimeMillis();
-    }
-
-    /**
-     * Gets (or create before, if not exist) json property.
+     * Gets the or create json property.
      *
      * @param fieldName the field name
      * @param defaultData the default data
