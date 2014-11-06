@@ -170,7 +170,7 @@ public class Virtualhost extends Entity {
         backend.setKeepAliveMaxRequest(keepAliveMaxRequest);
         backend.setKeepAliveTimeOut(keepAliveTimeOut);
         backend.setMinSessionPoolSize(minSessionPoolSize);
-        backend.startPool();
+        backend.startSessionPool();
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }

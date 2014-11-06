@@ -332,7 +332,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     }
 
     /**
-     * Gets the or create json property.
+     * Gets (or create before, if not exist) json property.
      *
      * @param fieldName the field name
      * @param defaultData the default data
@@ -708,11 +708,11 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     }
 
     /**
-     * Start pool.
+     * Start session pool.
      *
      * @return the backend
      */
-    public Backend startPool() {
+    public Backend startSessionPool() {
 
         for (int i=0 ; i<minSessionPoolSize ; i++) {
             BackendSession backendSession = new BackendSession(vertx, id)
