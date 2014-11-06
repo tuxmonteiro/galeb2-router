@@ -40,7 +40,7 @@ public class HostHeaderCriterion<T> implements ICriterion<T> {
     }
 
     @Override
-    public T getResult() {
+    public T thenResult() {
         if ("".equals(host)) {
             log.warn("Host UNDEF");
             return null;

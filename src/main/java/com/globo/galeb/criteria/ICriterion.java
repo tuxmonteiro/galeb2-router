@@ -16,6 +16,6 @@ public interface ICriterion<T> {
 
     public ICriterion<T> when(Object param);
 
-    public T getResult();
+    public T thenResult();
 
 }

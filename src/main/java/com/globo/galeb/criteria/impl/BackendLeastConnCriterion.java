@@ -37,7 +37,7 @@ public class BackendLeastConnCriterion<T> implements ICriterion<T> {
     }
 
     @Override
-    public T getResult() {
+    public T thenResult() {
 
         if (backends.isEmpty()) {
             return null;

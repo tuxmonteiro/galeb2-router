@@ -34,7 +34,7 @@ public class RandomCriterion<T> implements ICriterion<T> {
     }
 
     @Override
-    public T getResult() {
+    public T thenResult() {
         if (collection.isEmpty()) {
             return null;
         }

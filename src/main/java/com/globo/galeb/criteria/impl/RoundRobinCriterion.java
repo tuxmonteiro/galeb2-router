@@ -42,7 +42,7 @@ public class RoundRobinCriterion<T> implements ICriterion<T> {
     }
 
     @Override
-    public T getResult() {
+    public T thenResult() {
         if (originals.isEmpty()) {
             return null;
         }

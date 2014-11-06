@@ -29,7 +29,7 @@ public class NullCriterion<T> implements ICriterion<T> {
     }
 
     @Override
-    public T getResult() {
+    public T thenResult() {
         log.debug(this.getClass().getName());
         return null;
     }

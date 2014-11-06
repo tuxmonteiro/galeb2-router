@@ -81,7 +81,7 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
     }
 
     public T getEntityByCriterion() {
-        return criterion.getResult();
+        return criterion.thenResult();
     }
 
     public EntitiesMap<T> setCriterion(final ICriterion<T> criterion) {
