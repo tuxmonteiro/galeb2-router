@@ -235,7 +235,7 @@ public class FarmTest extends TestVerticle {
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendAddAgain = farm.addToMap(messageBackend);
         Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
-        Backend backendExpected = new Backend(backendJson, vertx);
+        Backend backendExpected = (Backend) new Backend(backendJson).setPlataform(vertx);
 
         assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(true).contains(backendExpected)).isTrue();
@@ -267,7 +267,7 @@ public class FarmTest extends TestVerticle {
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
         Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
-        Backend backendNotExpected = new Backend(backendJson, vertx);
+        Backend backendNotExpected = (Backend) new Backend(backendJson).setPlataform(vertx);
 
         assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(true).contains(backendNotExpected)).isFalse();
@@ -317,7 +317,7 @@ public class FarmTest extends TestVerticle {
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
         Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
-        Backend backendNotExpected = new Backend(backendJson, vertx);
+        Backend backendNotExpected = (Backend) new Backend(backendJson).setPlataform(vertx);
 
         assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(!"0".equals(statusStr)).contains(backendNotExpected)).isFalse();

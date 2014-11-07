@@ -15,13 +15,15 @@
  */
 package com.globo.galeb.core.bus;
 
+import com.globo.galeb.core.entity.Entity;
+
 /**
  * Class NullMap.
  *
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class NullMap extends MessageToMap<IEventObserver> {
+public class NullMap extends MessageToMap<Entity> {
 
     /** The log message on err. */
     private String logMessageOnErr = "Farm is NULL or uriBase not supported";

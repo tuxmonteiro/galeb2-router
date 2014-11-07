@@ -67,7 +67,7 @@ public class BackendPoolTest {
         JsonObject json = new JsonObject();
         json.putString(IJsonable.ID_FIELDNAME, backendId);
 
-        Backend backend = new Backend(json, vertx);
+        Backend backend = (Backend) new Backend(json).setPlataform(vertx);
         return backendPool.addEntity(backend);
     }
 
@@ -98,7 +98,7 @@ public class BackendPoolTest {
         JsonObject json = new JsonObject();
         json.putString(IJsonable.ID_FIELDNAME, backendId);
 
-        Backend backend = new Backend(json, vertx);
+        Backend backend = (Backend) new Backend(json).setPlataform(vertx);
         return backendPool.removeEntity(backend);
     }
 

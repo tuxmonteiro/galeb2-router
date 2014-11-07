@@ -87,9 +87,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     public static final String UUID_FIELDNAME                  = "uuid";
 
 
-    /** The vertx. */
-    private final Vertx vertx;
-
     /** The host name or IP. */
     private final String host;
 
@@ -244,21 +241,18 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * Instantiates a new backend.
      *
      * @param backendId the backend id
-     * @param vertx the vertx
      */
-    public Backend(final String backendId, final Vertx vertx) {
-        this(new JsonObject().putString(IJsonable.ID_FIELDNAME, backendId), vertx);
+    public Backend(final String backendId) {
+        this(new JsonObject().putString(IJsonable.ID_FIELDNAME, backendId)  );
     }
 
     /**
      * Instantiates a new backend.
      *
      * @param json the json
-     * @param vertx the vertx
      */
-    public Backend(JsonObject json, final Vertx vertx) {
+    public Backend(JsonObject json) {
         super();
-        this.vertx = vertx;
         this.id = json.getString(IJsonable.ID_FIELDNAME, "127.0.0.1:80");
         this.virtualhostId = json.getString(IJsonable.PARENT_ID_FIELDNAME, "");
 
@@ -527,8 +521,8 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
 
         final BackendSession backendSession;
 
-        if (cleanupSessionScheduler==null) {
-            cleanupSessionScheduler = new VertxPeriodicScheduler(vertx)
+        if (cleanupSessionScheduler==null && (Vertx) getPlataform()!=null) {
+            cleanupSessionScheduler = new VertxPeriodicScheduler((Vertx) getPlataform())
                                             .setPeriod(10000L)
                                             .setHandler(new CleanUpSessionHandler(this))
                                             .start();
@@ -546,7 +540,8 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
 
             } else {
 
-                backendSession = new BackendSession(vertx, id)
+                backendSession = new BackendSession(id)
+                                        .setPlataform(getPlataform())
                                         .setQueueService(queueService)
                                         .setMaxPoolSize(getMaxPoolSize())
                                         .setBackendProperties(properties)
@@ -688,7 +683,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#callbackGlobalConnectionsInfo(org.vertx.java.core.json.JsonObject)
+     * @see com.globo.galeb.core.bus.ICallbackConnectionCounter#callbackGlobalConnectionsInfo(org.(Vertx) getPlataform().java.core.json.JsonObject)
      */
     @Override
     public void callbackGlobalConnectionsInfo(JsonObject message) {
@@ -711,7 +706,8 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     public Backend startSessionPool() {
 
         for (int i=0 ; i<minSessionPoolSize ; i++) {
-            BackendSession backendSession = new BackendSession(vertx, id)
+            BackendSession backendSession = new BackendSession(id)
+                                                .setPlataform(getPlataform())
                                                 .setQueueService(queueService)
                                                 .setMaxPoolSize(getMaxPoolSize())
                                                 .setBackendProperties(properties)

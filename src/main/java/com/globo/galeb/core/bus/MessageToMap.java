@@ -21,6 +21,7 @@ import java.util.Map;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
+import com.globo.galeb.core.entity.Entity;
 
 /**
  * Class MessageToMap.
@@ -29,7 +30,7 @@ import org.vertx.java.core.logging.Logger;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public abstract class MessageToMap<T> {
+public abstract class MessageToMap<T extends Entity> {
 
     /** The uri base. */
     protected String uriBase        = "";

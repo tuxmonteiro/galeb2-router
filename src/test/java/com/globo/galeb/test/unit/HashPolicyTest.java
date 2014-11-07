@@ -51,7 +51,7 @@ public class HashPolicyTest {
         JsonObject virtualhostJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
-        virtualhost = new Virtualhost(virtualhostJson, vertx);
+        virtualhost = (Virtualhost) new Virtualhost(virtualhostJson).setPlataform(vertx);
 
         for (int x=0; x<numBackends; x++) {
             virtualhost.addBackend(String.format("0:%s", x), true);

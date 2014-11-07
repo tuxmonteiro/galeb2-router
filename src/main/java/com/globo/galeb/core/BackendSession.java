@@ -35,8 +35,8 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  */
 public class BackendSession {
 
-    /** The vertx. */
-    private final Vertx vertx;
+    /** The plataform. */
+    private Vertx plataform;
 
     /** The backend id. */
     private final String backendId;
@@ -117,8 +117,7 @@ public class BackendSession {
      * @param serverHost the server host
      * @param backendId the backend id
      */
-    public BackendSession(final Vertx vertx, String backendId) {
-        this.vertx = vertx;
+    public BackendSession(String backendId) {
         this.backendId = backendId;
     }
 
@@ -129,6 +128,25 @@ public class BackendSession {
     protected void finalize() throws Throwable {
         super.finalize();
         keepAliveLimitScheduler.cancel();
+    }
+
+    /**
+     * Sets the plataform.
+     *
+     * @param plataform the new plataform
+     */
+    public BackendSession setPlataform(final Object plataform) {
+        this.plataform = (Vertx) plataform;
+        return this;
+    }
+
+    /**
+     * Gets the plataform.
+     *
+     * @return the plataform
+     */
+    public Vertx getPlataform() {
+        return plataform;
     }
 
     /**
@@ -191,8 +209,8 @@ public class BackendSession {
      */
     public HttpClient connect() {
 
-        if (keepAlive && keepAliveLimitScheduler==null) {
-            keepAliveLimitScheduler = new VertxPeriodicScheduler(vertx)
+        if (keepAlive && keepAliveLimitScheduler==null && plataform!=null) {
+            keepAliveLimitScheduler = new VertxPeriodicScheduler(plataform)
                                                 .setHandler(new KeepAliveCheckLimitHandler(this))
                                                 .setPeriod(1000L)
                                                 .start();
@@ -219,8 +237,8 @@ public class BackendSession {
             close();
         }
 
-        if (client==null && vertx!=null) {
-            client = vertx.createHttpClient();
+        if (client==null && plataform!=null) {
+            client = plataform.createHttpClient();
             client.setKeepAlive(keepAlive);
             client.setTCPKeepAlive(keepAlive);
             client.setMaxPoolSize(maxPoolSize);
@@ -283,6 +301,8 @@ public class BackendSession {
             client.getReceiveBufferSize();
         } catch (IllegalStateException e) {
             httpClientClosed = true;
+        } catch (RuntimeException e) {
+            e.printStackTrace();
         }
         return httpClientClosed;
     }

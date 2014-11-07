@@ -54,7 +54,7 @@ public class VirtualhostTest {
         JsonObject virtualhostJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, virtualhostName)
             .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
-        virtualhost = new Virtualhost(virtualhostJson, vertx);
+        virtualhost = (Virtualhost) new Virtualhost(virtualhostJson).setPlataform(vertx);
 
         backend = "0.0.0.0:0";
     }

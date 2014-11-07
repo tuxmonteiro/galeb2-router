@@ -33,8 +33,8 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void equalsObject() {
-        Backend backend1 = new Backend("127.0.0.1:0", vertx);
-        Backend backend2 = new Backend("127.0.0.1:0", vertx);
+        Backend backend1 = (Backend) new Backend("127.0.0.1:0").setPlataform(vertx);
+        Backend backend2 = (Backend) new Backend("127.0.0.1:0").setPlataform(vertx);
 
         assertThat(backend1).isEqualTo(backend2);
 
@@ -43,8 +43,8 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void notEqualsObject() {
-        Backend backend1 = new Backend("127.0.0.1:0", vertx);
-        Backend backend2 = new Backend("127.0.0.2:0", vertx);
+        Backend backend1 = (Backend) new Backend("127.0.0.1:0").setPlataform(vertx);
+        Backend backend2 = (Backend) new Backend("127.0.0.2:0").setPlataform(vertx);
 
         assertThat(backend1).isNotEqualTo(backend2);
 
@@ -53,7 +53,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void connectReturnNotNull() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = (Backend) new Backend(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         HttpClient httpClient = backendTested.connect(new RemoteUser("127.0.0.1", 0));
@@ -64,7 +64,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void connectSuccessful() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = (Backend) new Backend(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
@@ -77,7 +77,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void closeSuccessful() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = (Backend) new Backend(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
@@ -91,7 +91,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesActiveConnections() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = (Backend) new Backend(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
@@ -105,7 +105,7 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void multiplesRequestsButOneActiveConnection() {
-        Backend backendTested = new Backend(new JsonObject(), vertx);
+        Backend backendTested = (Backend) new Backend(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {

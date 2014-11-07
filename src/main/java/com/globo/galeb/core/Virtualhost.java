@@ -19,13 +19,12 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
@@ -35,7 +34,7 @@ import org.vertx.java.core.json.JsonObject;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Virtualhost extends Entity {
+public class Virtualhost extends EntitiesMap<Backend> {
 
     /** The Constant BACKENDS_FIELDNAME. */
     public static final String BACKENDS_FIELDNAME            = "backends";
@@ -66,9 +65,6 @@ public class Virtualhost extends Entity {
 
     /** The bad backends. */
     private final UniqueArrayList<Backend> badBackends;
-
-    /** The vertx. */
-    private final Vertx                    vertx;
 
     /** The queue service. */
     private IQueueService                  queueService        = null;
@@ -103,23 +99,13 @@ public class Virtualhost extends Entity {
      * @param json the json properties
      * @param vertx the vertx
      */
-    public Virtualhost(JsonObject json, final Vertx vertx) {
-        super();
-        this.id = json.getString(IJsonable.ID_FIELDNAME, "UNDEF");
+    public Virtualhost(JsonObject json) {
+        super(json.getString(IJsonable.ID_FIELDNAME, "UNDEF"));
         this.backends = new UniqueArrayList<Backend>();
         this.badBackends = new UniqueArrayList<Backend>();
-        this.vertx = vertx;
 
         properties.mergeIn(json.getObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()));
         getLoadBalancePolicy();
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return getVirtualhostName();
     }
 
     /**
@@ -159,7 +145,7 @@ public class Virtualhost extends Entity {
      */
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         updateModifiedTimestamp();
-        Backend backend = new Backend(backendJson, vertx);
+        Backend backend = (Backend) new Backend(backendJson).setPlataform(getPlataform());
         backend.setQueueService(queueService);
         backend.setMaxPoolSize(maxPoolSize);
         backend.setKeepAliveMaxRequest(keepAliveMaxRequest);
@@ -181,15 +167,6 @@ public class Virtualhost extends Entity {
     }
 
     /**
-     * Gets the virtualhost name.
-     *
-     * @return the virtualhost name
-     */
-    public String getVirtualhostName() {
-        return id;
-    }
-
-    /**
      * Removes a backend.
      *
      * @param backend the backend
@@ -200,9 +177,9 @@ public class Virtualhost extends Entity {
         updateModifiedTimestamp();
         if (backendOk) {
             setTransientState();
-            return backends.remove(new Backend(backend, vertx));
+            return backends.remove(new Backend(backend).setPlataform(getPlataform()));
         } else {
-            return badBackends.remove(new Backend(backend, vertx));
+            return badBackends.remove(new Backend(backend).setPlataform(getPlataform()));
         }
     }
 
