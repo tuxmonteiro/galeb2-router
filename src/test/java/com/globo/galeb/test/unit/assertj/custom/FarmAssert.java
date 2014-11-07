@@ -29,8 +29,8 @@ public class FarmAssert extends AbstractAssert<FarmAssert, Farm> {
 
     public FarmAssert hasVirtualhostsSize(Integer size) {
         isNotNull();
-        if (actual.getVirtualhosts().size() != size) {
-            failWithMessage("Expected size to be <%s> but was <%s>", size, actual.getVirtualhosts().size());
+        if (actual.getEntities().size() != size) {
+            failWithMessage("Expected size to be <%s> but was <%s>", size, actual.getEntities().size());
         }
         return this;
     }

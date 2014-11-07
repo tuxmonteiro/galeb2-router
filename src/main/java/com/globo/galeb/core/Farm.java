@@ -16,14 +16,11 @@
 package com.globo.galeb.core;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
@@ -34,6 +31,7 @@ import com.globo.galeb.core.bus.ICallbackSharedData;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageToMap;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
+import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.verticles.RouterVerticle;
@@ -44,7 +42,7 @@ import com.globo.galeb.verticles.RouterVerticle;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Farm extends Entity implements ICallbackQueueAction, ICallbackSharedData {
+public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueAction, ICallbackSharedData {
 
     /** The Constant FARM_MAP. */
     public static final String FARM_MAP                    = "farm";
@@ -60,9 +58,6 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
 
     /** The Constant FARM_VERSION_FIELDNAME. */
     public static final String FARM_VERSION_FIELDNAME      = "version";
-
-    /** The virtualhosts. */
-    private final Map<String, Virtualhost> virtualhosts = new HashMap<>();
 
     /** The version. */
     private Long version = 0L;
@@ -86,7 +81,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
      * @param queueService the queue service
      */
     public Farm(final Verticle verticle, final IQueueService queueService) {
-        this.id = "";
+        super("farm");
         this.verticle = verticle;
         this.queueService = queueService;
         if (verticle!=null) {
@@ -95,6 +90,7 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
             this.sharedMap.put(FARM_BACKENDS_FIELDNAME, "{}");
             properties.mergeIn(verticle.getContainer().config());
             this.log = verticle.getContainer().logger();
+            setPlataform(verticle.getVertx());
             registerQueueAction();
         } else {
             this.log = null;
@@ -127,15 +123,6 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
     }
 
     /**
-     * Gets the vertx.
-     *
-     * @return the vertx
-     */
-    public Vertx getVertx() {
-        return (verticle!=null) ? verticle.getVertx() : null;
-    }
-
-    /**
      * Gets the logger.
      *
      * @return the logger
@@ -160,30 +147,11 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
      */
     public Set<Backend> getBackends() {
         Set<Backend> backends = new HashSet<>();
-        for (Virtualhost virtualhost: virtualhosts.values()) {
+        for (Virtualhost virtualhost: getEntities().values()) {
             backends.addAll(virtualhost.getBackends(true));
             backends.addAll(virtualhost.getBackends(false));
         }
         return backends;
-    }
-
-    /**
-     * Gets the virtualhosts.
-     *
-     * @return the virtualhosts
-     */
-    public Set<Virtualhost> getVirtualhosts() {
-        return new HashSet<Virtualhost>(virtualhosts.values());
-    }
-
-    /**
-     * Gets the virtualhost by virtualhostId (key).
-     *
-     * @param key the key
-     * @return the virtualhost
-     */
-    public Virtualhost getVirtualhost(String key) {
-        return "".equals(key) ? null : virtualhosts.get(key);
     }
 
     /* (non-Javadoc)
@@ -197,8 +165,8 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         idObj.putNumber(FARM_VERSION_FIELDNAME, version);
         JsonArray virtualhostArray = new JsonArray();
 
-        for (String vhost : virtualhosts.keySet()) {
-            Virtualhost virtualhost = virtualhosts.get(vhost);
+        for (String vhost : getEntities().keySet()) {
+            Virtualhost virtualhost = getEntityById(vhost);
             if (virtualhost==null) {
                 continue;
             }
@@ -207,15 +175,6 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
 
         idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, virtualhostArray);
         return super.toJson();
-    }
-
-    /**
-     * Gets the virtualhosts (map).
-     *
-     * @return the virtualhosts
-     */
-    public Map<String, Virtualhost> getVirtualhostsToMap() {
-        return virtualhosts;
     }
 
     /* (non-Javadoc)
@@ -251,13 +210,6 @@ public class Farm extends Entity implements ICallbackQueueAction, ICallbackShare
         queueService.registerQueueDel(verticle, this);
         queueService.registerQueueVersion(verticle, this);
         queueService.registerUpdateSharedData(verticle, this);
-    }
-
-    /**
-     * Clear all virtualhosts.
-     */
-    public void clearAll() {
-        virtualhosts.clear();
     }
 
     /* (non-Javadoc)

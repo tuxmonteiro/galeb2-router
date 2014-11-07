@@ -92,7 +92,7 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
         String hostname = hostnameWithPort.split(":")[0];
 
-        final Virtualhost virtualhost = farm.getVirtualhost(hostname);
+        final Virtualhost virtualhost = farm.getEntityById(hostname);
 
         if (virtualhost==null) {
             log.warn(String.format("Host: %s UNDEF", hostname));

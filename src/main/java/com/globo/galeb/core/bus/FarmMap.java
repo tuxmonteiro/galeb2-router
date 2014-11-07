@@ -65,7 +65,7 @@ public class FarmMap extends MessageToMap<Farm> {
             virtualhostMap.setMessageBus(virtualhostMessageBus)
                           .setLogger(log)
                           .setVertx(vertx)
-                          .setMap(farm.getVirtualhostsToMap())
+                          .setMap(farm.getEntities())
                           .setVerticleId(verticleId);
 
             virtualhostMap.add();
@@ -93,7 +93,7 @@ public class FarmMap extends MessageToMap<Farm> {
                 backendMap.setMessageBus(backendMessageBus)
                           .setLogger(log)
                           .setVertx(vertx)
-                          .setMap(farm.getVirtualhostsToMap())
+                          .setMap(farm.getEntities())
                           .setVerticleId(verticleId);
                 backendMap.add();
             }
@@ -111,7 +111,7 @@ public class FarmMap extends MessageToMap<Farm> {
         boolean isOk = false;
         Farm farm = map.get("farm");
 
-        farm.clearAll();
+        farm.clearEntities();
 
         return isOk;
     }

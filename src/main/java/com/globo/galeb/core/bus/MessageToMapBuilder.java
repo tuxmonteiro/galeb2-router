@@ -52,7 +52,8 @@ public class MessageToMapBuilder {
 
         final MessageBus messageBus = new MessageBus(message);
         final Logger log = farm.getLogger();
-        final Vertx vertx = farm.getVertx();
+        Object plataform = farm.getPlataform();
+        final Vertx vertx = (plataform instanceof Vertx) ? (Vertx) plataform : null;
         final String verticleId = farm.getVerticleId();
 
         switch (messageBus.getUriBase()) {
@@ -70,14 +71,14 @@ public class MessageToMapBuilder {
                     .setMessageBus(messageBus)
                     .setLogger(log)
                     .setVertx(vertx)
-                    .setMap(farm.getVirtualhostsToMap())
+                    .setMap(farm.getEntities())
                     .setVerticleId(verticleId);
             case "backend":
                 return new BackendMap()
                     .setMessageBus(messageBus)
                     .setLogger(log)
                     .setVertx(vertx)
-                    .setMap(farm.getVirtualhostsToMap())
+                    .setMap(farm.getEntities())
                     .setVerticleId(verticleId);
             default:
                 break;

@@ -210,7 +210,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         if (virtualhosts!=null) {
             Iterator<String> it = virtualhosts.iterator();
             while (it.hasNext()) {
-                Virtualhost virtualhost = farm.getVirtualhost(it.next());
+                Virtualhost virtualhost = farm.getEntityById(it.next());
 
                 JsonObject backendJson = null;
                 if (virtualhost!=null) {

@@ -187,7 +187,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         log.debug(String.format("Received request for host %s '%s %s'",
                 sRequest.headers().get(httpHeaderHost), sRequest.method(), sRequest.absoluteURI().toString()));
 
-        final Virtualhost virtualhost = farm.getVirtualhost(headerHost);
+        final Virtualhost virtualhost = farm.getEntityById(headerHost);
 
         if (virtualhost==null) {
             log.warn("Host UNDEF");

@@ -54,7 +54,7 @@ public class FarmTest extends TestVerticle {
             farm.addToMap(message);
         }
 
-        assertThat(farm.getVirtualhosts()).hasSize(10);
+        assertThat(farm.getEntities()).hasSize(10);
         testComplete();
     }
 
@@ -102,7 +102,7 @@ public class FarmTest extends TestVerticle {
 
         boolean isOk = farm.addToMap(message);
 
-        assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
+        assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(isOk).isTrue();
         testComplete();
     }
@@ -122,7 +122,7 @@ public class FarmTest extends TestVerticle {
         farm.addToMap(message);
         boolean isOk = farm.addToMap(message);
 
-        assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
+        assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(isOk).isFalse();
         testComplete();
     }
@@ -148,7 +148,7 @@ public class FarmTest extends TestVerticle {
 
         assertThat(isOkAdd).isTrue();
         assertThat(isOkDel).isTrue();
-        assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
+        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
         testComplete();
     }
 
@@ -165,7 +165,7 @@ public class FarmTest extends TestVerticle {
 
         boolean isOk = farm.delFromMap(message);
 
-        assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
+        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
         assertThat(isOk).isFalse();
         testComplete();
     }
@@ -191,7 +191,7 @@ public class FarmTest extends TestVerticle {
 
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackend).as("isOkBackend").isTrue();
-        assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
+        assertThat(farm.getEntities()).containsKey(virtualhostId);
         testComplete();
     }
 
@@ -208,7 +208,7 @@ public class FarmTest extends TestVerticle {
 
         boolean isOk = farm.addToMap(messageBackend);
 
-        assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
+        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
         assertThat(isOk).isFalse();
         testComplete();
     }
@@ -234,10 +234,10 @@ public class FarmTest extends TestVerticle {
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendAddAgain = farm.addToMap(messageBackend);
-        Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
+        Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
         Backend backendExpected = new Backend(backendJson, vertx);
 
-        assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
+        assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(true).contains(backendExpected)).isTrue();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
@@ -266,10 +266,10 @@ public class FarmTest extends TestVerticle {
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackendAdd = farm.addToMap(messageBackend);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
-        Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
+        Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
         Backend backendNotExpected = new Backend(backendJson, vertx);
 
-        assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
+        assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(true).contains(backendNotExpected)).isFalse();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
@@ -290,7 +290,7 @@ public class FarmTest extends TestVerticle {
 
         boolean isOk = farm.delFromMap(messageBackend);
 
-        assertThat(farm.getVirtualhostsToMap()).doesNotContainKey(virtualhostJson.encode());
+        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
         assertThat(isOk).isFalse();
         testComplete();
     }
@@ -316,10 +316,10 @@ public class FarmTest extends TestVerticle {
 
         boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
         boolean isOkBackendRemove = farm.delFromMap(messageBackend);
-        Virtualhost virtualhost = farm.getVirtualhostsToMap().get(virtualhostId);
+        Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
         Backend backendNotExpected = new Backend(backendJson, vertx);
 
-        assertThat(farm.getVirtualhostsToMap()).containsKey(virtualhostId);
+        assertThat(farm.getEntities()).containsKey(virtualhostId);
         assertThat(virtualhost.getBackends(!"0".equals(statusStr)).contains(backendNotExpected)).isFalse();
         assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isFalse();
