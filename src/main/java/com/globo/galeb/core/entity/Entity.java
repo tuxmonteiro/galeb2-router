@@ -109,12 +109,21 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
+     * Gets the plataform.
+     *
+     * @return the plataform
+     */
+    public Object getPlataform() {
+        return plataform;
+    }
+
+    /**
      * Sets the plataform.
      *
      * @param plataform plataform instance
      * @return this
      */
-    public Entity setPlataform(Object plataform) {
+    public Entity setPlataform(final Object plataform) {
         this.plataform = plataform;
         updateModifiedTimestamp();
         return this;
@@ -126,7 +135,7 @@ public abstract class Entity implements IJsonable {
      * @param queueService the queue service
      * @return this
      */
-    public Entity setQueueService(IQueueService queueService) {
+    public Entity setQueueService(final IQueueService queueService) {
         this.queueService = queueService;
         updateModifiedTimestamp();
         return this;

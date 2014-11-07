@@ -72,6 +72,10 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
         entities.clear();
     }
 
+    public Map<String, T> getEntities() {
+        return this.entities;
+    }
+
     public T getEntityById(String entityId) {
         return entities.get(entityId);
     }
