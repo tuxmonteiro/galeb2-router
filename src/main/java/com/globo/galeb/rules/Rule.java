@@ -26,7 +26,9 @@ import com.globo.galeb.core.entity.Entity;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 6, 2014.
  */
-public abstract class Rule extends Entity {
+public abstract class Rule<T extends IRuleReturn> extends Entity {
+
+    private T ruleReturn;
 
     /**
      * Instantiates a new rule.
@@ -51,6 +53,14 @@ public abstract class Rule extends Entity {
      */
     public Rule(JsonObject json) {
         idObj.mergeIn(json);
+    }
+
+    protected T getRuleReturn() {
+        return ruleReturn;
+    }
+
+    protected void setRuleReturn(T ruleReturn) {
+        this.ruleReturn = ruleReturn;
     }
 
 }
