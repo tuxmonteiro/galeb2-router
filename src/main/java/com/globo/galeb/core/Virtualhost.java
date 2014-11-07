@@ -61,10 +61,10 @@ public class Virtualhost extends EntitiesMap<Backend> {
     public static final String TRANSIENT_STATE_FIELDNAME     = "_transientState";
 
     /** The backends. */
-    private final UniqueArrayList<Backend> backends;
+    private final UniqueArrayList<Backend> backends = new UniqueArrayList<Backend>();
 
     /** The bad backends. */
-    private final UniqueArrayList<Backend> badBackends;
+    private final UniqueArrayList<Backend> badBackends = new UniqueArrayList<Backend>();
 
     /** The queue service. */
     private IQueueService                  queueService        = null;
@@ -101,8 +101,6 @@ public class Virtualhost extends EntitiesMap<Backend> {
      */
     public Virtualhost(JsonObject json) {
         super(json.getString(IJsonable.ID_FIELDNAME, "UNDEF"));
-        this.backends = new UniqueArrayList<Backend>();
-        this.badBackends = new UniqueArrayList<Backend>();
 
         properties.mergeIn(json.getObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()));
         getLoadBalancePolicy();
@@ -145,13 +143,17 @@ public class Virtualhost extends EntitiesMap<Backend> {
      */
     public boolean addBackend(JsonObject backendJson, boolean backendOk) {
         updateModifiedTimestamp();
-        Backend backend = (Backend) new Backend(backendJson).setPlataform(getPlataform());
-        backend.setQueueService(queueService);
-        backend.setMaxPoolSize(maxPoolSize);
-        backend.setKeepAliveMaxRequest(keepAliveMaxRequest);
-        backend.setKeepAliveTimeOut(keepAliveTimeOut);
-        backend.setMinSessionPoolSize(minSessionPoolSize);
+        Backend backend = (Backend) new Backend(backendJson)
+                            .setPlataform(getPlataform())
+                            .setQueueService(queueService);
+
+        backend.setMaxPoolSize(maxPoolSize)
+                            .setKeepAliveMaxRequest(keepAliveMaxRequest)
+                            .setKeepAliveTimeOut(keepAliveTimeOut)
+                            .setMinSessionPoolSize(minSessionPoolSize);
+
         backend.startSessionPool();
+
         setTransientState();
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
