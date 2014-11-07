@@ -177,25 +177,19 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         String headerHost = "UNDEF";
         String backendId = "UNDEF";
 
-        if (sRequest.headers().contains(httpHeaderHost)) {
-            headerHost = sRequest.headers().get(httpHeaderHost).split(":")[0];
-        } else {
-            log.warn("HTTP Header Host UNDEF");
+        Virtualhost virtualhost = farm.getCriterion().when(sRequest).thenGetResult();
+
+        if (virtualhost==null) {
+            new ServerResponse(sRequest, log, counter, false).showErrorAndClose(new NotFoundException());
             return;
         }
 
         log.debug(String.format("Received request for host %s '%s %s'",
                 sRequest.headers().get(httpHeaderHost), sRequest.method(), sRequest.absoluteURI().toString()));
 
-        final Virtualhost virtualhost = farm.getEntityById(headerHost);
-
-        if (virtualhost==null) {
-            log.warn("Host UNDEF");
-            new ServerResponse(sRequest, log, counter, false).showErrorAndClose(new NotFoundException());
-            return;
-        }
-
+        // TODO: check performance penalt
         virtualhost.setQueue(queueService);
+
         Long requestTimeOut = virtualhost.getRequestTimeOut();
 //        Boolean enableChunked = virtualhost.isChunked();
         Boolean enableChunked = true;
@@ -237,8 +231,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         log.debug("Scheduler started");
 
         RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
-
-//        String persistRemoteUserToBackendId = String.format("%s:%s", virtualhost, remoteUser);
 
         final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
