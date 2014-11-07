@@ -23,19 +23,45 @@ import org.vertx.java.core.json.JsonObject;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.impl.NullCriterion;
 
+/**
+ * Class EntitiesMap.
+ *
+ * @author See AUTHORS file.
+ * @version 1.0.0, Nov 7, 2014.
+ * @param <T> the generic type
+ */
 public abstract class EntitiesMap<T extends Entity> extends Entity {
 
+    /** The entities. */
     private Map<String, T> entities        = new HashMap<>();
+
+    /** The criterion. */
     private ICriterion<T>  criterion       = new NullCriterion<T>();
 
+    /**
+     * Instantiates a new entities map.
+     *
+     * @param id the id
+     */
     public EntitiesMap(String id) {
         super(id);
     }
 
+    /**
+     * Instantiates a new entities map.
+     *
+     * @param json the json
+     */
     public EntitiesMap(JsonObject json) {
         super(json);
     }
 
+    /**
+     * Adds the entity.
+     *
+     * @param entity the entity
+     * @return true, if successful
+     */
     public boolean addEntity(T entity) {
         String id = entity.getId();
 
@@ -53,6 +79,12 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
         return false;
     }
 
+    /**
+     * Removes the entity.
+     *
+     * @param entity the entity
+     * @return true, if successful
+     */
     public boolean removeEntity(T entity) {
         String id = entity.getId();
 
@@ -68,26 +100,65 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
         return false;
     }
 
+    /**
+     * Clear entities.
+     */
     public void clearEntities() {
         entities.clear();
     }
 
+    /**
+     * Gets the entities.
+     *
+     * @return the entities
+     */
     public Map<String, T> getEntities() {
         return this.entities;
     }
 
+    /**
+     * Gets the entity by id.
+     *
+     * @param entityId the entity id
+     * @return the entity by id
+     */
     public T getEntityById(String entityId) {
         return entities.get(entityId);
     }
 
+    /**
+     * Gets the num entities.
+     *
+     * @return the num entities
+     */
     public int getNumEntities() {
         return entities.size();
     }
 
+    /**
+     * Gets the entity by criterion.
+     *
+     * @return the entity by criterion
+     */
     public T getEntityByCriterion() {
-        return criterion.thenResult();
+        return criterion.thenGetResult();
     }
 
+    /**
+     * Gets the criterion.
+     *
+     * @return the criterion
+     */
+    public ICriterion<T> getCriterion() {
+        return criterion;
+    }
+
+    /**
+     * Sets the criterion.
+     *
+     * @param criterion the criterion
+     * @return the entities map
+     */
     public EntitiesMap<T> setCriterion(final ICriterion<T> criterion) {
         this.criterion = criterion.given(entities);
         return this;
