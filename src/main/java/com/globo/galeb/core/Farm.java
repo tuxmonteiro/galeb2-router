@@ -34,6 +34,7 @@ import com.globo.galeb.core.bus.MessageToMapBuilder;
 import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.criteria.impl.HostHeaderCriterion;
 import com.globo.galeb.verticles.RouterVerticle;
 
 /**
@@ -96,6 +97,8 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
             this.log = null;
             this.sharedMap = null;
         }
+
+        setCriterion(new HostHeaderCriterion<Virtualhost>().setLog(log));
 
     }
 
