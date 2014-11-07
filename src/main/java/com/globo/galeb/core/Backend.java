@@ -204,39 +204,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         }
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
-    @Override
-    public String toString() {
-        return id;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#equals(java.lang.Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null) return false;
-        if (getClass() != obj.getClass()) return false;
-        Backend other = (Backend) obj;
-        if (id == null) {
-            if (other.id != null) return false;
-        } else {
-            if (!id.equalsIgnoreCase(other.id)) return false;
-        }
-        return true;
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
-        return this.toString().hashCode();
-    }
-
     /**
      * Instantiates a new backend.
      *
@@ -505,8 +472,9 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      *
      * @param minPoolSize the new min session pool size
      */
-    public void setMinSessionPoolSize(int minPoolSize) {
+    public Backend setMinSessionPoolSize(int minPoolSize) {
         this.minSessionPoolSize = minPoolSize;
+        return this;
     }
 
     /**
