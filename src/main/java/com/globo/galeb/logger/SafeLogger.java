@@ -17,8 +17,10 @@ public class SafeLogger {
     private Logger log = null;
     private LogLevel level = LogLevel.UNDEF;
 
-    public SafeLogger setLogger(final Logger log) {
-        this.log=log;
+    public SafeLogger setLogger(final Object log) {
+        if (log instanceof Logger) {
+            this.log=(Logger)log;
+        }
         return this;
     }
 
