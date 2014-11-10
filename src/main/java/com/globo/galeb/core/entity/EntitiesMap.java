@@ -15,11 +15,11 @@
  */
 package com.globo.galeb.core.entity;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.collection.IndexedMap;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.impl.NullCriterion;
 
@@ -33,7 +33,7 @@ import com.globo.galeb.criteria.impl.NullCriterion;
 public abstract class EntitiesMap<T extends Entity> extends Entity {
 
     /** The entities. */
-    private Map<String, T> entities        = new HashMap<>();
+    private Map<String, T> entities        = new IndexedMap<>();
 
     /** The criterion. */
     private ICriterion<T>  criterion       = new NullCriterion<T>();
