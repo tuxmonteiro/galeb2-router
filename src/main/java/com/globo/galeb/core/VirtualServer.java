@@ -21,6 +21,7 @@ import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.criteria.impl.RulesCriterion;
 import com.globo.galeb.rules.Rule;
 
+// TODO: Auto-generated Javadoc
 /**
  * Class VirtualServer.
  *
@@ -52,6 +53,13 @@ public class VirtualServer extends EntitiesMap<Rule> {
      */
     public VirtualServer(JsonObject json) {
         super(json);
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
+     */
+    @Override
+    public void start() {
         setCriterion(new RulesCriterion().setLog(logger));
     }
 

@@ -67,6 +67,14 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
     }
 
     /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
+     */
+    @Override
+    public void start() {
+        // unnecessary
+    }
+
+    /* (non-Javadoc)
      * @see com.globo.galeb.rules.IRuleReturn#getReturnType()
      */
     @Override
@@ -74,6 +82,9 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
         return returnType;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.rules.IRuleReturn#getReturnId()
+     */
     @Override
     public String getReturnId() {
         return id;

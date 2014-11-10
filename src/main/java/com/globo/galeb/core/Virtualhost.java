@@ -66,9 +66,6 @@ public class Virtualhost extends EntitiesMap<Backend> {
     /** The bad backends. */
     private final UniqueArrayList<Backend> badBackends = new UniqueArrayList<Backend>();
 
-    /** The queue service. */
-    private IQueueService                  queueService        = null;
-
     /** The loadbalance policy. */
     private ILoadBalancePolicy             loadbalancePolicy   = null;
 
@@ -106,6 +103,15 @@ public class Virtualhost extends EntitiesMap<Backend> {
         getLoadBalancePolicy();
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
+     */
+    @Override
+    public void start() {
+        // unnecessary
+    }
+
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Sets the queueService.
      *
@@ -123,6 +129,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         }
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Adds a backend.
      *
@@ -134,6 +141,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         return addBackend(new JsonObject().putString(IJsonable.ID_FIELDNAME, backend), backendOk);
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Adds a backend.
      *
@@ -158,6 +166,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         return backendOk ? backends.add(backend) : badBackends.add(backend);
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Gets backends.
      *
@@ -168,6 +177,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         return backendOk ? backends: badBackends;
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Removes a backend.
      *
@@ -185,6 +195,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         }
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Clear backends (filtered to backendOk).
      *
@@ -200,6 +211,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         }
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Clear all backends.
      */
@@ -210,6 +222,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         setTransientState();
     }
 
+    // TODO: REMOVE (USE ENTITIES METHODS)
     /**
      * Gets the backend chosen.
      *
@@ -282,6 +295,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         }
     }
 
+    // TODO: REMOVE
     /**
      * Checks if has backends.
      *
@@ -291,6 +305,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         return !backends.isEmpty();
     }
 
+    // TODO: REMOVE
     /**
      * Checks if has bad backends.
      *
@@ -338,6 +353,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         return super.toJson();
     }
 
+    // TODO: REMOVE - Dont work
     /**
      * Sets transient state.
      */
@@ -345,6 +361,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         idObj.putBoolean(TRANSIENT_STATE_FIELDNAME, true);
     }
 
+    // TODO: REMOVE - Dont work
     /**
      * Unsets transient state.
      */
@@ -361,6 +378,7 @@ public class Virtualhost extends EntitiesMap<Backend> {
         return this.requestTimeOut;
     }
 
+    // TODO: REMOVE AND OVERRIDE (USE ENTITIES METHODS)
     /* (non-Javadoc)
      * @see com.globo.galeb.core.Entity#setStaticConf(java.lang.String)
      */

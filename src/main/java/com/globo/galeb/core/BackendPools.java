@@ -37,6 +37,14 @@ public class BackendPools extends EntitiesMap<BackendPool> {
     }
 
     /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
+     */
+    @Override
+    public void start() {
+        // unnecessary
+    }
+
+    /* (non-Javadoc)
      * @see com.globo.galeb.core.entity.EntitiesMap#clearEntities()
      */
     @Override

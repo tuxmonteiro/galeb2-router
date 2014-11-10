@@ -53,7 +53,14 @@ public class BadBackendPool extends EntitiesMap<Backend> {
     public BadBackendPool(JsonObject json) {
         super(json);
 
-        setCriterion(new RandomCriterion<Backend>());
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
+     */
+    @Override
+    public void start() {
+        setCriterion(new RandomCriterion<Backend>().setLog(logger));
     }
 
 }

@@ -73,7 +73,9 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
               .setLogger(logger)
               .setQueueService(queueService)
               .setPlataform(plataform)
-              .setStaticConf(staticConf);
+              .setStaticConf(staticConf)
+              .setCounter(counter)
+              .start();
 
         entities.put(id, entity);
         if (entities.containsKey(id)) {

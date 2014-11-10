@@ -33,4 +33,9 @@ public class NullRule extends Rule {
         return true;
     }
 
+    @Override
+    public void start() {
+        // unnecessary
+    }
+
 }

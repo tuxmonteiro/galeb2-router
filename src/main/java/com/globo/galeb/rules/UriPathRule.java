@@ -40,4 +40,9 @@ public class UriPathRule extends Rule {
         }
     }
 
+    @Override
+    public void start() {
+        // unnecessary
+    }
+
 }

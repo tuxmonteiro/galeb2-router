@@ -31,7 +31,6 @@ import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
@@ -98,12 +97,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
 
     /** The queue active connections. */
     private final String queueActiveConnections;
-
-    /** The ICounter. */
-    private ICounter           counter            = null;
-
-    /** The queue service. */
-    private IQueueService queueService            = null;
 
     /** The virtualhost id. */
     private String     virtualhostId              = "";
@@ -244,9 +237,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         }
         this.queueActiveConnections = String.format("%s%s", IQueueService.QUEUE_BACKEND_CONNECTIONS_PREFIX, this);
         this.myUUID = UUID.randomUUID().toString();
-        registerConnectionsCounter();
-        publishConnection(0);
-
     }
 
     /* (non-Javadoc)
@@ -258,16 +248,13 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         cleanupSessionScheduler.cancel();
     }
 
-    /**
-     * Sets the queue service.
-     *
-     * @param queueService the queue service
-     * @return this
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
      */
     @Override
-    public Backend setQueueService(IQueueService queueService) {
-        this.queueService = queueService;
-        return this;
+    public void start() {
+        registerConnectionsCounter();
+        publishConnection(0);
     }
 
     /**
@@ -445,18 +432,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     public Boolean isPipelining() {
         return (Boolean) getOrCreateJsonProperty(PIPELINING_FIELDNAME, defaultPipelining);
     }
-
-    /**
-     * Sets the counter.
-     *
-     * @param counter the counter
-     * @return the backend
-     */
-    public Backend setCounter(ICounter counter) {
-        this.counter = counter;
-        return this;
-    }
-
 
     /**
      * Gets the min session pool size.
