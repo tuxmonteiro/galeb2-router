@@ -29,7 +29,7 @@ public class NullMatch implements IWhenMatch {
      * @see com.globo.galeb.criteria.IWhenMatch#getUri()
      */
     @Override
-    public String getUri() {
+    public String getUriPath() {
         return null;
     }
 
@@ -49,28 +49,14 @@ public class NullMatch implements IWhenMatch {
         return param;
     }
 
-    /* (non-Javadoc)
-     * @see com.globo.galeb.criteria.IWhenMatch#isNull()
-     */
     @Override
-    public boolean isNull() {
-        return false;
-    }
-
-    /* (non-Javadoc)
-     * @see com.globo.galeb.criteria.IWhenMatch#getMatch()
-     */
-    @Override
-    public Object getMatch() {
+    public String getRemoteAddress() {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see com.globo.galeb.criteria.IWhenMatch#setMatch(java.lang.Object)
-     */
     @Override
-    public IWhenMatch setMatch(Object match) {
-        return this;
+    public String getRemotePort() {
+        return null;
     }
 
 }
