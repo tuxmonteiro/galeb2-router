@@ -29,14 +29,15 @@ import com.globo.galeb.logger.SafeLogger;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
+
 /**
- * Class ConsistentHashCriterion.
+ * Class IPHashCriterion.
  *
  * @author See AUTHORS file.
- * @version 1.0.0, Nov 7, 2014.
+ * @version 1.0.0, Nov 9, 2014.
  * @param <T> the generic type
  */
-public class ConsistentHashCriterion<T> implements ICriterion<T> {
+public class IPHashCriterion<T> implements ICriterion<T> {
 
     /** The log. */
     private final SafeLogger  log            = new SafeLogger();
