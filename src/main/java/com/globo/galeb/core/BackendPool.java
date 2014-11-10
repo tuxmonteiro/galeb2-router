@@ -83,6 +83,17 @@ public class BackendPool extends EntitiesMap<Backend> {
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.EntitiesMap#clearEntities()
+     */
+    @Override
+    public void clearEntities() {
+        for (Backend backend: getEntities().values()) {
+            backend.closeAllForced();
+        }
+        super.clearEntities();
+    }
+
     /**
      * Gets the bad backends map.
      *
@@ -115,6 +126,9 @@ public class BackendPool extends EntitiesMap<Backend> {
      * Clear bad backend.
      */
     public void clearBadBackend() {
+        for (Backend backend: badBackends.getEntities().values()) {
+            backend.closeAllForced();
+        }
         badBackends.clearEntities();
     }
 
@@ -136,6 +150,14 @@ public class BackendPool extends EntitiesMap<Backend> {
      */
     public boolean removeBadBackend(Backend entity) {
         return badBackends.removeEntity(entity);
+    }
+
+    /**
+     * Clear all.
+     */
+    public void clearAll() {
+        clearEntities();
+        clearBadBackend();
     }
 
 }

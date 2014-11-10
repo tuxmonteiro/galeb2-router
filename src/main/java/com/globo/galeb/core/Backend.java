@@ -687,4 +687,26 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
 
         return this;
     }
+
+    /**
+     * Close all forced.
+     */
+    public void closeAllForced() {
+        for (BackendSession backendSession: sessions.values()) {
+            backendSession.close();
+        }
+        poolAvaliable.clear();
+        poolUnavaliable.clear();
+        sessions.clear();
+        cleanupSessionScheduler.cancel();
+    }
+
+    /**
+     * Close all.
+     */
+    public void closeAll() {
+        for (RemoteUser remoteUser: sessions.keySet()) {
+            close(remoteUser);
+        }
+    }
 }
