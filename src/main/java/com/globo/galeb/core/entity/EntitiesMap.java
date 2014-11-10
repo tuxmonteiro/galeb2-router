@@ -69,8 +69,12 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
             return false;
         }
 
-        entity.setPlataform(plataform);
-        entity.setQueueService(queueService);
+        entity.setFarm(farm)
+              .setLogger(logger)
+              .setQueueService(queueService)
+              .setPlataform(plataform)
+              .setStaticConf(staticConf);
+
         entities.put(id, entity);
         if (entities.containsKey(id)) {
             updateModifiedTimestamp();
@@ -163,5 +167,4 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
         this.criterion = criterion.given(entities);
         return this;
     }
-
 }
