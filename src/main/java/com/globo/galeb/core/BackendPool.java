@@ -18,6 +18,8 @@ package com.globo.galeb.core;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.entity.EntitiesMap;
+import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.criteria.impl.RandomCriterion;
 
 
 /**
@@ -27,6 +29,12 @@ import com.globo.galeb.core.entity.EntitiesMap;
  * @version 1.0.0, Nov 6, 2014.
  */
 public class BackendPool extends EntitiesMap<Backend> {
+
+    /** The bad backends. */
+    private final EntitiesMap<Backend> badBackends       = new BadBackendPool("badbackends");
+
+    /** The load balance policy. */
+    private String                     loadBalancePolicy = "";
 
     /**
      * Instantiates a new backend pool.
@@ -41,7 +49,7 @@ public class BackendPool extends EntitiesMap<Backend> {
      * @param id the id
      */
     public BackendPool(String id) {
-        super(id);
+        this(new JsonObject().putString(IJsonable.ID_FIELDNAME, id));
     }
 
     /**
@@ -51,6 +59,57 @@ public class BackendPool extends EntitiesMap<Backend> {
      */
     public BackendPool(JsonObject json) {
         super(json);
+
+        setCriterion(new RandomCriterion<Backend>());
+    }
+
+    /**
+     * Gets the load balance policy.
+     *
+     * @return the load balance policy
+     */
+    public String getLoadBalancePolicy() {
+        return loadBalancePolicy;
+    }
+
+    /**
+     * Sets the load balance policy.
+     *
+     * @param loadBalancePolicy the load balance policy
+     * @return the backend pool
+     */
+    public BackendPool setLoadBalancePolicy(String loadBalancePolicy) {
+        this.loadBalancePolicy = loadBalancePolicy;
+        return this;
+    }
+
+    /**
+     * Gets the bad backends.
+     *
+     * @return the bad backends
+     */
+    public EntitiesMap<Backend> getBadBackends() {
+        return badBackends;
+    }
+
+    public int getNumBadBackend() {
+        return badBackends.getNumEntities();
+    }
+
+    public Backend getBadBackendById(String entityId) {
+        return badBackends.getEntityById(entityId);
+    }
+
+    public void clearBadBackend() {
+        badBackends.clearEntities();
+    }
+
+    public boolean addBadBackend(Backend entity) {
+        return badBackends.addEntity(entity);
+    }
+
+    public boolean removeBadBackend(Backend entity) {
+        return badBackends.removeEntity(entity);
     }
 
 }

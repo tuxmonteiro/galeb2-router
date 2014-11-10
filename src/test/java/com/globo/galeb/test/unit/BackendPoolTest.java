@@ -64,11 +64,35 @@ public class BackendPoolTest {
     }
 
     private boolean createBackend(String backendId, BackendPool backendPool) {
+        return createBackend(backendId, backendPool, true);
+    }
+
+    private boolean createBackend(String backendId, BackendPool backendPool, boolean isElegible) {
         JsonObject json = new JsonObject();
         json.putString(IJsonable.ID_FIELDNAME, backendId);
 
         Backend backend = (Backend) new Backend(json).setPlataform(vertx);
-        return backendPool.addEntity(backend);
+        if (isElegible) {
+            return backendPool.addEntity(backend);
+        } else {
+            return backendPool.addBadBackend(backend);
+        }
+    }
+
+    private boolean removeBackend(String backendId, BackendPool backendPool) {
+        return removeBackend(backendId, backendPool, true);
+    }
+
+    private boolean removeBackend(String backendId, BackendPool backendPool, boolean isElegible) {
+        JsonObject json = new JsonObject();
+        json.putString(IJsonable.ID_FIELDNAME, backendId);
+
+        Backend backend = (Backend) new Backend(json).setPlataform(vertx);
+        if (isElegible) {
+            return backendPool.removeEntity(backend);
+        } else {
+            return backendPool.removeBadBackend(backend);
+        }
     }
 
     @Test
@@ -94,14 +118,6 @@ public class BackendPoolTest {
         assertThat(backendPool.getEntityById(backendId)).isNotNull();
     }
 
-    private boolean removeBackend(String backendId, BackendPool backendPool) {
-        JsonObject json = new JsonObject();
-        json.putString(IJsonable.ID_FIELDNAME, backendId);
-
-        Backend backend = (Backend) new Backend(json).setPlataform(vertx);
-        return backendPool.removeEntity(backend);
-    }
-
     @Test
     public void removeExistingBackend() {
         String backendId = "mybackend";
@@ -119,6 +135,52 @@ public class BackendPoolTest {
         String backendId = "mybackend";
         BackendPool backendPool = new BackendPool();
         boolean backedRemoved = removeBackend(backendId, backendPool);
+
+        assertThat(backedRemoved).isFalse();
+        assertThat(backendPool.getNumEntities()).isEqualTo(0);
+        assertThat(backendPool.getEntityById(backendId)).isNull();
+    }
+
+    @Test
+    public void addNewBadBackend() {
+        String backendId = "newbackend";
+        BackendPool backendPool = new BackendPool();
+        boolean backedCreated = createBackend(backendId, backendPool, false);
+
+        assertThat(backedCreated).isTrue();
+        assertThat(backendPool.getNumBadBackend()).isEqualTo(1);
+        assertThat(backendPool.getBadBackendById(backendId)).isNotNull();
+    }
+
+    @Test
+    public void addExistingBadBackend() {
+        String backendId = "newbackend";
+        BackendPool backendPool = new BackendPool();
+        createBackend(backendId, backendPool, false);
+        boolean backedCreated = createBackend(backendId, backendPool, false);
+
+        assertThat(backedCreated).isFalse();
+        assertThat(backendPool.getNumBadBackend()).isEqualTo(1);
+        assertThat(backendPool.getBadBackendById(backendId)).isNotNull();
+    }
+
+    @Test
+    public void removeExistingBadBackend() {
+        String backendId = "mybackend";
+        BackendPool backendPool = new BackendPool();
+        createBackend(backendId, backendPool, false);
+        boolean backedRemoved = removeBackend(backendId, backendPool, false);
+
+        assertThat(backedRemoved).isTrue();
+        assertThat(backendPool.getNumEntities()).isEqualTo(0);
+        assertThat(backendPool.getEntityById(backendId)).isNull();
+    }
+
+    @Test
+    public void removeAbsentBadBackend() {
+        String backendId = "mybackend";
+        BackendPool backendPool = new BackendPool();
+        boolean backedRemoved = removeBackend(backendId, backendPool, false);
 
         assertThat(backedRemoved).isFalse();
         assertThat(backendPool.getNumEntities()).isEqualTo(0);
