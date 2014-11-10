@@ -15,7 +15,10 @@
  */
 package com.globo.galeb.criteria.impl;
 
+import java.net.InetSocketAddress;
+
 import org.vertx.java.core.MultiMap;
+import org.vertx.java.core.http.CaseInsensitiveMultiMap;
 import org.vertx.java.core.http.HttpServerRequest;
 
 import com.globo.galeb.criteria.IWhenMatch;
@@ -28,11 +31,20 @@ import com.globo.galeb.criteria.IWhenMatch;
  */
 public class RequestMatch implements IWhenMatch {
 
-    /** The match. */
-    private Object match;
+    /** The uri path. */
+    private String   uriPath       = "";
 
-    /** The req. */
-    private final HttpServerRequest req;
+    /** The headers. */
+    private MultiMap headers       = new CaseInsensitiveMultiMap();
+
+    /** The params. */
+    private MultiMap params        = new CaseInsensitiveMultiMap();
+
+    /** The remote address. */
+    private String   remoteAddress = "";
+
+    /** The remote port. */
+    private String   remotePort    = "";
 
     /**
      * Instantiates a new request match.
@@ -47,15 +59,22 @@ public class RequestMatch implements IWhenMatch {
      * @param req the req
      */
     public RequestMatch(HttpServerRequest req) {
-        this.req = req;
+        if (req!=null) {
+            this.uriPath = req.absoluteURI().getPath();
+            this.headers = req.headers();
+            this.params = req.params();
+            InetSocketAddress localRemoteAddress = req.remoteAddress();
+            this.remoteAddress = localRemoteAddress.getHostString();
+            this.remotePort = Integer.toString(localRemoteAddress.getPort());
+        }
     }
 
     /* (non-Javadoc)
      * @see com.globo.galeb.criteria.IWhenMatch#getUri()
      */
     @Override
-    public String getUri() {
-        return req.absoluteURI().getPath();
+    public String getUriPath() {
+        return uriPath;
     }
 
     /* (non-Javadoc)
@@ -63,7 +82,6 @@ public class RequestMatch implements IWhenMatch {
      */
     @Override
     public String getHeader(String header) {
-        MultiMap headers = req.headers();
         return headers.contains(header) ? headers.get(header) : null;
     }
 
@@ -72,33 +90,23 @@ public class RequestMatch implements IWhenMatch {
      */
     @Override
     public String getParam(String param) {
-        MultiMap params = req.params();
         return params.contains(param) ? params.get(param) : null;
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.criteria.IWhenMatch#isNull()
+     * @see com.globo.galeb.criteria.IWhenMatch#getRemoteAddress()
      */
     @Override
-    public boolean isNull() {
-        return req == null;
+    public String getRemoteAddress() {
+        return this.remoteAddress;
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.criteria.IWhenMatch#getMatch()
+     * @see com.globo.galeb.criteria.IWhenMatch#getRemotePort()
      */
     @Override
-    public Object getMatch() {
-        return match;
-    }
-
-    /* (non-Javadoc)
-     * @see com.globo.galeb.criteria.IWhenMatch#setMatch(java.lang.Object)
-     */
-    @Override
-    public IWhenMatch setMatch(Object match) {
-        this.match = match;
-        return this;
+    public String getRemotePort() {
+        return this.remotePort;
     }
 
 }
