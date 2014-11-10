@@ -98,7 +98,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
             this.sharedMap = null;
         }
 
-        setCriterion(new HostHeaderCriterion<Virtualhost>().setLog(log));
+        setCriterion(new HostHeaderCriterion<Virtualhost>());
 
     }
 

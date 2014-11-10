@@ -177,7 +177,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         String headerHost = "UNDEF";
         String backendId = "UNDEF";
 
-        Virtualhost virtualhost = farm.getCriterion().when(sRequest).thenGetResult();
+        Virtualhost virtualhost = farm.getCriterion().setLog(log).when(sRequest).thenGetResult();
 
         if (virtualhost==null) {
             new ServerResponse(sRequest, log, counter, false).showErrorAndClose(new NotFoundException());
