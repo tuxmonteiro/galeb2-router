@@ -23,4 +23,18 @@ package com.globo.galeb.rules;
  */
 public interface IRuleReturn {
 
+    /**
+     * Gets the return type.
+     *
+     * @return the return type
+     */
+    public String getReturnType();
+
+    /**
+     * Gets the return id.
+     *
+     * @return the return id
+     */
+    public String getReturnId();
+
 }
