@@ -15,10 +15,9 @@
  */
 package com.globo.galeb.criteria.impl;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
+import com.globo.galeb.collection.IndexedMap;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;
 
@@ -34,10 +33,10 @@ import org.vertx.java.core.logging.Logger;
 public class RandomCriterion<T> implements ICriterion<T> {
 
     /** The log. */
-    private final SafeLogger log            = new SafeLogger();
+    private final SafeLogger log  = new SafeLogger();
 
     /** The collection. */
-    private List<T>          collection     = new ArrayList<T>();
+    private Map<String, T>   map;
 
     /* (non-Javadoc)
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
@@ -54,7 +53,9 @@ public class RandomCriterion<T> implements ICriterion<T> {
     @Override
     public ICriterion<T> given(final Map<String, T> map) {
         if (map!=null) {
-            this.collection = (List<T>) map.values();
+            this.map = map;
+        } else {
+            this.map = new IndexedMap<>();
         }
         return this;
     }
@@ -72,10 +73,10 @@ public class RandomCriterion<T> implements ICriterion<T> {
      */
     @Override
     public T thenGetResult() {
-        if (collection.isEmpty()) {
+        if (map.isEmpty() || !(map instanceof IndexedMap)) {
             return null;
         }
-        return collection.get(getIntRandom());
+        return ((IndexedMap<String, T>)map).getValueByIndex(getIntRandom());
     }
 
     /**
@@ -84,9 +85,9 @@ public class RandomCriterion<T> implements ICriterion<T> {
      * @return the int random
      */
     private int getIntRandom() {
-        if (collection.isEmpty()) {
+        if (map.isEmpty()) {
             return 0;
         }
-        return (int) (Math.random() * (collection.size() - Float.MIN_VALUE));
+        return (int) (Math.random() * (map.size() - Float.MIN_VALUE));
     }
 }
