@@ -36,7 +36,7 @@ public interface ICriterion<T> {
      */
     public static enum CriterionAction {
 
-        /** The reset required. */
+        /** reset is required. */
         RESET_REQUIRED
     }
 
