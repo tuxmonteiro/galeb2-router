@@ -19,7 +19,9 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.criteria.impl.RandomCriterion;
+import com.globo.galeb.criteria.ICriterion;
+import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
+import com.globo.galeb.rules.IRuleReturn;
 
 
 /**
@@ -28,13 +30,16 @@ import com.globo.galeb.criteria.impl.RandomCriterion;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 6, 2014.
  */
-public class BackendPool extends EntitiesMap<Backend> {
+public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
+
+    /** The rule return type. */
+    private final String returnType = BackendPool.class.getSimpleName();
 
     /** The bad backends. */
     private final EntitiesMap<Backend> badBackends       = new BadBackendPool("badbackends");
 
     /** The load balance policy. */
-    private String                     loadBalancePolicy = "";
+    private ICriterion<Backend>        loadBalancePolicy = new LoadBalanceCriterion();
 
     /**
      * Instantiates a new backend pool.
@@ -59,17 +64,32 @@ public class BackendPool extends EntitiesMap<Backend> {
      */
     public BackendPool(JsonObject json) {
         super(json);
+    }
 
-        setCriterion(new RandomCriterion<Backend>());
+    /* (non-Javadoc)
+     * @see com.globo.galeb.rules.IRuleReturn#getReturnType()
+     */
+    @Override
+    public String getReturnType() {
+        return returnType;
+    }
+
+    @Override
+    public String getReturnId() {
+        return id;
     }
 
     /**
-     * Gets the load balance policy.
+     * Gets the choice.
      *
-     * @return the load balance policy
+     * @param requestData the request data
+     * @return backend
      */
-    public String getLoadBalancePolicy() {
-        return loadBalancePolicy;
+    public Backend getChoice(RequestData requestData) {
+        return loadBalancePolicy.setLog(logger)
+                                .given(getEntities())
+                                .when(requestData)
+                                .thenGetResult();
     }
 
     /**
@@ -78,8 +98,12 @@ public class BackendPool extends EntitiesMap<Backend> {
      * @param loadBalancePolicy the load balance policy
      * @return the backend pool
      */
-    public BackendPool setLoadBalancePolicy(String loadBalancePolicy) {
-        this.loadBalancePolicy = loadBalancePolicy;
+    public BackendPool setLoadBalancePolicy(String loadbalanceName) {
+        loadBalancePolicy.setLog(logger)
+                         .given(getEntities())
+                         .when(loadbalanceName)
+                         .when(ICriterion.CriterionAction.RESET_REQUIRED)
+                         .thenGetResult();
         return this;
     }
 
