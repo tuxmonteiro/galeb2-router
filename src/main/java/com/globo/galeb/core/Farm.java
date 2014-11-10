@@ -23,7 +23,6 @@ import java.util.concurrent.ConcurrentMap;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.core.bus.ICallbackQueueAction;
@@ -66,14 +65,12 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /** The verticle. */
     private final Verticle verticle;
 
-    /** The log. */
-    private final Logger log;
-
-    /** The queue service. */
-    private final IQueueService queueService;
-
     /** The shared map. */
     private final ConcurrentMap<String, String> sharedMap;
+
+    /** The backend pools. */
+    private final EntitiesMap<BackendPool> backendPools;
+
 
     /**
      * Instantiates a new farm.
@@ -90,15 +87,21 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
             this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
             this.sharedMap.put(FARM_BACKENDS_FIELDNAME, "{}");
             properties.mergeIn(verticle.getContainer().config());
-            this.log = verticle.getContainer().logger();
+            logger = verticle.getContainer().logger();
             setPlataform(verticle.getVertx());
             registerQueueAction();
         } else {
-            this.log = null;
             this.sharedMap = null;
         }
 
-        setCriterion(new HostHeaderCriterion<Virtualhost>());
+        backendPools = new BackendPools("backendpools");
+        backendPools.setFarm(this)
+                    .setLogger(logger)
+                    .setPlataform(verticle.getVertx())
+                    .setQueueService(queueService)
+                    .setStaticConf(staticConf);
+
+        setCriterion(new HostHeaderCriterion<Virtualhost>().setLog(logger));
 
     }
 
@@ -119,19 +122,10 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         this.version = version;
         String infoMessage = String.format("Version changed to %d", version);
         if (verticle!=null) {
-            log.info(infoMessage);
+            logger.info(infoMessage);
         } else {
             System.out.println(infoMessage);
         }
-    }
-
-    /**
-     * Gets the logger.
-     *
-     * @return the logger
-     */
-    public Logger getLogger() {
-        return (verticle!=null) ? log : null;
     }
 
     /**
@@ -324,6 +318,51 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
             }
         }
         return !isArray ? result : new JsonObject().putArray(String.format("%ss", clazz), entityArray).encodePrettily();
+    }
+
+    /**
+     * Gets the backend pools.
+     *
+     * @return the backend pools
+     */
+    public EntitiesMap<BackendPool> getBackendPools() {
+        return backendPools;
+    }
+
+    /**
+     * Adds the backend pool.
+     *
+     * @param backendPool the backend pool
+     */
+    public void addBackendPool(JsonObject backendPool) {
+        BackendPool backendPoolInstance = new BackendPool(backendPool);
+        backendPools.addEntity(backendPoolInstance);
+    }
+
+    /**
+     * Removes the backend pool.
+     *
+     * @param backendPoolId the backend pool id
+     */
+    public void removeBackendPool(String backendPoolId) {
+        backendPools.removeEntity(new BackendPool(backendPoolId));
+    }
+
+    /**
+     * Clear backend pools map.
+     */
+    public void clearBackendPools() {
+        backendPools.clearEntities();
+    }
+
+    /**
+     * Gets the backend pool by id.
+     *
+     * @param id the id
+     * @return the backend pool by id
+     */
+    public BackendPool getBackendPoolById(String id) {
+        return backendPools.getEntityById(id);
     }
 
 }
