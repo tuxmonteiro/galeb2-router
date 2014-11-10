@@ -16,6 +16,9 @@
 package com.globo.galeb.core;
 
 import org.vertx.java.core.json.JsonObject;
+
+import com.globo.galeb.rules.IRuleReturn;
+
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 /**
@@ -24,7 +27,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class HttpCode {
+public class HttpCode implements IRuleReturn {
 
     /** The Constant OK. */
     public static final int OK                    = HttpResponseStatus.OK.code(); // 200
@@ -59,10 +62,14 @@ public class HttpCode {
     /** The Constant GATEWAY_TIMEOUT. */
     public static final int GATEWAY_TIMEOUT       = HttpResponseStatus.GATEWAY_TIMEOUT.code(); // 504
 
+    /** The http code. */
+    private Integer httpCode = OK;
+
     /**
      * Instantiates a new http code.
      */
-    private HttpCode() {
+    public HttpCode(int httpCode) {
+        this.httpCode = httpCode;
     }
 
     /**
@@ -110,6 +117,30 @@ public class HttpCode {
      */
     public static boolean isServerError(int code) {
         return (codeFamily(code)==5);
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.rules.IRuleReturn#getReturnType()
+     */
+    @Override
+    public String getReturnType() {
+        return HttpCode.class.getSimpleName();
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.rules.IRuleReturn#getReturnId()
+     */
+    @Override
+    public String getReturnId() {
+        return this.toString();
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return httpCode.toString();
     }
 
 }
