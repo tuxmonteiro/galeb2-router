@@ -84,30 +84,56 @@ public class BackendPool extends EntitiesMap<Backend> {
     }
 
     /**
-     * Gets the bad backends.
+     * Gets the bad backends map.
      *
-     * @return the bad backends
+     * @return the bad backends map
      */
     public EntitiesMap<Backend> getBadBackends() {
         return badBackends;
     }
 
+    /**
+     * Gets the length of bad backend pool.
+     *
+     * @return the length of bad backend pool
+     */
     public int getNumBadBackend() {
         return badBackends.getNumEntities();
     }
 
+    /**
+     * Gets the bad backend by id.
+     *
+     * @param entityId the entity id
+     * @return the bad backend by id
+     */
     public Backend getBadBackendById(String entityId) {
         return badBackends.getEntityById(entityId);
     }
 
+    /**
+     * Clear bad backend.
+     */
     public void clearBadBackend() {
         badBackends.clearEntities();
     }
 
+    /**
+     * Adds the bad backend.
+     *
+     * @param entity the entity
+     * @return true, if successful
+     */
     public boolean addBadBackend(Backend entity) {
         return badBackends.addEntity(entity);
     }
 
+    /**
+     * Removes the bad backend.
+     *
+     * @param entity the entity
+     * @return true, if successful
+     */
     public boolean removeBadBackend(Backend entity) {
         return badBackends.removeEntity(entity);
     }
