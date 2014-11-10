@@ -15,9 +15,18 @@
  */
 package com.globo.galeb.rules;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.criteria.impl.RequestMatch;
 
 
 /**
@@ -26,15 +35,46 @@ import com.globo.galeb.core.entity.Entity;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 6, 2014.
  */
-public abstract class Rule<T extends IRuleReturn> extends Entity {
+public abstract class Rule extends Entity {
 
-    private T ruleReturn;
+    /** The rule return. */
+    private IRuleReturn   ruleReturn    = new HttpCode(404);
+
+    /** The priority order. */
+    private Integer       priorityOrder = 0;
+
+    /** The match. */
+    protected Object      match         = new Object();
+
+    /** The request data. */
+    protected RequestData requestData   = new RequestData();
+
+    /** The rule is the default. */
+    protected boolean     ruleDefault     = false;
+
+    /**
+     * Sort rules.
+     *
+     * @param collection the rules collection
+     * @return the list ordered
+     */
+    public static List<Rule> sortRules(Collection<? extends Rule> collection) {
+        List<Rule> sortedList = new ArrayList<Rule>();
+        sortedList.addAll(collection);
+        Collections.sort(sortedList, new Comparator<Rule>() {
+            @Override
+            public int compare(Rule rule1, Rule rule2) {
+                return rule1.getPriorityOrder()-rule2.getPriorityOrder();
+            }
+        });
+        return sortedList;
+    }
 
     /**
      * Instantiates a new rule.
      */
     public Rule() {
-        super("UNDEF");
+        this("UNDEF");
     }
 
     /**
@@ -43,7 +83,7 @@ public abstract class Rule<T extends IRuleReturn> extends Entity {
      * @param id the id
      */
     public Rule(String id) {
-        super(id);
+        this(new JsonObject().putString(ID_FIELDNAME, id));
     }
 
     /**
@@ -52,15 +92,95 @@ public abstract class Rule<T extends IRuleReturn> extends Entity {
      * @param json the json
      */
     public Rule(JsonObject json) {
-        idObj.mergeIn(json);
+        super(json);
     }
 
-    protected T getRuleReturn() {
+    /**
+     * Gets the rule return.
+     *
+     * @return the rule return
+     */
+    public IRuleReturn getRuleReturn() {
         return ruleReturn;
     }
 
-    protected void setRuleReturn(T ruleReturn) {
+    /**
+     * Sets the rule return.
+     *
+     * @param ruleReturn the rule return
+     * @return this
+     */
+    public Rule setRuleReturn(IRuleReturn ruleReturn) {
         this.ruleReturn = ruleReturn;
+        return this;
     }
+
+    /**
+     * Gets the priority order.
+     *
+     * @return the priority order
+     */
+    public Integer getPriorityOrder() {
+        return priorityOrder;
+    }
+
+    /**
+     * Sets the priority order.
+     *
+     * @param priorityOrder the priority order
+     * @return this
+     */
+    public Rule setPriorityOrder(Integer priorityOrder) {
+        this.priorityOrder = priorityOrder;
+        return this;
+    }
+
+    /**
+     * Gets the match.
+     *
+     * @return the match
+     */
+    public Object getMatch() {
+        return this.match;
+    }
+
+    /**
+     * Sets the match.
+     *
+     * @param match the match
+     * @return this
+     */
+    public Rule setMatch(Object match) {
+        this.match = match;
+        return this;
+    }
+
+    /**
+     * Checks if is rule default.
+     *
+     * @return true, if is rule default
+     */
+    public boolean isRuleDefault() {
+        return ruleDefault;
+    }
+
+    /**
+     * Sets the rule default.
+     *
+     * @param ruleDefault the rule default
+     * @return the rule
+     */
+    public Rule setRuleDefault(boolean ruleDefault) {
+        this.ruleDefault = ruleDefault;
+        return this;
+    }
+
+    /**
+     * Checks if is match with.
+     *
+     * @param requestMatch the request match
+     * @return true, if is match with
+     */
+    public abstract boolean isMatchWith(RequestMatch requestMatch);
 
 }
