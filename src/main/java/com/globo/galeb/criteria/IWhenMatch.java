@@ -28,7 +28,7 @@ public interface IWhenMatch {
      *
      * @return the uri
      */
-    public String getUri();
+    public String getUriPath();
 
     /**
      * Gets the header.
@@ -47,25 +47,16 @@ public interface IWhenMatch {
     public String getParam(String param);
 
     /**
-     * Gets the match.
+     * Gets the remote address.
      *
-     * @return the match
+     * @return the remote address
      */
-    public Object getMatch();
+    public String getRemoteAddress();
 
     /**
-     * Sets the match.
+     * Gets the remote port.
      *
-     * @param match the match
-     * @return this
+     * @return the remote port
      */
-    public IWhenMatch setMatch(Object match);
-
-    /**
-     * Checks if is null.
-     *
-     * @return true, if is null
-     */
-    public boolean isNull();
-
+    public String getRemotePort();
 }
