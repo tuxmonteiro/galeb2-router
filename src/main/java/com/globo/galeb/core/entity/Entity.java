@@ -22,6 +22,8 @@ import org.vertx.java.core.logging.Logger;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.metrics.CounterConsoleOut;
+import com.globo.galeb.metrics.ICounter;
 
 /**
  * Class Entity.
@@ -66,6 +68,9 @@ public abstract class Entity implements IJsonable {
 
     /** The static conf. */
     protected JsonObject           staticConf    = new JsonObject();
+
+    /** The counter. */
+    protected ICounter             counter       = new CounterConsoleOut();
 
     /**
      * Instantiates a new entity.
@@ -231,6 +236,17 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
+     * Sets the counter.
+     *
+     * @param counter the counter
+     * @return this
+     */
+    public Entity setCounter(ICounter counter) {
+        this.counter = counter;
+        return this;
+    }
+
+    /**
      * Update modified timestamp.
      */
     protected void updateModifiedTimestamp() {
@@ -287,4 +303,6 @@ public abstract class Entity implements IJsonable {
     public int hashCode() {
         return this.id.hashCode();
     }
+
+    public abstract void start();
 }
