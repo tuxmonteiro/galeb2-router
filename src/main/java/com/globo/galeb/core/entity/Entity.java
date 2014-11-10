@@ -43,7 +43,7 @@ public abstract class Entity implements IJsonable {
     protected Long                 modifiedAt    = System.currentTimeMillis();
 
     /** The properties. */
-    protected final JsonObject     properties    = new JsonObject();
+    protected JsonObject           properties    = new JsonObject();
 
     /** The id obj. */
     protected final JsonObject     idObj         = new JsonObject();
@@ -189,8 +189,26 @@ public abstract class Entity implements IJsonable {
     /**
      * Update modified timestamp.
      */
-    public void updateModifiedTimestamp() {
+    protected void updateModifiedTimestamp() {
         modifiedAt = System.currentTimeMillis();
+    }
+
+    /**
+     * Reset and Update properties.
+     *
+     * @param json the json with new properties
+     */
+    public void resetAndUpdateProperties(JsonObject json) {
+        this.properties = json;
+    }
+
+    /**
+     * Merge new properties.
+     *
+     * @param json the json with properties to merge
+     */
+    public void mergeNewProperties(JsonObject json) {
+        this.properties.mergeIn(json);
     }
 
     /* (non-Javadoc)
