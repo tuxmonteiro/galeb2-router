@@ -141,7 +141,12 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
 
         queueService = new VertxQueueService(vertx.eventBus(),container.logger());
         queueService.registerHealthcheck(this);
-        farm = new Farm(this, queueService);
+        farm = new Farm(this);
+        farm.setLogger(log)
+            .setPlataform(vertx)
+            .setQueueService(queueService)
+            .setStaticConf(conf)
+            .start();
 
         new VertxPeriodicScheduler(vertx)
                 .setPeriod(checkInterval).setHandler(new CheckBadBackendTaskHandler()).start();

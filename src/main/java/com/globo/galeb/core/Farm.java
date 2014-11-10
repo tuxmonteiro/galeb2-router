@@ -19,15 +19,16 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.core.bus.ICallbackQueueAction;
 import com.globo.galeb.core.bus.ICallbackSharedData;
-import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageToMap;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
 import com.globo.galeb.core.entity.EntitiesMap;
@@ -59,17 +60,17 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /** The Constant FARM_VERSION_FIELDNAME. */
     public static final String FARM_VERSION_FIELDNAME      = "version";
 
-    /** The version. */
-    private Long version = 0L;
-
     /** The verticle. */
     private final Verticle verticle;
 
+    /** The version. */
+    private Long version = 0L;
+
     /** The shared map. */
-    private final ConcurrentMap<String, String> sharedMap;
+    private ConcurrentMap<String, String> sharedMap = new ConcurrentHashMap<String, String>();
 
     /** The backend pools. */
-    private final EntitiesMap<BackendPool> backendPools;
+    private EntitiesMap<BackendPool> backendPools;
 
 
     /**
@@ -78,31 +79,40 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      * @param verticle the verticle
      * @param queueService the queue service
      */
-    public Farm(final Verticle verticle, final IQueueService queueService) {
+    public Farm(final Verticle verticle) {
         super("farm");
+        setFarm(this);
         this.verticle = verticle;
-        this.queueService = queueService;
-        if (verticle!=null) {
-            this.sharedMap = verticle.getVertx().sharedData().getMap(FARM_SHAREDDATA_ID);
+    }
+
+    private Farm prepareSharedMap() {
+        if (plataform instanceof Vertx) {
+            this.sharedMap = ((Vertx)plataform).sharedData().getMap(FARM_SHAREDDATA_ID);
             this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
             this.sharedMap.put(FARM_BACKENDS_FIELDNAME, "{}");
-            properties.mergeIn(verticle.getContainer().config());
-            logger = verticle.getContainer().logger();
-            setPlataform(verticle.getVertx());
-            registerQueueAction();
-        } else {
-            this.sharedMap = null;
         }
+        return this;
+    }
 
+    private Farm prepareBackendPools() {
         backendPools = new BackendPools("backendpools");
-        backendPools.setFarm(this)
+        backendPools.setFarm(farm)
                     .setLogger(logger)
-                    .setPlataform(verticle.getVertx())
+                    .setPlataform(plataform)
                     .setQueueService(queueService)
                     .setStaticConf(staticConf);
+        return this;
+    }
 
+    @Override
+    public void start() {
+        if (verticle!=null) {
+            properties.mergeIn(verticle.getContainer().config());
+        }
+        prepareSharedMap();
+        prepareBackendPools();
+        registerQueueAction();
         setCriterion(new HostHeaderCriterion<Virtualhost>().setLog(logger));
-
     }
 
     /**
@@ -202,11 +212,13 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /**
      * Register queue action.
      */
-    public void registerQueueAction() {
-        queueService.registerQueueAdd(verticle, this);
-        queueService.registerQueueDel(verticle, this);
-        queueService.registerQueueVersion(verticle, this);
-        queueService.registerUpdateSharedData(verticle, this);
+    private void registerQueueAction() {
+        if (queueService!=null) {
+            queueService.registerQueueAdd(verticle, this);
+            queueService.registerQueueDel(verticle, this);
+            queueService.registerQueueVersion(verticle, this);
+            queueService.registerUpdateSharedData(verticle, this);
+        }
     }
 
     /* (non-Javadoc)

@@ -54,7 +54,9 @@ public class RouterRequestHandlerTest {
         logger = new FakeLogger(logDelegate);
         ICounter counter = new CounterConsoleOut();
         IQueueService queueService = new VertxQueueService(null, null);
-        farm = new Farm(null, queueService);
+        farm = new Farm(verticle);
+        farm.setQueueService(queueService)
+            .setPlataform(vertx);
 
         when(verticle.getVertx()).thenReturn(vertx);
         when(verticle.getVertx().eventBus()).thenReturn(null);

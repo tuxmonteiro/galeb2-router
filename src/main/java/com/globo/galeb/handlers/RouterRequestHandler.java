@@ -177,7 +177,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         String headerHost = "UNDEF";
         String backendId = "UNDEF";
 
-        Virtualhost virtualhost = farm.getCriterion().setLog(log).when(sRequest).thenGetResult();
+        Virtualhost virtualhost = farm.getCriterion().when(sRequest).thenGetResult();
 
         if (virtualhost==null) {
             new ServerResponse(sRequest, log, counter, false).showErrorAndClose(new NotFoundException());
@@ -235,7 +235,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
 
         final Backend backend = virtualhost.getChoice(new RequestData(sRequest))
-                                                .setCounter(counter)
                                                 .setKeepAlive(connectionKeepalive);
 
         log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));

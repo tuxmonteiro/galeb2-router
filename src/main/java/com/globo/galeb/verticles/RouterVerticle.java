@@ -48,7 +48,13 @@ public class RouterVerticle extends Verticle {
       //final JsonObject conf = container.config();
       final ICounter counter = new CounterWithEventBus(vertx.eventBus());
       final IQueueService queueService = new VertxQueueService(vertx.eventBus(), log);
-      final Farm farm = new Farm(this, queueService);
+      final Farm farm = new Farm(this);
+      farm.setLogger(log)
+          .setPlataform(vertx)
+          .setQueueService(queueService)
+          .setStaticConf(container.config())
+          .setCounter(counter)
+          .start();
 
       final Server server = new Server(vertx, container, counter);
 

@@ -22,6 +22,7 @@ import java.io.UnsupportedEncodingException;
 
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.testtools.TestVerticle;
 
 import com.globo.galeb.core.Backend;
@@ -30,6 +31,7 @@ import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class FarmTest extends TestVerticle {
 
@@ -37,10 +39,24 @@ public class FarmTest extends TestVerticle {
     private String virtualhostId = "test.virtualhost.com";
     private JsonObject backendJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "0.0.0.0:00");
     private IQueueService queueService = mock(IQueueService.class);
+    private LogDelegate logDelegate;
+    private FakeLogger logger;
+    private Farm farm;
+
+    private void setUp() {
+        logDelegate = mock(LogDelegate.class);
+        logger = new FakeLogger(logDelegate);
+        ((FakeLogger)logger).setQuiet(false);
+        ((FakeLogger)logger).setTestId("");
+
+        farm = new Farm(this);
+        farm.setQueueService(queueService).setLogger(logger).start();
+
+    }
 
     @Test
     public void insert10NewVirtualhost() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         for (int x=0; x<10;x++) {
             JsonObject virtualhostJson =
@@ -60,7 +76,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void insert10NewBackends() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String message = "";
         JsonObject virtualhostJson =
@@ -90,7 +106,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void insertNewVirtualhostToRouteMap() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String uriStr = "/virtualhost";
         String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
@@ -109,7 +125,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void insertDuplicatedVirtualhostToRouteMap() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String uriStr = "/virtualhost";
         String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
@@ -129,7 +145,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void removeExistingVirtualhostFromRouteMap() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String messageAdd = new MessageBus()
                                 .setEntity(virtualhostJson)
@@ -154,7 +170,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void removeAbsentVirtualhostFromRouteMap() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String uriStr = String.format("/virtualhost/%s", virtualhostJson);
         String message = new MessageBus()
@@ -172,7 +188,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void insertNewBackendToExistingVirtualhostSet() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String messageVirtualhost = new MessageBus()
                                         .setEntity(virtualhostJson)
@@ -197,7 +213,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void insertNewBackendToAbsentVirtualhostSet() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String messageBackend = new MessageBus()
                                     .setParentId(virtualhostId)
@@ -215,7 +231,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void insertDuplicatedBackendToExistingVirtualhostSet() {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
 
@@ -247,7 +263,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void removeExistingBackendFromExistingVirtualhostSet() throws UnsupportedEncodingException {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
 
@@ -279,7 +295,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void removeBackendFromAbsentVirtualhostSet() throws UnsupportedEncodingException {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String messageBackend = new MessageBus()
                                         .setParentId(virtualhostId)
@@ -297,7 +313,7 @@ public class FarmTest extends TestVerticle {
 
     @Test
     public void removeAbsentBackendFromVirtualhostSet() throws UnsupportedEncodingException {
-        Farm farm = new Farm(this, queueService);
+        setUp();
 
         String statusStr = "";
         String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);

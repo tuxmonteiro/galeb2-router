@@ -76,7 +76,13 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
         final ICounter counter = new CounterWithEventBus(vertx.eventBus());
         server = new Server(vertx, container, counter);
         queueService = new VertxQueueService(vertx.eventBus(), log);
-        farm = new Farm(this, queueService);
+        farm = new Farm(this);
+        farm.setLogger(log)
+            .setPlataform(vertx)
+            .setQueueService(queueService)
+            .setCounter(counter)
+            .setStaticConf(conf)
+            .start();
 
         startHttpServer(conf);
 
