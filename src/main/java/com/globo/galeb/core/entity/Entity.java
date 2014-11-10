@@ -19,6 +19,7 @@ import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.Server;
 import com.globo.galeb.core.bus.IQueueService;
 
@@ -53,6 +54,9 @@ public abstract class Entity implements IJsonable {
 
     /** The plataform */
     protected Object               plataform     = null;
+
+    /** The farm instance */
+    protected Farm                 farm          = null;
 
     /** The queue service */
     protected IQueueService        queueService  = null;
@@ -130,6 +134,26 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
+     * Gets the farm.
+     *
+     * @return the farm
+     */
+    public Farm getFarm() {
+        return farm;
+    }
+
+    /**
+     * Sets the farm.
+     *
+     * @param farm the farm
+     * @return this
+     */
+    public Entity setFarm(Farm farm) {
+        this.farm = farm;
+        return this;
+    }
+
+    /**
      * Sets the queue service.
      *
      * @param queueService the queue service
@@ -150,6 +174,15 @@ public abstract class Entity implements IJsonable {
     public Entity setLogger(Logger logger) {
         this.logger = logger;
         return this;
+    }
+
+    /**
+     * Gets the logger.
+     *
+     * @return the logger
+     */
+    public Logger getLogger() {
+        return logger;
     }
 
     /**
@@ -183,6 +216,17 @@ public abstract class Entity implements IJsonable {
             } catch (DecodeException ignore) {}
         }
         updateModifiedTimestamp();
+        return this;
+    }
+
+    /**
+     * Sets the static conf.
+     *
+     * @param staticConf the static conf
+     * @return this
+     */
+    public Entity setStaticConf(JsonObject staticConf) {
+        setStaticConf(staticConf.encode());
         return this;
     }
 
