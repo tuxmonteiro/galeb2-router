@@ -18,10 +18,10 @@ package com.globo.galeb.core;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+import com.globo.galeb.collection.UniqueArrayList;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.list.UniqueArrayList;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
 

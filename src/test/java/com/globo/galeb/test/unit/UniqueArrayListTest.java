@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.*;
 
 import java.util.ArrayList;
 
-import com.globo.galeb.list.UniqueArrayList;
+import com.globo.galeb.collection.UniqueArrayList;
 
 import org.junit.Test;
 
