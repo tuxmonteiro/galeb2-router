@@ -20,8 +20,8 @@ import java.util.Iterator;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.entity.IJsonable;
 
 /**
@@ -72,7 +72,7 @@ public class FarmMap extends MessageToMap<Farm> {
 
             backendPoolMap.add();
 
-            JsonArray backends = backendPoolJson.getArray(Virtualhost.BACKENDS_FIELDNAME);
+            JsonArray backends = backendPoolJson.getArray(BackendPool.BACKENDS_FIELDNAME);
             if (backends==null) {
                 return isOk;
             }

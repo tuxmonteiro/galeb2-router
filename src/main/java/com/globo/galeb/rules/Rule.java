@@ -109,6 +109,7 @@ public abstract class Rule extends Entity {
         ruleDefault = properties.getBoolean(DEFAULT_FIELDNAME, false);
         priorityOrder = properties.getInteger(ORDERNUM_FIELDNAME, 0);
         match = properties.getString(MATCH_FIELDNAME, UNDEF);
+        entityType = Rule.class.getSimpleName().toLowerCase();
     }
 
     /**
