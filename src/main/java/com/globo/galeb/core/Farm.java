@@ -49,7 +49,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     public static final String FARM_MAP                    = "farm";
 
     /** The Constant FARM_BACKENDS_FIELDNAME. */
-    public static final String FARM_BACKENDS_FIELDNAME     = "backends";
+    public static final String FARM_BACKENDPOOLS_FIELDNAME = "backendpools";
 
     /** The Constant FARM_VIRTUALHOSTS_FIELDNAME. */
     public static final String FARM_VIRTUALHOSTS_FIELDNAME = "virtualhosts";
@@ -62,8 +62,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
 
 
     /** The Constant REQUEST_TIMEOUT_FIELDNAME. */
-    public static final String REQUEST_TIMEOUT_FIELDNAME     = "requestTimeOut";
-
+    public static final String REQUEST_TIMEOUT_FIELDNAME   = "requestTimeOut";
 
     /** The verticle. */
     private final Verticle verticle;
@@ -75,7 +74,8 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     private ConcurrentMap<String, String> sharedMap = new ConcurrentHashMap<String, String>();
 
     /** The backend pools. */
-    private EntitiesMap<BackendPool> backendPools;
+    private EntitiesMap<BackendPool> backendPools = new BackendPools("backendpools");
+
 
     /**
      * Instantiates a new farm.
@@ -93,13 +93,12 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         if (plataform instanceof Vertx) {
             this.sharedMap = ((Vertx)plataform).sharedData().getMap(FARM_SHAREDDATA_ID);
             this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
-            this.sharedMap.put(FARM_BACKENDS_FIELDNAME, "{}");
+            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, "{}");
         }
         return this;
     }
 
     private Farm prepareBackendPools() {
-        backendPools = new BackendPools("backendpools");
         backendPools.setFarm(farm)
                     .setLogger(logger)
                     .setPlataform(plataform)
@@ -174,6 +173,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         idObj.removeField(STATUS_FIELDNAME);
         idObj.putNumber(FARM_VERSION_FIELDNAME, version);
         JsonArray virtualServerArray = new JsonArray();
+        JsonArray backendPoolArray = new JsonArray();
 
         for (String vhost : getEntities().keySet()) {
             Virtualhost virtualserver = getEntityById(vhost);
@@ -182,8 +182,17 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
             }
             virtualServerArray.add(virtualserver.toJson());
         }
-
         idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, virtualServerArray);
+
+        for (String bepool : getBackendPools().getEntities().keySet()) {
+            BackendPool backendPool = getBackendPoolById(bepool);
+            if (backendPool==null) {
+                continue;
+            }
+            backendPoolArray.add(backendPool.toJson());
+        }
+        idObj.putArray(FARM_BACKENDPOOLS_FIELDNAME, backendPoolArray);
+
         return super.toJson();
     }
 
@@ -232,7 +241,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         if (verticle instanceof RouterVerticle) {
             this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
             String backendClassName = Backend.class.getSimpleName().toLowerCase();
-            this.sharedMap.put(FARM_BACKENDS_FIELDNAME, collectionToJson("", getBackends(), backendClassName));
+            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, collectionToJson("", getBackends(), backendClassName));
         }
     }
 
@@ -274,7 +283,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         try {
             Thread.sleep(500);
         } catch (InterruptedException ignore) {}
-        return getJsonObject(id, this.sharedMap.get(FARM_BACKENDS_FIELDNAME), Backend.class.getSimpleName().toLowerCase());
+        return getJsonObject(id, this.sharedMap.get(FARM_BACKENDPOOLS_FIELDNAME), Backend.class.getSimpleName().toLowerCase());
     }
 
     /**

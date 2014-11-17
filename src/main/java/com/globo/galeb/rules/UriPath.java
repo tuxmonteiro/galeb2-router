@@ -29,6 +29,7 @@ import com.globo.galeb.criteria.impl.RequestMatch;
  */
 public class UriPath extends Rule {
 
+
     public UriPath() {
         this(new JsonObject().putString(ID_FIELDNAME, UUID.randomUUID().toString()));
     }

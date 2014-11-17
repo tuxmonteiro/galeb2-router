@@ -15,6 +15,7 @@
  */
 package com.globo.galeb.core;
 
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.entity.EntitiesMap;
@@ -22,7 +23,7 @@ import com.globo.galeb.criteria.impl.RulesCriterion;
 import com.globo.galeb.rules.Rule;
 
 /**
- * Class VirtualServer.
+ * Class Virtualhost.
  *
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 10, 2014.
@@ -32,8 +33,8 @@ public class Virtualhost extends EntitiesMap<Rule> {
     /** The Constant ENABLE_ACCESSLOG_FIELDNAME. */
     public static final String ENABLE_ACCESSLOG_FIELDNAME = "enableAccessLog";
 
-    /** The Constant BACKENDS_FIELDNAME. */
-    public static final String BACKENDS_FIELDNAME         = "backends";
+    /** The Constant RULES_FIELDNAME. */
+    public static final String RULES_FIELDNAME            = "rules";
 
     /**
      * Instantiates a new virtual server.
@@ -66,6 +67,22 @@ public class Virtualhost extends EntitiesMap<Rule> {
     @Override
     public void start() {
         setCriterion(new RulesCriterion().given(getEntities()).setLog(logger));
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#toJson()
+     */
+    @Override
+    public JsonObject toJson() {
+        prepareJson();
+
+        JsonArray rulesArray = new JsonArray();
+        for (Rule rule: getEntities().values()) {
+            rulesArray.addObject(rule.toJson());
+        }
+        idObj.putArray(RULES_FIELDNAME, rulesArray);
+
+        return super.toJson();
     }
 
 }
