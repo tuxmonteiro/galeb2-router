@@ -15,12 +15,11 @@
  */
 package com.globo.galeb.core.bus;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
+
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.entity.Entity;
 
 /**
@@ -44,8 +43,8 @@ public abstract class MessageToMap<T extends Entity> {
     /** The parent id. */
     protected String parentId       = "";
 
-    /** The map. */
-    protected Map<String, T> map    = new HashMap<>();
+    /** The farm. */
+    protected Farm farm             = null;
 
     /** The message bus. */
     protected MessageBus messageBus = new MessageBus().setUri("/null");
@@ -104,15 +103,13 @@ public abstract class MessageToMap<T extends Entity> {
     }
 
     /**
-     * Sets the map.
+     * Sets the farm.
      *
-     * @param map the map
-     * @return this
+     * @param farm the farm
+     * @return the message to map
      */
-    public MessageToMap<T> setMap(final Map<String, T> map) {
-        if (map!=null) {
-            this.map = map;
-        }
+    public MessageToMap<T> setFarm(Farm farm) {
+        this.farm = farm;
         return this;
     }
 
@@ -132,36 +129,28 @@ public abstract class MessageToMap<T extends Entity> {
      *
      * @return true, if successful
      */
-    public boolean add() {
-        return false;
-    }
+    public abstract boolean add();
 
     /**
      * Del the entity
      *
      * @return true, if successful
      */
-    public boolean del() {
-        return false;
-    }
+    public abstract boolean del();
 
     /**
      * Reset the entity
      *
      * @return true, if successful
      */
-    public boolean reset() {
-        return false;
-    }
+    public abstract boolean reset();
 
     /**
      * Change the entity
      *
      * @return true, if successful
      */
-    public boolean change() {
-        return false;
-    }
+    public abstract boolean change();
 
     /**
      * Sets static conf (from configuration file).

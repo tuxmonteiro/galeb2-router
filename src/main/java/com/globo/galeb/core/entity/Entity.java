@@ -72,11 +72,14 @@ public abstract class Entity implements IJsonable {
     /** The counter. */
     protected ICounter             counter       = new CounterConsoleOut();
 
+    /** The entity status */
+    protected String               status        = UNDEF;
+
     /**
      * Instantiates a new entity.
      */
     protected Entity() {
-        this("UNDEF");
+        this(UNDEF);
     }
 
     /**
@@ -85,7 +88,7 @@ public abstract class Entity implements IJsonable {
      * @param id the string id
      */
     protected Entity(String id) {
-        this.id = id;
+        this(new JsonObject().putString(ID_FIELDNAME, id));
     }
 
     /**
@@ -94,9 +97,10 @@ public abstract class Entity implements IJsonable {
      * @param json the json
      */
     protected Entity(JsonObject json) {
-        this(json.getString(IJsonable.ID_FIELDNAME, "UNDEF"));
+        this.id = json.getString(IJsonable.ID_FIELDNAME, UNDEF);
         this.parentId = json.getString(IJsonable.PARENT_ID_FIELDNAME, "");
         this.properties.mergeIn(json.getObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()));
+        idObj.mergeIn(json);
     }
 
     /**
@@ -153,7 +157,7 @@ public abstract class Entity implements IJsonable {
      * @param farm the farm
      * @return this
      */
-    public Entity setFarm(Farm farm) {
+    public Entity setFarm(final Farm farm) {
         this.farm = farm;
         return this;
     }
@@ -176,7 +180,7 @@ public abstract class Entity implements IJsonable {
      * @param logger the logger instance
      * @return this
      */
-    public Entity setLogger(Logger logger) {
+    public Entity setLogger(final Logger logger) {
         this.logger = logger;
         return this;
     }
@@ -196,15 +200,17 @@ public abstract class Entity implements IJsonable {
      * @return this
      */
     protected Entity prepareJson() {
-        idObj.putString(IJsonable.ID_FIELDNAME, id);
+        idObj.putString(ID_FIELDNAME, id);
+        idObj.putString(STATUS_FIELDNAME, status);
         idObj.putObject(LINKS_FIELDNAME, new JsonObject()
             .putString(LINKS_REL_FIELDNAME, "self")
-            .putString(LINKS_HREF_FIELDNAME, String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
+            .putString(LINKS_HREF_FIELDNAME,
+                    String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
         );
         idObj.putString(STATUS_FIELDNAME, "created");
-        idObj.putNumber(IJsonable.CREATED_AT_FIELDNAME, createdAt);
-        idObj.putNumber(IJsonable.MODIFIED_AT_FIELDNAME, modifiedAt);
-        idObj.putObject(IJsonable.PROPERTIES_FIELDNAME, properties);
+        idObj.putNumber(CREATED_AT_FIELDNAME, createdAt);
+        idObj.putNumber(MODIFIED_AT_FIELDNAME, modifiedAt);
+        idObj.putObject(PROPERTIES_FIELDNAME, properties);
         return this;
     }
 
@@ -247,6 +253,26 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
+     * Gets the status.
+     *
+     * @return the status
+     */
+    public String getStatus() {
+        return status;
+    }
+
+    /**
+     * Sets the status.
+     *
+     * @param status the status
+     * @return the entity
+     */
+    public Entity setStatus(String status) {
+        this.status = status;
+        return this;
+    }
+
+    /**
      * Update modified timestamp.
      */
     protected void updateModifiedTimestamp() {
@@ -269,6 +295,21 @@ public abstract class Entity implements IJsonable {
      */
     public void mergeNewProperties(JsonObject json) {
         this.properties.mergeIn(json);
+    }
+
+    /**
+     * Gets the or create json property.
+     *
+     * @param fieldName the field name
+     * @param defaultData the default data
+     * @return the or create json property
+     */
+    public Object getOrCreateProperty(String fieldName, Object defaultData) {
+        if (!properties.containsField(fieldName)) {
+            properties.putValue(fieldName, defaultData);
+            updateModifiedTimestamp();
+        }
+        return properties.getField(fieldName);
     }
 
     /* (non-Javadoc)
@@ -304,5 +345,10 @@ public abstract class Entity implements IJsonable {
         return this.id.hashCode();
     }
 
-    public abstract void start();
+    /**
+     * Start entity.
+     */
+    public void start() {
+        //
+    }
 }

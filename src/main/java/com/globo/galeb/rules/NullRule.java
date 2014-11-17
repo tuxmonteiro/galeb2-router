@@ -15,6 +15,10 @@
  */
 package com.globo.galeb.rules;
 
+import java.util.UUID;
+
+import org.vertx.java.core.json.JsonObject;
+
 import com.globo.galeb.criteria.impl.RequestMatch;
 
 /**
@@ -25,17 +29,28 @@ import com.globo.galeb.criteria.impl.RequestMatch;
  */
 public class NullRule extends Rule {
 
+    /**
+     * Instantiates a new null rule.
+     */
+    public NullRule() {
+        this(new JsonObject().putString(ID_FIELDNAME, UUID.randomUUID().toString()));
+    }
+
+    /**
+     * Instantiates a new null rule.
+     *
+     * @param json the json
+     */
+    public NullRule(JsonObject json) {
+        super(json);
+    }
+
     /* (non-Javadoc)
      * @see com.globo.galeb.rules.Rule#isMatchWith(com.globo.galeb.criteria.impl.RequestMatch)
      */
     @Override
     public boolean isMatchWith(RequestMatch requestMatch) {
         return true;
-    }
-
-    @Override
-    public void start() {
-        // unnecessary
     }
 
 }

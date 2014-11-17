@@ -17,19 +17,12 @@ package com.globo.galeb.handlers.ws;
 
 import java.util.Map.Entry;
 
-import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.RemoteUser;
-import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.Virtualhost;
-
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
-import org.vertx.java.core.buffer.Buffer;
-import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.ServerWebSocket;
-import org.vertx.java.core.http.WebSocketVersion;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Container;
 
@@ -41,8 +34,8 @@ import org.vertx.java.platform.Container;
  */
 public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
-    /** The vertx. */
-    private final Vertx vertx;
+//    /** The vertx. */
+//    private final Vertx vertx;
 
     /** The logger. */
     private final Logger log;
@@ -64,7 +57,7 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
             final Vertx vertx,
             final Container container,
             final Farm farm) {
-        this.vertx = vertx;
+//        this.vertx = vertx;
         this.farm = farm;
         this.log = container.logger();
     }
@@ -92,55 +85,55 @@ public class FrontendWebSocketHandler implements Handler<ServerWebSocket> {
 
         String hostname = hostnameWithPort.split(":")[0];
 
-        final Virtualhost virtualhost = farm.getEntityById(hostname);
+        final Virtualhost virtualserver = farm.getEntityById(hostname);
 
-        if (virtualhost==null) {
+        if (virtualserver==null) {
             log.warn(String.format("Host: %s UNDEF", hostname));
             serverWebSocket.close();
             return;
         }
 
-        if (!virtualhost.hasBackends()) {
+        if (virtualserver.getEntities().isEmpty()) {
             log.warn(String.format("Host %s without backends", hostname));
             serverWebSocket.close();
             return;
         }
 
-        final Backend backend = virtualhost.getChoice(new RequestData(serverWebSocket))
-                .setKeepAlive(true)
-                .setKeepAliveTimeOut(Long.MAX_VALUE)
-                .setKeepAliveMaxRequest(Long.MAX_VALUE)
-                .setConnectionTimeout(10000)
-                .setMaxPoolSize(10);
+//        final Backend backend = virtualserver.getChoice(new RequestData(serverWebSocket))
+//                .setKeepAlive(true)
+//                .setKeepAliveTimeOut(Long.MAX_VALUE)
+//                .setKeepAliveMaxRequest(Long.MAX_VALUE)
+//                .setConnectionTimeout(10000)
+//                .setMaxPoolSize(10);
 
-        String backendId = backend.toString();
-        log.info(backend);
+//        String backendId = backend.toString();
+//        log.info(backend);
+//
+//        RemoteUser remoteUser = new RemoteUser(serverWebSocket.remoteAddress());
+//
+//        final HttpClient httpClient = backend.connect(remoteUser);
+//        final BackendWebSocketHandler backendWebSocketHandler =
+//                new BackendWebSocketHandler(vertx, log, backendId, serverWebSocket);
 
-        RemoteUser remoteUser = new RemoteUser(serverWebSocket.remoteAddress());
-
-        final HttpClient httpClient = backend.connect(remoteUser);
-        final BackendWebSocketHandler backendWebSocketHandler =
-                new BackendWebSocketHandler(vertx, log, backendId, serverWebSocket);
-
-        httpClient.connectWebsocket(serverWebSocket.uri(),
-                WebSocketVersion.RFC6455, serverWebSocket.headers(), backendWebSocketHandler);
-
-        serverWebSocket.dataHandler(new Handler<Buffer>() {
-
-            @Override
-            public void handle(Buffer buffer) {
-                backendWebSocketHandler.forwardToBackend(buffer);
-            }
-
-        });
-
-        serverWebSocket.closeHandler(new Handler<Void>() {
-            @Override
-            public void handle(Void event) {
-                log.debug("Frontend WebSocket was closed");
-                backendWebSocketHandler.closeWS();
-            }
-        });
+//        httpClient.connectWebsocket(serverWebSocket.uri(),
+//                WebSocketVersion.RFC6455, serverWebSocket.headers(), backendWebSocketHandler);
+//
+//        serverWebSocket.dataHandler(new Handler<Buffer>() {
+//
+//            @Override
+//            public void handle(Buffer buffer) {
+//                backendWebSocketHandler.forwardToBackend(buffer);
+//            }
+//
+//        });
+//
+//        serverWebSocket.closeHandler(new Handler<Void>() {
+//            @Override
+//            public void handle(Void event) {
+//                log.debug("Frontend WebSocket was closed");
+//                backendWebSocketHandler.closeWS();
+//            }
+//        });
 
     }
 }

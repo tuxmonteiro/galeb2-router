@@ -17,11 +17,8 @@ package com.globo.galeb.loadbalance.impl;
 
 import java.util.List;
 
-import org.vertx.java.core.json.JsonObject;
-
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 /**
@@ -44,25 +41,23 @@ public class LeastConnPolicy implements ILoadBalancePolicy {
     @Override
     public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
 
-        JsonObject properties = requestData.getProperties();
-        long timeout = properties.getLong(ILoadBalancePolicy.CACHE_TIMEOUT_FIELDNAME, 2000L);
-        boolean transientState = properties.getBoolean(Virtualhost.TRANSIENT_STATE_FIELDNAME, false);
+//        JsonObject properties = requestData.getProperties();
+//        long timeout = properties.getLong(ILoadBalancePolicy.CACHE_TIMEOUT_FIELDNAME, 2000L);
 
         long now = System.currentTimeMillis();
 
         if (leastConnectionsFinder == null) {
-            transientState = false;
             lastReset = now;
             leastConnectionsFinder = new LeastConnectionsFinder(backends);
         }
 
-        if (transientState) {
-            leastConnectionsFinder.rebuild(backends);
-            lastReset = now;
-        } else if ((lastReset + timeout) < now) {
-            leastConnectionsFinder.update();
-            lastReset = now;
-        }
+//        if (transientState) {
+//            leastConnectionsFinder.rebuild(backends);
+//            lastReset = now;
+//        } else if ((lastReset + timeout) < now) {
+//            leastConnectionsFinder.update();
+//            lastReset = now;
+//        }
 
         return leastConnectionsFinder.get();
     }

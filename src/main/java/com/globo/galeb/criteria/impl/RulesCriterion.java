@@ -40,6 +40,7 @@ public class RulesCriterion implements ICriterion<Rule> {
     /** The map. */
     private Map<String, Rule> map = null;
 
+    /** The request match. */
     private RequestMatch requestMatch;
 
     /* (non-Javadoc)

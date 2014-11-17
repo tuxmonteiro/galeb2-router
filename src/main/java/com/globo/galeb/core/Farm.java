@@ -60,6 +60,11 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /** The Constant FARM_VERSION_FIELDNAME. */
     public static final String FARM_VERSION_FIELDNAME      = "version";
 
+
+    /** The Constant REQUEST_TIMEOUT_FIELDNAME. */
+    public static final String REQUEST_TIMEOUT_FIELDNAME     = "requestTimeOut";
+
+
     /** The verticle. */
     private final Verticle verticle;
 
@@ -71,7 +76,6 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
 
     /** The backend pools. */
     private EntitiesMap<BackendPool> backendPools;
-
 
     /**
      * Instantiates a new farm.
@@ -154,9 +158,8 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     public Set<Backend> getBackends() {
         Set<Backend> backends = new HashSet<>();
-        for (Virtualhost virtualhost: getEntities().values()) {
-            backends.addAll(virtualhost.getBackends(true));
-            backends.addAll(virtualhost.getBackends(false));
+        for (BackendPool backendpool: backendPools.getEntities().values()) {
+            backends.addAll(backendpool.getEntities().values());
         }
         return backends;
     }
@@ -170,17 +173,17 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
 
         idObj.removeField(STATUS_FIELDNAME);
         idObj.putNumber(FARM_VERSION_FIELDNAME, version);
-        JsonArray virtualhostArray = new JsonArray();
+        JsonArray virtualServerArray = new JsonArray();
 
         for (String vhost : getEntities().keySet()) {
-            Virtualhost virtualhost = getEntityById(vhost);
-            if (virtualhost==null) {
+            Virtualhost virtualserver = getEntityById(vhost);
+            if (virtualserver==null) {
                 continue;
             }
-            virtualhostArray.add(virtualhost.toJson());
+            virtualServerArray.add(virtualserver.toJson());
         }
 
-        idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, virtualhostArray);
+        idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, virtualServerArray);
         return super.toJson();
     }
 

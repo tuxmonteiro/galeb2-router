@@ -71,7 +71,7 @@ public class BackendPoolTest {
         JsonObject json = new JsonObject();
         json.putString(IJsonable.ID_FIELDNAME, backendId);
 
-        Backend backend = (Backend) new Backend(json).setPlataform(vertx);
+        Backend backend = (Backend) new Backend(json);
         if (isElegible) {
             return backendPool.addEntity(backend);
         } else {

@@ -56,13 +56,17 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
         super(json);
     }
 
+    public EntitiesMap() {
+        super(UNDEF);
+    }
+
     /**
      * Adds the entity.
      *
      * @param entity the entity
      * @return true, if successful
      */
-    public boolean addEntity(T entity) {
+    public boolean addEntity(final T entity) {
         String id = entity.getId();
 
         if (entities.containsKey(id)) {
@@ -75,7 +79,9 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
               .setPlataform(plataform)
               .setStaticConf(staticConf)
               .setCounter(counter)
-              .start();
+              .setStatus(StatusType.RUNNING_STATUS.toString());
+
+        entity.start();
 
         entities.put(id, entity);
         if (entities.containsKey(id)) {
@@ -85,25 +91,34 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
         return false;
     }
 
+    public boolean removeEntity(String entityId) {
+        if (!entities.containsKey(entityId)) {
+            return false;
+        }
+
+        entities.remove(entityId);
+        if (!entities.containsKey(entityId)) {
+            updateModifiedTimestamp();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean removeEntity(JsonObject json) {
+        String entityId = json.getString(ID_FIELDNAME, UNDEF);
+        return removeEntity(entityId);
+    }
+
+
     /**
      * Removes the entity.
      *
      * @param entity the entity
      * @return true, if successful
      */
-    public boolean removeEntity(T entity) {
-        String id = entity.getId();
-
-        if (!entities.containsKey(id)) {
-            return false;
-        }
-
-        entities.remove(id);
-        if (!entities.containsKey(id)) {
-            updateModifiedTimestamp();
-            return true;
-        }
-        return false;
+    public boolean removeEntity(final T entity) {
+        String entityId = entity.getId();
+        return removeEntity(entityId);
     }
 
     /**

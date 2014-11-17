@@ -17,11 +17,15 @@ package com.globo.galeb.test.unit;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.HashMap;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.core.BackendPools;
 import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.BackendMap;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
@@ -36,6 +40,8 @@ public class MessageToMapBuilderTest {
     @Before
     public void setUp() throws Exception {
         farm=mock(Farm.class);
+        when(farm.getEntities()).thenReturn(new HashMap<String, Virtualhost>());
+        when(farm.getBackendPools()).thenReturn(new BackendPools("backendpools"));
     }
 
     @Test

@@ -21,6 +21,7 @@ import static org.mockito.Mockito.mock;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.IJsonable;
 
 import org.junit.Test;
 import org.vertx.java.core.http.HttpClient;
@@ -31,10 +32,14 @@ public class BackendTest extends TestVerticle {
 
     private IQueueService queueService = mock(IQueueService.class);
 
+    private JsonObject buildJsonEntity(String id) {
+        return new JsonObject().putString(IJsonable.ID_FIELDNAME, id);
+    }
+
     @Test
     public void equalsObject() {
-        Backend backend1 = (Backend) new Backend("127.0.0.1:0").setPlataform(vertx);
-        Backend backend2 = (Backend) new Backend("127.0.0.1:0").setPlataform(vertx);
+        Backend backend1 = (Backend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
+        Backend backend2 = (Backend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
 
         assertThat(backend1).isEqualTo(backend2);
 
@@ -43,8 +48,8 @@ public class BackendTest extends TestVerticle {
 
     @Test
     public void notEqualsObject() {
-        Backend backend1 = (Backend) new Backend("127.0.0.1:0").setPlataform(vertx);
-        Backend backend2 = (Backend) new Backend("127.0.0.2:0").setPlataform(vertx);
+        Backend backend1 = (Backend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
+        Backend backend2 = (Backend) new Backend(buildJsonEntity("127.0.0.2:0")).setPlataform(vertx);
 
         assertThat(backend1).isNotEqualTo(backend2);
 
@@ -70,7 +75,7 @@ public class BackendTest extends TestVerticle {
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
         backendTested.connect(remoteUser);
 
-        assertThat(backendTested.isClosed(remoteUser)).isFalse();
+        assertThat(backendTested.isClosed(remoteUser.toString())).isFalse();
 
         testComplete();
     }
@@ -82,9 +87,9 @@ public class BackendTest extends TestVerticle {
 
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
         backendTested.connect(remoteUser);
-        backendTested.close(remoteUser);
+        backendTested.close(remoteUser.toString());
 
-        assertThat(backendTested.isClosed(remoteUser)).isTrue();
+        assertThat(backendTested.isClosed(remoteUser.toString())).isTrue();
 
         testComplete();
     }

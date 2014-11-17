@@ -17,10 +17,10 @@ package com.globo.galeb.core;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.vertx.java.core.Vertx;
@@ -29,8 +29,8 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.Entity;
-import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
@@ -41,7 +41,7 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Backend extends Entity implements ICallbackConnectionCounter {
+public class Backend extends EntitiesMap<BackendSession> implements ICallbackConnectionCounter {
 
     /** The Constant KEEPALIVE_FIELDNAME. */
     public static final String KEEPALIVE_FIELDNAME             = "keepalive";
@@ -79,11 +79,40 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     /** The Constant ACTIVE_CONNECTIONS_FIELDNAME. */
     public static final String ACTIVE_CONNECTIONS_FIELDNAME    = "_activeConnections";
 
-    /** The Constant NUM_CONNECTIONS_FIELDNAME. */
-    public static final String NUM_CONNECTIONS_FIELDNAME       = "numConnections";
 
-    /** The Constant UUID_FIELDNAME. */
-    public static final String UUID_FIELDNAME                  = "uuid";
+    /** The Constant NUM_CONNECTIONS_INFO. */
+    public static final String NUM_CONNECTIONS_INFO            = "numConnections";
+
+    /** The Constant UUID_INFO_ID. */
+    public static final String UUID_INFO_ID                    = "uuid";
+
+
+    /** The Constant DEFAULT_KEEPALIVE. */
+    public static final Boolean DEFAULT_KEEPALIVE             = true;
+
+    /** The Constant DEFAULT_CONNECTION_TIMEOUT. */
+    public static final Integer DEFAULT_CONNECTION_TIMEOUT    = 60000; // 10 minutes
+
+    /** The Constant DEFAULT_KEEPALIVE_MAXREQUEST. */
+    public static final Long    DEFAULT_KEEPALIVE_MAXREQUEST  = Long.MAX_VALUE-1;
+
+    /** The Constant DEFAULT_KEEPALIVE_TIMEOUT. */
+    public static final Long    DEFAULT_KEEPALIVE_TIMEOUT     = 86400000L; // One day
+
+    /** The Constant DEFAULT_MAX_POOL_SIZE. */
+    public static final Integer DEFAULT_MAX_POOL_SIZE         = 1;
+
+    /** The Constant DEFAULT_USE_POOLED_BUFFERS. */
+    public static final Boolean DEFAULT_USE_POOLED_BUFFERS    = false;
+
+    /** The Constant DEFAULT_SEND_BUFFER_SIZE. */
+    public static final Integer DEFAULT_SEND_BUFFER_SIZE      = Constants.TCP_SEND_BUFFER_SIZE;
+
+    /** The Constant DEFAULT_RECEIVE_BUFFER_SIZE. */
+    public static final Integer DEFAULT_RECEIVE_BUFFER_SIZE   = Constants.TCP_RECEIVED_BUFFER_SIZE;
+
+    /** The Constant DEFAULT_PIPELINING. */
+    public static final Boolean DEFAULT_PIPELINING            = false;
 
 
     /** The host name or IP. */
@@ -98,47 +127,11 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     /** The queue active connections. */
     private final String queueActiveConnections;
 
-    /** The virtualhost id. */
-    private String     virtualhostId              = "";
-
-    /** The default keep alive. */
-    private Boolean defaultKeepAlive              = true;
-
-    /** The default connection timeout. */
-    private Integer defaultConnectionTimeout      = 60000; // 10 minutes
-
-    /** The default keepalive max request. */
-    private Long    defaultKeepaliveMaxRequest    = Long.MAX_VALUE-1;
-
-    /** The default keep alive time out. */
-    private Long    defaultKeepAliveTimeOut       = 86400000L; // One day
-
-    /** The default max pool size. */
-    private Integer defaultMaxPoolSize            = 1;
-
-    /** The default use pooled buffers. */
-    private Boolean defaultUsePooledBuffers       = false;
-
-    /** The default send buffer size. */
-    private Integer defaultSendBufferSize         = Constants.TCP_SEND_BUFFER_SIZE;
-
-    /** The default receive buffer size. */
-    private Integer defaultReceiveBufferSize      = Constants.TCP_RECEIVED_BUFFER_SIZE;
-
-    /** The default pipelining. */
-    private Boolean defaultPipelining             = false;
-
-    /** The map of sessions. */
-    private final Map<RemoteUser, BackendSession> sessions = new HashMap<>();
-
     /** The min session pool size. */
     private int minSessionPoolSize = 1;
 
     /** The pool avaliable. */
     private final Set<BackendSession> poolAvaliable = new HashSet<>();
-
-    /** The pool unavaliable. */
-    private final Set<BackendSession> poolUnavaliable = new HashSet<>();
 
     /** The cleanup session scheduler. */
     private IScheduler cleanupSessionScheduler    = null;
@@ -178,20 +171,18 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
         @Override
         public void handle() {
 
-            if (!backend.sessions.isEmpty() && !backend.isLocked.get()) {
+            if (!getEntities().isEmpty() && !backend.isLocked.get()) {
                 backend.isLocked.set(true);
-                Map<RemoteUser, BackendSession> tmpSessions = new HashMap<>(backend.sessions);
-                for (Entry<RemoteUser, BackendSession> entry : tmpSessions.entrySet()) {
-                    RemoteUser remoteUser = entry.getKey();
-                    BackendSession backendSession = entry.getValue();
+                Map<String, BackendSession> tmpSessions = new HashMap<>(getEntities());
+                for (BackendSession backendSession : tmpSessions.values()) {
                     if (backendSession.isClosed()) {
-                        backend.removeSession(remoteUser);
+                        removeEntity(backendSession);
                     }
                 }
                 backend.isLocked.set(false);
             }
 
-            publishConnection(sessions.size());
+            publishConnection(getEntities().size());
             numExternalSessions = 0;
 
         }
@@ -200,21 +191,10 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     /**
      * Instantiates a new backend.
      *
-     * @param backendId the backend id
-     */
-    public Backend(final String backendId) {
-        this(new JsonObject().putString(IJsonable.ID_FIELDNAME, backendId)  );
-    }
-
-    /**
-     * Instantiates a new backend.
-     *
      * @param json the json
      */
     public Backend(JsonObject json) {
-        super();
-        this.id = json.getString(IJsonable.ID_FIELDNAME, "127.0.0.1:80");
-        this.virtualhostId = json.getString(IJsonable.PARENT_ID_FIELDNAME, "");
+        super(json);
 
         String[] hostWithPortArray = id!=null ? id.split(":") : null;
         if (hostWithPortArray != null && hostWithPortArray.length>1) {
@@ -231,10 +211,6 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
             this.port = 80;
         }
 
-        if (json.containsField(IJsonable.PROPERTIES_FIELDNAME)) {
-            JsonObject jsonProperties = json.getObject(PROPERTIES_FIELDNAME, new JsonObject());
-            properties.mergeIn(jsonProperties);
-        }
         this.queueActiveConnections = String.format("%s%s", IQueueService.QUEUE_BACKEND_CONNECTIONS_PREFIX, this);
         this.myUUID = UUID.randomUUID().toString();
     }
@@ -276,27 +252,12 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     }
 
     /**
-     * Gets the or create json property.
-     *
-     * @param fieldName the field name
-     * @param defaultData the default data
-     * @return the or create json property
-     */
-    private Object getOrCreateJsonProperty(String fieldName, Object defaultData) {
-        if (!properties.containsField(fieldName)) {
-            properties.putValue(fieldName, defaultData);
-            updateModifiedTimestamp();
-        }
-        return properties.getField(fieldName);
-    }
-
-    /**
      * Gets the connection timeout.
      *
      * @return the connection timeout
      */
     public Integer getConnectionTimeout() {
-        return (Integer) getOrCreateJsonProperty(CONNECTION_TIMEOUT_FIELDNAME, defaultConnectionTimeout);
+        return (Integer) getOrCreateProperty(CONNECTION_TIMEOUT_FIELDNAME, DEFAULT_CONNECTION_TIMEOUT);
     }
 
     /**
@@ -317,7 +278,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the boolean
      */
     public Boolean isKeepalive() {
-        return (Boolean) getOrCreateJsonProperty(KEEPALIVE_FIELDNAME, defaultKeepAlive);
+        return (Boolean) getOrCreateProperty(KEEPALIVE_FIELDNAME, DEFAULT_KEEPALIVE);
 
     }
 
@@ -339,7 +300,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the keep alive max request
      */
     public Long getKeepAliveMaxRequest() {
-        return (Long) getOrCreateJsonProperty(KEEPALIVE_MAXREQUEST_FIELDNAME, defaultKeepaliveMaxRequest);
+        return (Long) getOrCreateProperty(KEEPALIVE_MAXREQUEST_FIELDNAME, DEFAULT_KEEPALIVE_MAXREQUEST);
     }
 
     /**
@@ -360,7 +321,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the keep alive time out
      */
     public Long getKeepAliveTimeOut() {
-        return (Long) getOrCreateJsonProperty(KEEPALIVE_TIMEOUT_FIELDNAME, defaultKeepAliveTimeOut);
+        return (Long) getOrCreateProperty(KEEPALIVE_TIMEOUT_FIELDNAME, DEFAULT_KEEPALIVE_TIMEOUT);
     }
 
     /**
@@ -381,7 +342,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the max pool size
      */
     public Integer getMaxPoolSize() {
-        return (Integer) getOrCreateJsonProperty(MAXPOOL_SIZE_FIELDNAME, defaultMaxPoolSize);
+        return (Integer) getOrCreateProperty(MAXPOOL_SIZE_FIELDNAME, DEFAULT_MAX_POOL_SIZE);
     }
 
     /**
@@ -402,7 +363,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the boolean
      */
     public Boolean isUsePooledBuffers() {
-        return (Boolean) getOrCreateJsonProperty(USE_POOLED_BUFFERS_FIELDNAME, defaultUsePooledBuffers);
+        return (Boolean) getOrCreateProperty(USE_POOLED_BUFFERS_FIELDNAME, DEFAULT_USE_POOLED_BUFFERS);
     }
 
     /**
@@ -411,7 +372,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the send buffer size
      */
     public Integer getSendBufferSize() {
-        return (Integer) getOrCreateJsonProperty(SEND_BUFFER_SIZE_FIELDNAME, defaultSendBufferSize);
+        return (Integer) getOrCreateProperty(SEND_BUFFER_SIZE_FIELDNAME, DEFAULT_SEND_BUFFER_SIZE);
     }
 
     /**
@@ -420,7 +381,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the receive buffer size
      */
     public Integer getReceiveBufferSize() {
-        return (Integer) getOrCreateJsonProperty(RECEIVED_BUFFER_SIZE_FIELDNAME, defaultReceiveBufferSize);
+        return (Integer) getOrCreateProperty(RECEIVED_BUFFER_SIZE_FIELDNAME, DEFAULT_RECEIVE_BUFFER_SIZE);
 
     }
 
@@ -430,7 +391,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the boolean
      */
     public Boolean isPipelining() {
-        return (Boolean) getOrCreateJsonProperty(PIPELINING_FIELDNAME, defaultPipelining);
+        return (Boolean) getOrCreateProperty(PIPELINING_FIELDNAME, DEFAULT_PIPELINING);
     }
 
     /**
@@ -462,6 +423,8 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
             return null;
         }
 
+        String remoteUserId = remoteUser.toString();
+
         final BackendSession backendSession;
 
         if (cleanupSessionScheduler==null && (Vertx) getPlataform()!=null) {
@@ -471,36 +434,36 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
                                             .start();
         }
 
-        if (sessions.containsKey(remoteUser)) {
-            backendSession = sessions.get(remoteUser);
+        if (getEntityById(remoteUserId)!=null) {
+            backendSession = getEntityById(remoteUserId);
         } else {
 
             if (!poolAvaliable.isEmpty()) {
 
                 backendSession = poolAvaliable.iterator().next();
+                backendSession.setRemoteUser(remoteUserId);
                 poolAvaliable.remove(backendSession);
-                poolUnavaliable.add(backendSession);
+                addEntity(backendSession);
 
             } else {
 
-                backendSession = new BackendSession(id)
-                                        .setPlataform(getPlataform())
-                                        .setQueueService(queueService)
-                                        .setMaxPoolSize(getMaxPoolSize())
-                                        .setBackendProperties(properties)
-                                        .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
-                                        .setKeepAliveTimeOut(getKeepAliveTimeOut());
+                backendSession = new BackendSession(
+                        new JsonObject().putString(ID_FIELDNAME, remoteUserId)
+                                        .putString(PARENT_ID_FIELDNAME, id)
+                                        .putObject(PROPERTIES_FIELDNAME, properties));
 
-                poolUnavaliable.add(backendSession);
+                backendSession.setPlataform(plataform)
+                              .setQueueService(queueService)
+                              .start();
 
+                addEntity(backendSession);
             }
 
-            sessions.put(remoteUser, backendSession);
 
             String backendId = this.toString();
-            if (!"".equals(virtualhostId) && !"UNDEF".equals(virtualhostId) &&
+            if (!"".equals(parentId) && !"UNDEF".equals(parentId) &&
                     !"".equals(backendId) && !"UNDEF".equals(backendId)) {
-                counter.sendActiveSessions(virtualhostId, backendId, 1L);
+                counter.sendActiveSessions(parentId, backendId, 1L);
             }
 
         }
@@ -511,18 +474,18 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     /**
      * Close connection and destroy backendSession instance.
      */
-    public void close(RemoteUser remoteUser) {
-        if (!(remoteUser==null) && sessions.containsKey(remoteUser)) {
-            BackendSession backendSession = sessions.get(remoteUser);
-            poolUnavaliable.remove(backendSession);
+    public void close(String remoteUser) {
+        if (!(remoteUser==null) && getEntityById(remoteUser)!=null) {
+            BackendSession backendSession = getEntityById(remoteUser);
+            removeEntity(remoteUser);
 
             if (poolAvaliable.size()>=minSessionPoolSize) {
                 backendSession.close();
             } else {
+                backendSession.setRemoteUser(UUID.randomUUID().toString());
                 poolAvaliable.add(backendSession);
             }
 
-            sessions.remove(remoteUser);
         }
     }
 
@@ -532,7 +495,7 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * @return the active connections
      */
     public int getActiveConnections() {
-        return sessions.size() + numExternalSessions;
+        return getEntities().size() + numExternalSessions;
     }
 
     /**
@@ -540,9 +503,9 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      *
      * @return true, if is closed
      */
-    public boolean isClosed(RemoteUser remoteUser) {
-        if (!(remoteUser==null) && sessions.containsKey(remoteUser)) {
-            return sessions.get(remoteUser).isClosed();
+    public boolean isClosed(String remoteUser) {
+        if (!(remoteUser==null) && getEntityById(remoteUser)!=null) {
+            return getEntityById(remoteUser).isClosed();
         }
         return true;
     }
@@ -553,19 +516,10 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     @Override
     public JsonObject toJson() {
         prepareJson();
-        idObj.putString(Entity.PARENT_ID_FIELDNAME, virtualhostId);
+        idObj.putString(Entity.PARENT_ID_FIELDNAME, parentId);
         idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, getActiveConnections());
 
         return super.toJson();
-    }
-
-    /**
-     * Removes the session.
-     *
-     * @param remoteUser the remote user
-     */
-    public void removeSession(RemoteUser remoteUser) {
-        sessions.remove(remoteUser);
     }
 
     /**
@@ -604,8 +558,8 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      */
     public JsonObject makeConnectionInfoMessage(int numConnection) {
         JsonObject myConnections = new JsonObject();
-        myConnections.putString(UUID_FIELDNAME, myUUID);
-        myConnections.putNumber(NUM_CONNECTIONS_FIELDNAME, numConnection);
+        myConnections.putString(UUID_INFO_ID, myUUID);
+        myConnections.putNumber(NUM_CONNECTIONS_INFO, numConnection);
         return myConnections;
     }
 
@@ -630,9 +584,9 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      */
     @Override
     public void callbackGlobalConnectionsInfo(JsonObject message) {
-        String uuid = message.getString(UUID_FIELDNAME);
+        String uuid = message.getString(UUID_INFO_ID);
         if (uuid != myUUID) {
-            int numConnections = message.getInteger(NUM_CONNECTIONS_FIELDNAME);
+            int numConnections = message.getInteger(NUM_CONNECTIONS_INFO);
             if (numConnections>=0) {
                 numExternalSessions += numConnections;
             } else {
@@ -649,13 +603,15 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
     public Backend startSessionPool() {
 
         for (int i=0 ; i<minSessionPoolSize ; i++) {
-            BackendSession backendSession = new BackendSession(id)
-                                                .setPlataform(getPlataform())
-                                                .setQueueService(queueService)
-                                                .setMaxPoolSize(getMaxPoolSize())
-                                                .setBackendProperties(properties)
-                                                .setKeepAliveMaxRequest(getKeepAliveMaxRequest())
-                                                .setKeepAliveTimeOut(getKeepAliveTimeOut());
+            BackendSession backendSession = new BackendSession(
+                    new JsonObject().putString(ID_FIELDNAME, UUID.randomUUID().toString())
+                                    .putString(PARENT_ID_FIELDNAME, id)
+                                    .putObject(PROPERTIES_FIELDNAME, properties));
+
+            backendSession.setPlataform(plataform)
+                          .setQueueService(queueService)
+                          .start();
+
             backendSession.connect();
             poolAvaliable.add(backendSession);
         }
@@ -667,20 +623,29 @@ public class Backend extends Entity implements ICallbackConnectionCounter {
      * Close all forced.
      */
     public void closeAllForced() {
-        for (BackendSession backendSession: sessions.values()) {
+        for (BackendSession backendSession: getEntities().values()) {
             backendSession.close();
         }
+
+        Iterator<BackendSession> poolAvaliableIter = poolAvaliable.iterator();
+        while (poolAvaliableIter.hasNext()) {
+            BackendSession backendSession = poolAvaliableIter.next();
+            if (!backendSession.isClosed()) {
+                backendSession.close();
+            }
+        }
         poolAvaliable.clear();
-        poolUnavaliable.clear();
-        sessions.clear();
-        cleanupSessionScheduler.cancel();
+        clearEntities();
+        if (cleanupSessionScheduler!=null) {
+            cleanupSessionScheduler.cancel();
+        }
     }
 
     /**
      * Close all.
      */
     public void closeAll() {
-        for (RemoteUser remoteUser: sessions.keySet()) {
+        for (String remoteUser: getEntities().keySet()) {
             close(remoteUser);
         }
     }

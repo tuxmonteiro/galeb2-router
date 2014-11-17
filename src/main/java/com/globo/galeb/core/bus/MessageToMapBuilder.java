@@ -15,9 +15,6 @@
  */
 package com.globo.galeb.core.bus;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.logging.Logger;
 
@@ -58,27 +55,39 @@ public class MessageToMapBuilder {
 
         switch (messageBus.getUriBase()) {
             case "farm":
-                Map<String, Farm> map = new HashMap<>();
-                map.put("farm", farm);
                 return new FarmMap()
                     .setMessageBus(messageBus)
                     .setLogger(log)
                     .setVertx(vertx)
-                    .setMap(map)
+                    .setFarm(farm)
                     .setVerticleId(verticleId);
             case "virtualhost":
                 return new VirtualhostMap()
                     .setMessageBus(messageBus)
                     .setLogger(log)
                     .setVertx(vertx)
-                    .setMap(farm.getEntities())
+                    .setFarm(farm)
                     .setVerticleId(verticleId);
             case "backend":
                 return new BackendMap()
                     .setMessageBus(messageBus)
                     .setLogger(log)
                     .setVertx(vertx)
-                    .setMap(farm.getEntities())
+                    .setFarm(farm)
+                    .setVerticleId(verticleId);
+            case "backendpool":
+                return new BackendPoolMap()
+                    .setMessageBus(messageBus)
+                    .setLogger(log)
+                    .setVertx(vertx)
+                    .setFarm(farm)
+                    .setVerticleId(verticleId);
+            case "rule":
+                return new RuleMap()
+                    .setMessageBus(messageBus)
+                    .setLogger(log)
+                    .setVertx(vertx)
+                    .setFarm(farm)
                     .setVerticleId(verticleId);
             default:
                 break;

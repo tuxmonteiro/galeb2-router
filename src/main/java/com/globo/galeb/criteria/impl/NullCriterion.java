@@ -17,6 +17,7 @@ package com.globo.galeb.criteria.impl;
 
 import java.util.Map;
 
+
 //import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;

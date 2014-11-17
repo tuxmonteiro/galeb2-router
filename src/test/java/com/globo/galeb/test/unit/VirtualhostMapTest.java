@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.impl.LogDelegate;
 
+import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.VirtualhostMap;
 import com.globo.galeb.core.entity.Entity;
@@ -43,8 +44,10 @@ public class VirtualhostMapTest {
         messageBus.setUri("/virtualhost/test.localdomain")
                   .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "test.localdomain").encode());
 
+        Farm farm = new Farm(null);
+        farm.start();
         virtualhostMap = new VirtualhostMap();
-        virtualhostMap.setMessageBus(messageBus).setLogger(logger);
+        virtualhostMap.setFarm(farm).setMessageBus(messageBus).setLogger(logger);
     }
 
     @Test

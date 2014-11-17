@@ -25,7 +25,6 @@ import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 /**
@@ -57,13 +56,11 @@ public class HashPolicy implements ILoadBalancePolicy {
         String sourceIp = requestData.getRemoteAddress();
         JsonObject properties = requestData.getProperties();
         String hashType = properties.getString(HASH_ALGORITHM_FIELDNAME, DEFAULT_HASH_ALGORITHM);
-        boolean transientState = properties.getBoolean(Virtualhost.TRANSIENT_STATE_FIELDNAME, false);
 
         int numberOfReplicas = 1;
 
         if (lastHashType == null || consistentHash == null) {
             lastHashType = hashType;
-            transientState = false;
             consistentHash = new ConsistentHash<Backend>(
                     new HashAlgorithm(hashType), numberOfReplicas, backends);
         }
@@ -71,8 +68,6 @@ public class HashPolicy implements ILoadBalancePolicy {
         if (!lastHashType.equals(hashType)) {
             consistentHash.rebuild(new HashAlgorithm(hashType), numberOfReplicas, backends);
             lastHashType = hashType;
-        } else if (transientState) {
-            consistentHash.rebuild(null, null, backends);
         }
 
         return consistentHash.get(sourceIp);

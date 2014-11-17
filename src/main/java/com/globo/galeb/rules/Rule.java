@@ -23,8 +23,6 @@ import java.util.List;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.criteria.impl.RequestMatch;
 
@@ -37,17 +35,32 @@ import com.globo.galeb.criteria.impl.RequestMatch;
  */
 public abstract class Rule extends Entity {
 
+    /** The Constant RULETYPE_FIELDNAME. */
+    public static final String RULETYPE_FIELDNAME   = "ruleType";
+
+    /** The Constant RETURNTYPE_FIELDNAME. */
+    public static final String RETURNTYPE_FIELDNAME = "returnType";
+
+    /** The Constant ORDERNUM_FIELDNAME. */
+    public static final String ORDERNUM_FIELDNAME   = "orderNum";
+
+    /** The Constant MATCH_FIELDNAME. */
+    public static final String MATCH_FIELDNAME      = "match";
+
+    /** The Constant RETURNID_FIELDNAME. */
+    public static final String RETURNID_FIELDNAME   = "returnId";
+
+    /** The Constant DEFAULT_FIELDNAME. */
+    public static final String DEFAULT_FIELDNAME    = "default";
+
     /** The rule return. */
-    private IRuleReturn   ruleReturn    = new HttpCode(404);
+    private IRuleReturn   ruleReturn    = null;
 
     /** The priority order. */
     private Integer       priorityOrder = 0;
 
     /** The match. */
     protected Object      match         = new Object();
-
-    /** The request data. */
-    protected RequestData requestData   = new RequestData();
 
     /** The rule is the default. */
     protected boolean     ruleDefault     = false;
@@ -74,7 +87,7 @@ public abstract class Rule extends Entity {
      * Instantiates a new rule.
      */
     public Rule() {
-        this("UNDEF");
+        this(UNDEF);
     }
 
     /**
@@ -93,6 +106,9 @@ public abstract class Rule extends Entity {
      */
     public Rule(JsonObject json) {
         super(json);
+        ruleDefault = properties.getBoolean(DEFAULT_FIELDNAME, false);
+        priorityOrder = properties.getInteger(ORDERNUM_FIELDNAME, 0);
+        match = properties.getString(MATCH_FIELDNAME, UNDEF);
     }
 
     /**
@@ -173,6 +189,15 @@ public abstract class Rule extends Entity {
     public Rule setRuleDefault(boolean ruleDefault) {
         this.ruleDefault = ruleDefault;
         return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#start()
+     */
+    @Override
+    public void start() {
+        super.start();
+        ruleReturn = new RuleReturnFactory(farm).getRuleReturn(idObj);
     }
 
     /**

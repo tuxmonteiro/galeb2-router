@@ -1,170 +1,135 @@
-/*
- * Copyright (c) 2014 Globo.com - ATeam
- * All rights reserved.
- *
- * This source is subject to the Apache License, Version 2.0.
- * Please see the LICENSE file for more information.
- *
- * Authors: See AUTHORS file
- *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
- */
 package com.globo.galeb.test.unit;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static com.globo.galeb.test.unit.assertj.custom.VirtualHostAssert.*;
+import static org.mockito.Matchers.*;
 
-import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Virtualhost;
-import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.loadbalance.ILoadBalancePolicy;
-import com.globo.galeb.loadbalance.impl.DefaultLoadBalancePolicy;
-import com.globo.galeb.loadbalance.impl.RandomPolicy;
-
-import org.junit.Before;
 import org.junit.Test;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.logging.Logger;
+
+import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.rules.Rule;
 
 public class VirtualhostTest {
 
-    String virtualhostName;
-    Virtualhost virtualhost;
-    String backend;
-    RequestData requestData;
+    Virtualhost virtualserver = new Virtualhost();
 
-    @Before
-    public void setUp(){
-        Vertx vertx = mock(DefaultVertx.class);
-        HttpClient httpClient = mock(HttpClient.class);
-        when(vertx.createHttpClient()).thenReturn(httpClient);
-
-        virtualhostName = "virtualhost1";
-        requestData = new RequestData();
-
-        JsonObject virtualhostProperties = new JsonObject()
-            .putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, RandomPolicy.class.getSimpleName());
-        JsonObject virtualhostJson = new JsonObject()
-            .putString(IJsonable.ID_FIELDNAME, virtualhostName)
-            .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
-        virtualhost = (Virtualhost) new Virtualhost(virtualhostJson).setPlataform(vertx);
-
-        backend = "0.0.0.0:0";
+    @Test
+    public void createWithDefaultContructor() {
+        assertThat(String.format("%s", virtualserver)).isEqualTo(IJsonable.UNDEF);
     }
 
     @Test
-    public void insertNewBackendInSet() {
-        boolean backendOk = true;
-
-        boolean notFail = virtualhost.addBackend(backend, backendOk);
-
-        assertThat(virtualhost).hasActionOk(notFail).hasSize(1, backendOk);
+    public void createWithContructorWithId() {
+        String id = "NOT_UNDEF";
+        Virtualhost virtualserver2 = new Virtualhost(id);
+        assertThat(String.format("%s", virtualserver2)).isEqualTo(id);
     }
 
     @Test
-    public void insertNewBadBackendInSet() {
-        boolean backendOk = false;
+    public void createWithContructorWithJson() {
+        String id = "NOT_UNDEF";
+        JsonObject json = new JsonObject();
+        json.putString(IJsonable.ID_FIELDNAME, id);
+        Virtualhost virtualserver2 = new Virtualhost(json);
 
-        boolean notExist = virtualhost.addBackend(backend, backendOk);
-
-        assertThat(virtualhost).hasActionOk(notExist).hasSize(1, backendOk);
+        assertThat(String.format("%s", virtualserver2)).isEqualTo(id);
     }
 
     @Test
-    public void insertDuplicatedBackendInSet() {
-        boolean backendOk = true;
-
-        virtualhost.addBackend(backend, backendOk);
-        boolean notFail = virtualhost.addBackend(backend, backendOk);
-
-        assertThat(virtualhost).hasActionFail(notFail).hasSize(1, backendOk);
-
+    public void areEqualsIfIdIsTheSame() {
+        String sameId = "sameId";
+        Virtualhost virtualserver1 = new Virtualhost(sameId);
+        Virtualhost virtualserver2 = new Virtualhost(sameId);
+        assertThat(virtualserver1).isEqualTo(virtualserver2);
     }
 
     @Test
-    public void insertDuplicatedBadBackendInSet() {
-        boolean backendOk = false;
-
-        virtualhost.addBackend(backend, backendOk);
-        boolean notFail = virtualhost.addBackend(backend, backendOk);
-
-        assertThat(virtualhost).hasActionFail(notFail).hasSize(1, backendOk);
-
+    public void areEqualsIfIdIsNotDefined() {
+        Virtualhost virtualserver1 = new Virtualhost();
+        Virtualhost virtualserver2 = new Virtualhost();
+        assertThat(virtualserver1).isEqualTo(virtualserver2);
     }
 
     @Test
-    public void removeExistingBackendInSet() {
-        boolean backendOk = true;
+    public void areNotEqualsIfIdIsDifferent() {
+        String oneId = "oneId";
+        String otherId = "otherId";
 
-        virtualhost.addBackend(backend, backendOk);
-        boolean notFail = virtualhost.removeBackend(backend, backendOk);
+        Virtualhost virtualserver1 = new Virtualhost(oneId);
+        Virtualhost virtualserver2 = new Virtualhost(otherId);
+        assertThat(virtualserver1).isNotEqualTo(virtualserver2);
+    }
 
-        assertThat(virtualhost).hasActionOk(notFail).hasSize(0, backendOk);
+    private boolean createRule(String ruleId, final Virtualhost virtualserver) {
+        Rule rule = mock(Rule.class);
+
+        when(rule.setLogger((Logger) anyObject())).thenReturn(rule);
+        when(rule.setCounter((ICounter) anyObject())).thenReturn(rule);
+        when(rule.setQueueService((IQueueService) anyObject())).thenReturn(rule);
+        when(rule.setFarm((Farm) anyObject())).thenReturn(rule);
+        when(rule.setPlataform(anyObject())).thenReturn(rule);
+        when(rule.setStaticConf((String) anyObject())).thenReturn(rule);
+        when(rule.setStaticConf((JsonObject) anyObject())).thenReturn(rule);
+
+        return virtualserver.addEntity(rule);
     }
 
     @Test
-    public void removeExistingBadBackendInSet() {
-        boolean backendOk = false;
+    public void addNewRule() {
+        String ruleId = "newrule";
+        boolean ruleCreated = createRule(ruleId, virtualserver);
 
-        virtualhost.addBackend(backend, backendOk);
-        boolean notFail = virtualhost.removeBackend(backend, backendOk);
-
-        assertThat(virtualhost).hasActionOk(notFail).hasSize(0, backendOk);
+        assertThat(ruleCreated).isTrue();
+        assertThat(virtualserver.getNumEntities()).isEqualTo(1);
     }
 
     @Test
-    public void removeAbsentBackendInSet() {
-        boolean backendOk = true;
+    public void addExistingRule() {
+        String ruleId = "newrule";
+        createRule(ruleId, virtualserver);
+        boolean ruleCreated = createRule(ruleId, virtualserver);
 
-        boolean notFail = virtualhost.removeBackend(backend, backendOk);
+        assertThat(ruleCreated).isFalse();
+        assertThat(virtualserver.getNumEntities()).isEqualTo(1);
+    }
 
-        assertThat(virtualhost).hasActionFail(notFail).hasSize(0, backendOk);
+    private boolean removeRule(String ruleId, final Virtualhost virtualserver) {
+        Rule rule = mock(Rule.class);
 
+        when(rule.setLogger((Logger) anyObject())).thenReturn(rule);
+        when(rule.setCounter((ICounter) anyObject())).thenReturn(rule);
+        when(rule.setQueueService((IQueueService) anyObject())).thenReturn(rule);
+        when(rule.setFarm((Farm) anyObject())).thenReturn(rule);
+        when(rule.setPlataform(anyObject())).thenReturn(rule);
+        when(rule.setStaticConf((String) anyObject())).thenReturn(rule);
+        when(rule.setStaticConf((JsonObject) anyObject())).thenReturn(rule);
+
+        return virtualserver.removeEntity(rule);
     }
 
     @Test
-    public void removeAbsentBadBackendInSet() {
-        boolean backendOk = false;
+    public void removeExistingRule() {
+        String ruleId = "myrule";
+        createRule(ruleId, virtualserver);
+        boolean ruleRemoved = removeRule(ruleId, virtualserver);
 
-        boolean notFail = virtualhost.removeBackend(backend, backendOk);
-
-        assertThat(virtualhost).hasActionFail(notFail).hasSize(0, backendOk);
-
+        assertThat(ruleRemoved).isTrue();
+        assertThat(virtualserver.getNumEntities()).isEqualTo(0);
     }
 
     @Test
-    public void loadBalancePolicyClassFound() {
-        virtualhost.setLoadBalancePolicy(RandomPolicy.class.getSimpleName());
+    public void removeAbsentRule() {
+        String ruleId = "myrule";
+        boolean ruleRemoved = removeRule(ruleId, virtualserver);
 
-        ILoadBalancePolicy loadBalance = virtualhost.getLoadBalancePolicy();
-
-        assertThat(loadBalance.isDefault()).isFalse();
+        assertThat(ruleRemoved).isFalse();
+        assertThat(virtualserver.getNumEntities()).isEqualTo(0);
     }
-
-    @Test
-    public void loadBalancePolicyClassNotFound() {
-        String loadBalancePolicyStr = "ClassNotExist";
-        virtualhost.setLoadBalancePolicy(loadBalancePolicyStr);
-
-        ILoadBalancePolicy loadBalance = virtualhost.getLoadBalancePolicy();
-
-        assertThat(loadBalance.isDefault()).isTrue();
-    }
-
-    @Test
-    public void getBackendWithLoadBalancePolicy() {
-        virtualhost.setLoadBalancePolicy(DefaultLoadBalancePolicy.class.getSimpleName());
-
-        virtualhost.addBackend(backend, true);
-
-        assertThat(virtualhost.getChoice(requestData).toString()).isEqualTo(backend);
-    }
-
 }

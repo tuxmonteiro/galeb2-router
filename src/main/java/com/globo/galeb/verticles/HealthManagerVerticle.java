@@ -24,9 +24,9 @@ import java.util.Map;
 import java.util.Set;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.ICallbackHealthcheck;
 import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.IQueueService;
@@ -210,21 +210,19 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     @Override
     public void moveBackend(String backend, boolean elegible) throws UnsupportedEncodingException {
 
-        Set<String> virtualhosts = elegible ? badBackendsMap.get(backend) : backendsMap.get(backend);
+        Set<String> backendpools = elegible ? badBackendsMap.get(backend) : backendsMap.get(backend);
 
-        if (virtualhosts!=null) {
-            Iterator<String> it = virtualhosts.iterator();
+        if (backendpools!=null) {
+            Iterator<String> it = backendpools.iterator();
             while (it.hasNext()) {
-                Virtualhost virtualhost = farm.getEntityById(it.next());
+                BackendPool backendPool = farm.getBackendPoolById(it.next());
 
                 JsonObject backendJson = null;
-                if (virtualhost!=null) {
+                if (backendPool!=null) {
 
-                    for (Backend backendSearched: virtualhost.getBackends(!elegible)) {
-                        if (backend.equals(backendSearched.toString())) {
-                            backendJson = backendSearched.toJson();
-                            break;
-                        }
+                    Backend backendSearched = elegible ? backendPool.getEntityById(backend) : backendPool.getBadBackendById(backend);
+                    if (backendSearched!=null) {
+                        backendJson = backendSearched.toJson();
                     }
 
                     if (backendJson!=null) {

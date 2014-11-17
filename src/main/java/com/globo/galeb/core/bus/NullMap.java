@@ -48,7 +48,7 @@ public class NullMap extends MessageToMap<Entity> {
         } else {
             System.err.println(logMessageOnErr);
         }
-        return super.add();
+        return false;
     }
 
     /* (non-Javadoc)
@@ -61,7 +61,7 @@ public class NullMap extends MessageToMap<Entity> {
         } else {
             System.err.println(logMessageOnErr);
         }
-        return super.del();
+        return false;
     }
 
     /* (non-Javadoc)
@@ -74,7 +74,7 @@ public class NullMap extends MessageToMap<Entity> {
         } else {
             System.err.println(logMessageOnErr);
         }
-        return super.reset();
+        return false;
     }
 
     /* (non-Javadoc)
@@ -87,7 +87,7 @@ public class NullMap extends MessageToMap<Entity> {
         } else {
             System.err.println(logMessageOnErr);
         }
-        return super.change();
+        return false;
     }
 
 }

@@ -45,7 +45,64 @@ public class FarmMap extends MessageToMap<Farm> {
     @Override
     public boolean add() {
         boolean isOk = false;
-        Farm farm = map.get("farm");
+
+        JsonArray backendPools = entity.getArray("backendpools", new JsonArray());
+
+        Iterator<Object> backendPoolsIterator = backendPools.iterator();
+        while (backendPoolsIterator.hasNext()) {
+
+            Object backendPoolObj = backendPoolsIterator.next();
+            JsonObject backendPoolJson = (JsonObject) backendPoolObj;
+
+            BackendPoolMap backendPoolMap = new BackendPoolMap();
+            backendPoolMap.staticConf(staticConf);
+
+            MessageBus backendPoolMessageBus = new MessageBus()
+                                                .setEntity(backendPoolJson.encode())
+                                                .setUri("/backendpool")
+                                                .make();
+
+            backendPoolMap.setMessageBus(backendPoolMessageBus)
+                          .setLogger(log)
+                          .setVertx(vertx)
+                                              .setFarm(farm)
+
+//                          .setMap(farm.getBackendPools().getEntities())
+                          .setVerticleId(verticleId);
+
+            backendPoolMap.add();
+
+            JsonArray backends = backendPoolJson.getArray(Virtualhost.BACKENDS_FIELDNAME);
+            if (backends==null) {
+                return isOk;
+            }
+
+            Iterator<Object> backendIterator = backends.iterator();
+            while (backendIterator.hasNext()) {
+                Object backendObj = backendIterator.next();
+                JsonObject backendJson = (JsonObject) backendObj;
+
+                BackendMap backendMap = new BackendMap();
+                backendMap.staticConf(staticConf);
+
+                String backendPoolId = backendPoolJson.getString(IJsonable.ID_FIELDNAME);
+                MessageBus backendMessageBus = new MessageBus()
+                                                    .setEntity(backendJson.encode())
+                                                    .setParentId(backendPoolId)
+                                                    .setUri("/backend")
+                                                    .make();
+
+                backendMap.setMessageBus(backendMessageBus)
+                          .setLogger(log)
+                          .setVertx(vertx)
+                                              .setFarm(farm)
+
+//                          .setMap(farm.getBackendPools().getEntities())
+                          .setVerticleId(verticleId);
+                backendMap.add();
+            }
+            isOk = true;
+        }
 
         JsonArray virtualhosts = entity.getArray("virtualhosts", new JsonArray());
 
@@ -65,40 +122,46 @@ public class FarmMap extends MessageToMap<Farm> {
             virtualhostMap.setMessageBus(virtualhostMessageBus)
                           .setLogger(log)
                           .setVertx(vertx)
-                          .setMap(farm.getEntities())
+                                              .setFarm(farm)
+
+//                          .setMap(farm.getEntities())
                           .setVerticleId(verticleId);
 
             virtualhostMap.add();
 
-            JsonArray backends = virtualhostJson.getObject(Virtualhost.BACKENDS_FIELDNAME, new JsonObject())
-                                                .getArray(Virtualhost.BACKENDS_ELIGIBLE_FIELDNAME);
-            if (backends==null) {
-                continue;
+            JsonArray rules = virtualhostJson.getArray("rules");
+            if (rules==null) {
+                return isOk;
             }
 
-            Iterator<Object> backendIterator = backends.iterator();
-            while (backendIterator.hasNext()) {
-                Object backendObj = backendIterator.next();
-                JsonObject backendJson = (JsonObject) backendObj;
+            Iterator<Object> ruleIterator = rules.iterator();
+            while (ruleIterator.hasNext()) {
+                Object ruleObj = ruleIterator.next();
+                JsonObject ruleJson = (JsonObject) ruleObj;
+                String ruleParentId = ruleJson.getString(IJsonable.PARENT_ID_FIELDNAME);
 
-                BackendMap backendMap = new BackendMap();
-                backendMap.staticConf(staticConf);
+                RuleMap ruleMap = new RuleMap();
+                ruleMap.staticConf(staticConf);
 
-                MessageBus backendMessageBus = new MessageBus()
-                                                    .setEntity(backendJson.encode())
-                                                    .setParentId(virtualhostJson.getString(IJsonable.ID_FIELDNAME))
-                                                    .setUri("/backend")
+                MessageBus ruleMessageBus = new MessageBus()
+                                                    .setEntity(ruleJson.encode())
+                                                    .setParentId(ruleParentId)
+                                                    .setUri("/rule")
                                                     .make();
 
-                backendMap.setMessageBus(backendMessageBus)
+                ruleMap.setMessageBus(ruleMessageBus)
                           .setLogger(log)
                           .setVertx(vertx)
-                          .setMap(farm.getEntities())
+                                              .setFarm(farm)
+
+//                          .setMap(farm.getEntities())
                           .setVerticleId(verticleId);
-                backendMap.add();
+                ruleMap.add();
             }
             isOk = true;
+
         }
+
 
         return isOk;
     }
@@ -109,8 +172,6 @@ public class FarmMap extends MessageToMap<Farm> {
     @Override
     public boolean del() {
         boolean isOk = false;
-        Farm farm = map.get("farm");
-
         farm.clearEntities();
 
         return isOk;

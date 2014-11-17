@@ -52,6 +52,27 @@ public interface IJsonable {
     /** The Constant LINKS_HREF_FIELDNAME. */
     public static final String LINKS_HREF_FIELDNAME  = "href";
 
+    /** The Constant UNDEF. */
+    public static final String UNDEF                 = "UNDEF";
+
+    public static enum StatusType {
+
+        ACCEPTED_STATUS("accepted"),
+        FAILED_STATUS("failed"),
+        RUNNING_STATUS("running");
+
+        final String statusType;
+        private StatusType(String statusType) {
+            this.statusType = statusType;
+        }
+
+        @Override
+        public String toString() {
+            return this.statusType;
+        }
+
+    }
+
     /**
      * json representation of the Entity.
      *

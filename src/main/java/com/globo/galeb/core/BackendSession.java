@@ -22,7 +22,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
@@ -33,46 +33,34 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class BackendSession {
-
-    /** The plataform. */
-    private Vertx plataform;
-
-    /** The backend id. */
-    private final String backendId;
+public class BackendSession extends Entity {
 
     /** The http client instance. */
-    private HttpClient         client             = null;
-
-    /** The queue service. */
-    private IQueueService      queueService       = null;
-
-    /** The backend properties. */
-    private JsonObject backendProperties    = new JsonObject();
+    private HttpClient client                  = null;
 
     /** The keep alive. */
-    private boolean    keepAlive            = true;
+    private boolean    keepAlive               = true;
 
     /** The max pool size. */
-    private int        maxPoolSize          = 1;
+    private int        maxPoolSize             = 1;
 
     /** The keep alive limit scheduler. */
     private IScheduler keepAliveLimitScheduler = null;
 
     /** The request count. */
-    private long requestCount = 0L;
+    private long       requestCount            = 0L;
 
     /** The keep alive time mark. */
-    private long keepAliveTimeMark = System.currentTimeMillis();
+    private long       keepAliveTimeMark       = System.currentTimeMillis();
 
     /** The keep alive max request. */
-    private long keepAliveMaxRequest = Long.MAX_VALUE;
+    private long       keepAliveMaxRequest     = Long.MAX_VALUE;
 
     /** The keep alive time out. */
-    private long keepAliveTimeOut = 86400000L; // One day
+    private long       keepAliveTimeOut        = 86400000L; // One day
 
     /** The is locked. */
-    private AtomicBoolean isLocked = new AtomicBoolean(false);
+    private AtomicBoolean isLocked             = new AtomicBoolean(false);
 
     /**
      * Class KeepAliveCheckLimitHandler.
@@ -117,8 +105,12 @@ public class BackendSession {
      * @param serverHost the server host
      * @param backendId the backend id
      */
-    public BackendSession(String backendId) {
-        this.backendId = backendId;
+    public BackendSession(final JsonObject json) {
+        super(json);
+        keepAlive = properties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
+        keepAliveMaxRequest = properties.getLong(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, Backend.DEFAULT_KEEPALIVE_MAXREQUEST);
+        keepAliveTimeOut = properties.getLong(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, Backend.DEFAULT_KEEPALIVE_TIMEOUT);
+        maxPoolSize = properties.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, Backend.DEFAULT_MAX_POOL_SIZE);
     }
 
     /* (non-Javadoc)
@@ -128,47 +120,6 @@ public class BackendSession {
     protected void finalize() throws Throwable {
         super.finalize();
         keepAliveLimitScheduler.cancel();
-    }
-
-    /**
-     * Sets the plataform.
-     *
-     * @param plataform the new plataform
-     */
-    public BackendSession setPlataform(final Object plataform) {
-        this.plataform = (Vertx) plataform;
-        return this;
-    }
-
-    /**
-     * Gets the plataform.
-     *
-     * @return the plataform
-     */
-    public Vertx getPlataform() {
-        return plataform;
-    }
-
-    /**
-     * Sets the keep alive max request.
-     *
-     * @param keepAliveMaxRequest the keep alive max request
-     * @return the backend session
-     */
-    public BackendSession setKeepAliveMaxRequest(long keepAliveMaxRequest) {
-        this.keepAliveMaxRequest = keepAliveMaxRequest;
-        return this;
-    }
-
-    /**
-     * Sets the keep alive time out.
-     *
-     * @param keepAliveTimeOut the keep alive time out
-     * @return the backend session
-     */
-    public BackendSession setKeepAliveTimeOut(long keepAliveTimeOut) {
-        this.keepAliveTimeOut = keepAliveTimeOut;
-        return this;
     }
 
     /**
@@ -190,17 +141,6 @@ public class BackendSession {
         return false;
     }
 
-    /**
-     * Sets the backend properties.
-     *
-     * @param backendProperties the backend properties
-     * @return the backend session
-     */
-    public BackendSession setBackendProperties(JsonObject backendProperties) {
-        this.backendProperties = backendProperties;
-        return this;
-    }
-
     // Lazy initialization
     /**
      * Connect and gets http client instance.
@@ -210,15 +150,13 @@ public class BackendSession {
     public HttpClient connect() {
 
         if (keepAlive && keepAliveLimitScheduler==null && plataform!=null) {
-            keepAliveLimitScheduler = new VertxPeriodicScheduler(plataform)
+            keepAliveLimitScheduler = new VertxPeriodicScheduler((Vertx)plataform)
                                                 .setHandler(new KeepAliveCheckLimitHandler(this))
                                                 .setPeriod(1000L)
                                                 .start();
         }
 
-        setKeepAliveFromProperties();
-
-        String[] hostWithPortArray = backendId!=null ? backendId.split(":") : null;
+        String[] hostWithPortArray = parentId!=null ? parentId.split(":") : null;
         String host = "";
         int port = 80;
         if (hostWithPortArray != null && hostWithPortArray.length>1) {
@@ -229,7 +167,7 @@ public class BackendSession {
                 port = 80;
             }
         } else {
-            host = backendId;
+            host = parentId;
             port = 80;
         }
 
@@ -238,7 +176,7 @@ public class BackendSession {
         }
 
         if (client==null && plataform!=null) {
-            client = plataform.createHttpClient();
+            client = ((Vertx) plataform).createHttpClient();
             client.setKeepAlive(keepAlive);
             client.setTCPKeepAlive(keepAlive);
             client.setMaxPoolSize(maxPoolSize);
@@ -251,20 +189,13 @@ public class BackendSession {
                 @Override
                 public void handle(Throwable e) {
                     if (queueService!=null) {
-                        queueService.publishBackendFail(backendId);
+                        queueService.publishBackendFail(id);
                     }
                 }
             });
         }
 
         return client;
-    }
-
-    /**
-     * Sets keepalive attribute from properties.
-     */
-    private void setKeepAliveFromProperties() {
-        keepAlive = backendProperties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
     }
 
     /**
@@ -307,27 +238,13 @@ public class BackendSession {
         return httpClientClosed;
     }
 
-    /**
-     * Sets the queue service.
-     *
-     * @param queueService the new queue service
-     * @return this
-     *
-     */
-    public BackendSession setQueueService(IQueueService queueService) {
-        this.queueService = queueService;
-        return this;
+    @Override
+    public void start() {
+        // unnecessary
     }
 
-    /**
-     * Sets the max pool size.
-     *
-     * @param maxPoolSize the new max pool size
-     * @return this
-     *
-     */
-    public BackendSession setMaxPoolSize(int maxPoolSize) {
-        this.maxPoolSize = maxPoolSize;
+    public BackendSession setRemoteUser(String remoteUser) {
+        this.id = remoteUser;
         return this;
     }
 

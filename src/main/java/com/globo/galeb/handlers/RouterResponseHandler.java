@@ -122,7 +122,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
-                    backend.close(remoteUser);
+                    backend.close(remoteUser.toString());
                 }
                 log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }
@@ -138,7 +138,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
 
-                backend.removeSession(remoteUser);
+                backend.removeEntity(remoteUser.toString());
             }
         });
 

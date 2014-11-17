@@ -50,7 +50,13 @@ public class ManagerService {
         FARM,
 
         /** The version. */
-        VERSION
+        VERSION,
+
+        /** The backendpool. */
+        BACKENDPOOL,
+
+        /** The rule. */
+        RULE
     }
 
     /** The manager service id. */

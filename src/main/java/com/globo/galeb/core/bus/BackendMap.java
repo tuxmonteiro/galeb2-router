@@ -16,7 +16,7 @@
 package com.globo.galeb.core.bus;
 
 import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.BackendPool;
 
 /**
  * Class BackendMap.
@@ -24,7 +24,7 @@ import com.globo.galeb.core.Virtualhost;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class BackendMap extends MessageToMap<Virtualhost> {
+public class BackendMap extends MessageToMap<BackendPool> {
 
     /**
      * Instantiates a new backend map.
@@ -44,20 +44,22 @@ public class BackendMap extends MessageToMap<Virtualhost> {
             log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
             return false;
         }
-        if (!map.containsKey(parentId)) {
-            log.warn(String.format("[%s] Backend not created, because Virtualhost %s not exist", verticleId, parentId));
+
+        if (farm.getBackendPoolById(parentId)==null) {
+            log.warn(String.format("[%s] Backend not created, because BackendPool %s not exist", verticleId, parentId));
             return false;
         } else {
 
             boolean status = entity.getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
 
-            final Virtualhost vhost = map.get(parentId);
-            if (vhost.addBackend(entity, status)) {
+            final BackendPool backendPool = farm.getBackendPoolById(parentId);
+            isOk  = status ? backendPool.addEntity(new Backend(entity)) :
+                             backendPool.addBadBackend(new Backend(entity));
+
+            if (isOk) {
                 log.info(String.format("[%s] Backend %s (%s) added", verticleId, entityId, parentId));
-                isOk = true;
             } else {
                 log.warn(String.format("[%s] Backend %s (%s) already exist", verticleId, entityId, parentId));
-                isOk = false;
             }
         }
         return isOk;
@@ -83,25 +85,29 @@ public class BackendMap extends MessageToMap<Virtualhost> {
             if ("".equals(entityId)) {
                 log.warn(String.format("[%s] Backend UNDEF", verticleId));
                 return false;
-            } else if (!map.containsKey(parentId)) {
-                log.warn(String.format("[%s] Backend not removed. Virtualhost %s not exist", verticleId, parentId));
+            } else if (farm.getBackendPoolById(parentId)==null) {
+                log.warn(String.format("[%s] Backend not removed. BackendPool %s not exist", verticleId, parentId));
                 return false;
             }
-            final Virtualhost virtualhostObj = map.get(parentId);
-            if (virtualhostObj!=null && virtualhostObj.removeBackend(entityId, status)) {
+            final BackendPool backendPool = farm.getBackendPoolById(parentId);
+            isOk = backendPool!=null;
+
+            if (isOk) {
+                isOk = status ? backendPool.removeEntity(entity) :
+                                backendPool.removeBadBackend(entity);
                 log.info(String.format("[%s] Backend %s (%s) removed", verticleId, entityId, parentId));
-                isOk = true;
             } else {
                 log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticleId, entityId, parentId));
-                isOk = false;
             }
 
             return isOk;
+
         } else {
-            for (Virtualhost virtualhost: map.values()) {
-                virtualhost.clearAll();
-                log.info(String.format("[%s] All Backends removed", verticleId));
+            for (BackendPool backendPool: farm.getBackendPools().getEntities().values()) {
+                backendPool.clearEntities();
+                backendPool.clearBadBackend();
             }
+            log.info(String.format("[%s] All Backends removed", verticleId));
             return true;
         }
     }

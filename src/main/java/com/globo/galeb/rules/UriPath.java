@@ -15,7 +15,9 @@
  */
 package com.globo.galeb.rules;
 
-import java.net.URI;
+import java.util.UUID;
+
+import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.criteria.impl.RequestMatch;
 
@@ -25,24 +27,23 @@ import com.globo.galeb.criteria.impl.RequestMatch;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 10, 2014.
  */
-public class UriPathRule extends Rule {
+public class UriPath extends Rule {
+
+    public UriPath() {
+        this(new JsonObject().putString(ID_FIELDNAME, UUID.randomUUID().toString()));
+    }
+
+    public UriPath(JsonObject json) {
+        super(json);
+    }
 
     /* (non-Javadoc)
      * @see com.globo.galeb.rules.Rule#isMatchWith(com.globo.galeb.criteria.impl.RequestMatch)
      */
     @Override
     public boolean isMatchWith(RequestMatch requestMatch) {
-        URI uri = requestData.getUri();
-        if (uri!=null) {
-            return uri.getPath().equals(match.toString());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public void start() {
-        // unnecessary
+        String uriPath = requestMatch.getUriPath();
+        return uriPath.startsWith(match.toString());
     }
 
 }

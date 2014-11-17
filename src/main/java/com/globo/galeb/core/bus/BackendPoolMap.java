@@ -15,20 +15,20 @@
  */
 package com.globo.galeb.core.bus;
 
-import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.BackendPool;
 
 /**
- * Class VirtualhostMap.
+ * Class BackendPoolMap.
  *
- * @author: See AUTHORS file.
- * @version: 1.0.0, Oct 23, 2014.
+ * @author See AUTHORS file.
+ * @version 1.0.0, Nov 16, 2014.
  */
-public class VirtualhostMap extends MessageToMap<Virtualhost> {
+public class BackendPoolMap extends MessageToMap<BackendPool> {
 
     /**
-     * Instantiates a new virtualhostMap.
+     * Instantiates a new backend pool map.
      */
-    public VirtualhostMap() {
+    public BackendPoolMap() {
         super();
     }
 
@@ -44,15 +44,14 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
             return false;
         }
 
-        if (farm.getEntityById(entityId)!=null) {
-            log.warn(String.format("[%s] Virtualhost not created. Virtualhost %s already exist", verticleId, entityId));
+        if (farm.getBackendPoolById(entityId)!=null) {
+            log.warn(String.format("[%s] BackendPool not created. BackendPool %s already exist", verticleId, entityId));
             return false;
         }
+        farm.addBackendPool(entity);
 
-        if (farm.getEntityById(entityId)==null) {
-
-            farm.addEntity(new Virtualhost(entity));
-            log.info(String.format("[%s] %s added", verticleId, entityId));
+        if (farm.getBackendPoolById(entityId)!=null) {
+            log.info(String.format("[%s] BackendPool %s added", verticleId, entityId));
             isOk = true;
         } else {
             isOk = false;
@@ -71,18 +70,18 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
 
         if (!hasUriBaseOnly) {
 
-            if (farm.getEntityById(entityId)!=null) {
-                farm.removeEntity(entityId);
-                log.info(String.format("[%s] Virtualhost %s removed", verticleId, entityId));
+            if (farm.getBackendPoolById(entityId)!=null) {
+                farm.removeBackendPool(entityId);
+                log.info(String.format("[%s] BackendPool %s removed", verticleId, entityId));
                 isOk = true;
             } else {
-                log.warn(String.format("[%s] Virtualhost not removed. Virtualhost %s not exist", verticleId, entityId));
+                log.warn(String.format("[%s] BackendPool not removed. BackendPool %s not exist", verticleId, entityId));
                 isOk = false;
             }
             return isOk;
         } else {
-            farm.clearEntities();
-            log.info(String.format("[%s] All Virtualhosts removed", verticleId));
+            farm.clearBackendPools();
+            log.info(String.format("[%s] All BackendPools removed", verticleId));
             return true;
         }
     }
@@ -92,7 +91,7 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
      */
     @Override
     public boolean reset() {
-        // TODO
+        // TODO Auto-generated method stub
         return false;
     }
 
@@ -101,7 +100,7 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
      */
     @Override
     public boolean change() {
-        // TODO
+        // TODO Auto-generated method stub
         return false;
     }
 

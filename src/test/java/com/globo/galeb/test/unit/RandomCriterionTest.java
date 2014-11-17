@@ -18,8 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.loadbalance.impl.RandomPolicy;
 
@@ -30,9 +31,9 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 
-public class RandomPolicyTest {
+public class RandomCriterionTest {
 
-    Virtualhost virtualhost;
+    BackendPool backendPool;
     int numBackends = 10;
 
     @Before
@@ -42,15 +43,15 @@ public class RandomPolicyTest {
         HttpClient httpClient = mock(HttpClient.class);
         when(vertx.createHttpClient()).thenReturn(httpClient);
 
-        JsonObject virtualhostProperties = new JsonObject()
-            .putString(Virtualhost.LOADBALANCE_POLICY_FIELDNAME, RandomPolicy.class.getSimpleName());
-        JsonObject virtualhostJson = new JsonObject()
+        JsonObject backendPoolProperties = new JsonObject()
+            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME, RandomPolicy.class.getSimpleName());
+        JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
-            .putObject(IJsonable.PROPERTIES_FIELDNAME, virtualhostProperties);
-        virtualhost = (Virtualhost) new Virtualhost(virtualhostJson).setPlataform(vertx);
+            .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
+        backendPool = (BackendPool) new BackendPool(backendPoolJson).setPlataform(vertx);
 
         for (int x=0; x<numBackends; x++) {
-            virtualhost.addBackend(String.format("0:%s", x), true);
+            backendPool.addEntity(new Backend(new JsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%s", x))));
         }
     }
 
@@ -63,7 +64,7 @@ public class RandomPolicyTest {
         long initialTime = System.currentTimeMillis();
         for (int x=0; x<samples; x++) {
             RequestData requestData = new RequestData("127.0.0.1", null);
-            sum += virtualhost.getChoice(requestData).getPort();
+            sum += backendPool.getChoice(requestData).getPort();
         }
         long finishTime = System.currentTimeMillis();
 

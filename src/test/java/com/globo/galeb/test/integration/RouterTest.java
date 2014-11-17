@@ -14,12 +14,16 @@
  */
 package com.globo.galeb.test.integration;
 
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.rules.Rule;
+import com.globo.galeb.rules.UriPath;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
@@ -101,22 +105,46 @@ public class RouterTest extends UtilTestVerticle {
     @Test
     public void testRouterWith1VHostAnd1TimeoutBackend() {
         // The timeout is set to 1s at test initialization
+
+        String backendPoolId = UUID.randomUUID().toString();
+        JsonObject backendPoolJson = new JsonObject()
+                                            .putNumber("version", 1L)
+                                            .putString(IJsonable.ID_FIELDNAME, backendPoolId);
+
+        JsonObject backendJson = new JsonObject()
+                                        .putNumber("version", 2L)
+                                        .putString(MessageBus.PARENT_ID_FIELDNAME, backendPoolId)
+                                        .putString(IJsonable.ID_FIELDNAME, "1.2.3.4:8888");
+
+
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
-                                    .putNumber("version", 1L)
+                                    .putNumber("version", 3L)
                                     .putString(IJsonable.ID_FIELDNAME, vhostId);
-        JsonObject backend = new JsonObject()
-                                    .putNumber("version", 2L)
+
+        JsonObject ruleJson = new JsonObject()
+                                    .putNumber("version", 4L)
                                     .putString(MessageBus.PARENT_ID_FIELDNAME, vhostId)
-                                    .putString(IJsonable.ID_FIELDNAME, "1.2.3.4:8888");
+                                    .putString(IJsonable.ID_FIELDNAME, UUID.randomUUID().toString())
+                                    .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()
+                                        .putString(Rule.RULETYPE_FIELDNAME, UriPath.class.getSimpleName())
+                                        .putString(Rule.MATCH_FIELDNAME, "/")
+                                        .putString(Rule.RETURNTYPE_FIELDNAME, BackendPool.class.getSimpleName())
+                                        .putString(Rule.RETURNID_FIELDNAME, backendPoolId)
+                                        .putNumber(Rule.ORDERNUM_FIELDNAME, 0));
+
 
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
-        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
+        Action action1 = newPost().onPort(9000).setBodyJson(backendPoolJson).atUri("/backendpool").expectBodyJson(expectedJson);
 
-        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action2 = newPost().onPort(9000).setBodyJson(backendJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
 
-        newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.GATEWAY_TIMEOUT).expectBodySize(0).after(action2);
+        Action action3 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson).after(action2);
+
+        Action action4 = newPost().onPort(9000).setBodyJson(ruleJson).atUri("/rule").expectBodyJson(expectedJson).after(action3);
+
+        newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").expectCode(HttpCode.GATEWAY_TIMEOUT).expectBodySize(0).after(action4);
 
         action1.run();
 
@@ -134,28 +162,51 @@ public class RouterTest extends UtilTestVerticle {
         });
         server.listen(8888, "localhost");
 
-        // Create Jsons
+        String backendPoolId = UUID.randomUUID().toString();
+        JsonObject backendPoolJson = new JsonObject()
+                                            .putNumber("version", 1L)
+                                            .putString(IJsonable.ID_FIELDNAME, backendPoolId);
+
+        JsonObject backendJson = new JsonObject()
+                                        .putNumber("version", 2L)
+                                        .putString(MessageBus.PARENT_ID_FIELDNAME, backendPoolId)
+                                        .putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+
+
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
-                                    .putNumber("version", 1L)
+                                    .putNumber("version", 3L)
                                     .putString(IJsonable.ID_FIELDNAME, vhostId);
-        JsonObject backend = new JsonObject()
-                                    .putNumber("version", 2L)
+
+        JsonObject ruleJson = new JsonObject()
+                                    .putNumber("version", 4L)
                                     .putString(MessageBus.PARENT_ID_FIELDNAME, vhostId)
-                                    .putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+                                    .putString(IJsonable.ID_FIELDNAME, UUID.randomUUID().toString())
+                                    .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()
+                                        .putString(Rule.RULETYPE_FIELDNAME, UriPath.class.getSimpleName())
+                                        .putString(Rule.MATCH_FIELDNAME, "/")
+                                        .putString(Rule.RETURNTYPE_FIELDNAME, BackendPool.class.getSimpleName())
+                                        .putString(Rule.RETURNID_FIELDNAME, backendPoolId)
+                                        .putNumber(Rule.ORDERNUM_FIELDNAME, 0));
+
+
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
-        final Action action3 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
-                .expectCode(HttpCode.OK).expectBody("response from backend").after(action2).setDontStop();
+
+        Action action1 = newPost().onPort(9000).setBodyJson(backendPoolJson).atUri("/backendpool").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9000).setBodyJson(backendJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action3 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson).after(action2);
+        Action action4 = newPost().onPort(9000).setBodyJson(ruleJson).atUri("/rule").expectBodyJson(expectedJson).after(action3);
+
+        final Action action5 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
+                .expectCode(HttpCode.OK).expectBody("response from backend").after(action4).setDontStop();
 
         // Create handler to close server after the test
         getVertx().eventBus().registerHandler("ended.action", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
-                if (message.body().equals(action3.id())) {
+                if (message.body().equals(action5.id())) {
                     server.close();
                     testCompleteWrapper();
                 }
@@ -183,27 +234,52 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
+
+        String backendPoolId = UUID.randomUUID().toString();
+        JsonObject backendPoolJson = new JsonObject()
+                                            .putNumber("version", 1L)
+                                            .putString(IJsonable.ID_FIELDNAME, backendPoolId);
+
+        JsonObject backendJson = new JsonObject()
+                                        .putNumber("version", 2L)
+                                        .putString(MessageBus.PARENT_ID_FIELDNAME, backendPoolId)
+                                        .putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+
+
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
-                                    .putNumber("version", 1L)
+                                    .putNumber("version", 3L)
                                     .putString(IJsonable.ID_FIELDNAME, vhostId);
-        JsonObject backend = new JsonObject()
-                                    .putNumber("version", 2L)
+
+        JsonObject ruleJson = new JsonObject()
+                                    .putNumber("version", 4L)
                                     .putString(MessageBus.PARENT_ID_FIELDNAME, vhostId)
-                                    .putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+                                    .putString(IJsonable.ID_FIELDNAME, UUID.randomUUID().toString())
+                                    .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()
+                                        .putString(Rule.RULETYPE_FIELDNAME, UriPath.class.getSimpleName())
+                                        .putString(Rule.MATCH_FIELDNAME, "/")
+                                        .putString(Rule.RETURNTYPE_FIELDNAME, BackendPool.class.getSimpleName())
+                                        .putString(Rule.RETURNID_FIELDNAME, backendPoolId)
+                                        .putNumber(Rule.ORDERNUM_FIELDNAME, 0));
+
+
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
-        final Action action3 = newPost().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").setBodyJson("{ \"some key\": \"some value\" }")
-                .expectCode(HttpCode.OK).expectBody("{\"some key\":\"some value\"}").after(action2).setDontStop();
+
+        Action action1 = newPost().onPort(9000).setBodyJson(backendPoolJson).atUri("/backendpool").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9000).setBodyJson(backendJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action3 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson).after(action2);
+        Action action4 = newPost().onPort(9000).setBodyJson(ruleJson).atUri("/rule").expectBodyJson(expectedJson).after(action3);
+
+        final Action action5 = newPost().onPort(8000).addHeader(httpHeaderHost, "test.localdomain").setBodyJson("{ \"some key\": \"some value\" }")
+                .expectCode(HttpCode.OK).expectBody("{\"some key\":\"some value\"}").after(action4).setDontStop();
 
         // Create handler to close server after the test
         getVertx().eventBus().registerHandler("ended.action", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
-                if (message.body().equals(action3.id())) {
+                if (message.body().equals(action5.id())) {
                     server.close();
                     testCompleteWrapper();
                 }
@@ -289,27 +365,52 @@ public class RouterTest extends UtilTestVerticle {
         server.listen(8888, "localhost");
 
         // Create Jsons
+
+        String backendPoolId = UUID.randomUUID().toString();
+        JsonObject backendPoolJson = new JsonObject()
+                                            .putNumber("version", 1L)
+                                            .putString(IJsonable.ID_FIELDNAME, backendPoolId);
+
+        JsonObject backendJson = new JsonObject()
+                                        .putNumber("version", 2L)
+                                        .putString(MessageBus.PARENT_ID_FIELDNAME, backendPoolId)
+                                        .putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+
+
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
-                                    .putNumber("version", 1L)
+                                    .putNumber("version", 3L)
                                     .putString(IJsonable.ID_FIELDNAME, vhostId);
-        JsonObject backend = new JsonObject()
-                                    .putNumber("version", 2L)
+
+        JsonObject ruleJson = new JsonObject()
+                                    .putNumber("version", 4L)
                                     .putString(MessageBus.PARENT_ID_FIELDNAME, vhostId)
-                                    .putString(IJsonable.ID_FIELDNAME, "127.0.0.1:8888");
+                                    .putString(IJsonable.ID_FIELDNAME, UUID.randomUUID().toString())
+                                    .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()
+                                        .putString(Rule.RULETYPE_FIELDNAME, UriPath.class.getSimpleName())
+                                        .putString(Rule.MATCH_FIELDNAME, "/")
+                                        .putString(Rule.RETURNTYPE_FIELDNAME, BackendPool.class.getSimpleName())
+                                        .putString(Rule.RETURNID_FIELDNAME, backendPoolId)
+                                        .putNumber(Rule.ORDERNUM_FIELDNAME, 0));
+
+
         JsonObject expectedJson = new JsonObject().putString("status_message", "OK");
 
         // Create Actions
-        Action action1 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson);
-        Action action2 = newPost().onPort(9000).setBodyJson(backend).atUri("/backend").expectBodyJson(expectedJson).after(action1);
-        final Action action3 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
-                .expectCode(HttpCode.FOUND).expectBodySize(0).after(action2).setDontStop();
+
+        Action action1 = newPost().onPort(9000).setBodyJson(backendPoolJson).atUri("/backendpool").expectBodyJson(expectedJson);
+        Action action2 = newPost().onPort(9000).setBodyJson(backendJson).atUri("/backend").expectBodyJson(expectedJson).after(action1);
+        Action action3 = newPost().onPort(9000).setBodyJson(vhostJson).atUri("/virtualhost").expectBodyJson(expectedJson).after(action2);
+        Action action4 = newPost().onPort(9000).setBodyJson(ruleJson).atUri("/rule").expectBodyJson(expectedJson).after(action3);
+
+        final Action action5 = newGet().onPort(8000).addHeader(httpHeaderHost, "test.localdomain")
+                .expectCode(HttpCode.FOUND).expectBodySize(0).after(action4).setDontStop();
 
         // Create handler to close server after the test
         getVertx().eventBus().registerHandler("ended.action", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
-                if (message.body().equals(action3.id())) {
+                if (message.body().equals(action5.id())) {
                     server.close();
                     testCompleteWrapper();
                 }

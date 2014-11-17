@@ -100,6 +100,15 @@ public class HttpCode implements IRuleReturn {
     }
 
     /**
+     * Gets the message.
+     *
+     * @return the message
+     */
+    public String getMessage() {
+        return getMessage(httpCode);
+    }
+
+    /**
      * Code family.
      *
      * @param code the code

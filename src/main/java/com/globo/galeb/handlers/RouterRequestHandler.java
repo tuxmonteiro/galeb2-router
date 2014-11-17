@@ -19,7 +19,6 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.VoidHandler;
-import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
@@ -29,7 +28,9 @@ import org.vertx.java.core.http.HttpVersion;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.ServerResponse;
@@ -39,6 +40,8 @@ import com.globo.galeb.exceptions.GatewayTimeoutException;
 import com.globo.galeb.exceptions.NotFoundException;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.rules.IRuleReturn;
+import com.globo.galeb.rules.Rule;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxDelayScheduler;
@@ -76,6 +79,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
 
     /** The scheduler clean up dead sessions. */
     private final IScheduler schedulerCleanUpDeadSessions;
+
+    /** The enable chuncked. */
+    private Boolean enableChuncked = true;
 
     /**
      * Class GatewayTimeoutTaskHandler.
@@ -187,13 +193,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
         log.debug(String.format("Received request for host %s '%s %s'",
                 sRequest.headers().get(httpHeaderHost), sRequest.method(), sRequest.absoluteURI().toString()));
 
-        // TODO: check performance penalt
-        virtualhost.setQueue(queueService);
-
-        Long requestTimeOut = virtualhost.getRequestTimeOut();
-//        Boolean enableChunked = virtualhost.isChunked();
-        Boolean enableChunked = true;
-        Boolean enableAccessLog = virtualhost.hasAccessLog();
+        boolean enableAccessLog = (boolean) virtualhost.getOrCreateProperty(Virtualhost.ENABLE_ACCESSLOG_FIELDNAME, false);
 
         final ServerResponse sResponse = new ServerResponse(sRequest, log, counter, enableAccessLog);
         sRequest.exceptionHandler(new Handler<Throwable>() {
@@ -204,16 +204,49 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             }
         });
 
-        sResponse.setChunked(enableChunked);
+        Rule ruleChosen = virtualhost.getCriterion().when(sRequest).thenGetResult();
 
-        if (!virtualhost.hasBackends()) {
-            log.warn(String.format("Host %s without backends", headerHost));
+        IRuleReturn ruleReturn = null;
+
+        if (ruleChosen!=null) {
+            ruleReturn = ruleChosen.getRuleReturn();
+        } else {
+            sResponse.showErrorAndClose(new ServiceUnavailableException());
+        }
+
+        if (ruleReturn instanceof HttpCode) {
+            sResponse.setStatusCode(Integer.parseInt(ruleReturn.getReturnId()));
+            sResponse.setMessage(((HttpCode)ruleReturn).getMessage());
+            sResponse.endResponse();
+            return;
+        }
+
+        BackendPool backendPool = null;
+        if (ruleReturn instanceof BackendPool) {
+            backendPool = (BackendPool)ruleReturn;
+        } else {
             sResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
 
+        if (backendPool.getEntities().isEmpty()) {
+            log.warn(String.format("Pool '%s' without backends", backendPool));
+            sResponse.showErrorAndClose(new ServiceUnavailableException());
+            return;
+        }
+
+        sResponse.setChunked(enableChuncked);
+
+        final Backend backend = backendPool.getChoice(new RequestData(sRequest));
+//                                                .setKeepAlive(connectionKeepalive); // TODO?
+
+        RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
+
+        final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
+//        requestTimeOut = (Long) farm.getOrCreateProperty(Farm.REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
+
         final IScheduler schedulerTimeOut = new VertxDelayScheduler(vertx)
-                        .setPeriod(requestTimeOut)
+                        .setPeriod((Long) backendPool.getOrCreateProperty(BackendPool.REQUEST_TIMEOUT_FIELDNAME, 10000L))
                         .setHandler(new GatewayTimeoutTaskHandler(sResponse, headerHost, backendId))
                         .cancelHandler(new Handler<Void>() {
                             @Override
@@ -229,13 +262,6 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
                         })
                         .start();
         log.debug("Scheduler started");
-
-        RemoteUser remoteUser = new RemoteUser(sRequest.remoteAddress());
-
-        final boolean connectionKeepalive = isHttpKeepAlive(sRequest.headers(), sRequest.version());
-
-        final Backend backend = virtualhost.getChoice(new RequestData(sRequest))
-                                                .setKeepAlive(connectionKeepalive);
 
         log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
 
@@ -266,45 +292,33 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             return;
         }
 
-        cRequest.setChunked(enableChunked);
+        cRequest.setChunked(enableChuncked);
 
         updateHeadersXFF(sRequest.headers(), remoteUser);
 
         cRequest.headers().set(sRequest.headers());
         cRequest.headers().set(httpHeaderConnection, "keep-alive");
 
-        if (enableChunked) {
+        // Pump sRequest => cRequest
 
-            // Pump sRequest => cRequest
-
-            final Pump pump = new Pump(sRequest, cRequest);
-            pump.exceptionHandler(new Handler<Throwable>() {
-                @Override
-                public void handle(Throwable event) {
-                    schedulerTimeOut.cancel();
-                    log.error(String.format("FAIL: RouterRequest.pump with %s", event.getMessage()));
-                    sResponse.showErrorAndClose(new ServiceUnavailableException());
-                }
-            });
-            pump.writeHandler(new Handler<Void>() {
-                @Override
-                public void handle(Void v) {
-                    schedulerTimeOut.cancel();
-                    pump.writeHandler(null);
-                }
-            });
-            pump.start();
-            log.debug(String.format("PUMP Virtualhost: %s, Backend: %s >> pump started", virtualhost, backend));
-
-        } else {
-            sRequest.bodyHandler(new Handler<Buffer>() {
-                @Override
-                public void handle(Buffer buffer) {
-                    cRequest.headers().set("Content-Length", String.format("%d", buffer.length()));
-                    cRequest.write(buffer);
-                }
-            });
-        }
+        final Pump pump = new Pump(sRequest, cRequest);
+        pump.exceptionHandler(new Handler<Throwable>() {
+            @Override
+            public void handle(Throwable event) {
+                schedulerTimeOut.cancel();
+                log.error(String.format("FAIL: RouterRequest.pump with %s", event.getMessage()));
+                sResponse.showErrorAndClose(new ServiceUnavailableException());
+            }
+        });
+        pump.writeHandler(new Handler<Void>() {
+            @Override
+            public void handle(Void v) {
+                schedulerTimeOut.cancel();
+                pump.writeHandler(null);
+            }
+        });
+        pump.start();
+        log.debug(String.format("PUMP Virtualhost: %s, Backend: %s >> pump started", virtualhost, backend));
 
         cRequest.exceptionHandler(
                 new ClientRequestExceptionHandler(sResponse, schedulerTimeOut, headerHost, backendId));

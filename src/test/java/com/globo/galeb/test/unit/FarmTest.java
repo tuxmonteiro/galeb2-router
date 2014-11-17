@@ -19,39 +19,53 @@ import static org.mockito.Mockito.mock;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
 import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.testtools.TestVerticle;
 
-import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.rules.Rule;
+import com.globo.galeb.rules.RuleFactory;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class FarmTest extends TestVerticle {
 
+    private JsonObject backendPoolJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "pool0");
+    private String backendPoolId = backendPoolJson.getString(IJsonable.ID_FIELDNAME);
     private JsonObject virtualhostJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "test.virtualhost.com");
-    private String virtualhostId = "test.virtualhost.com";
+    private String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
     private JsonObject backendJson = new JsonObject().putString(IJsonable.ID_FIELDNAME, "0.0.0.0:00");
-    private IQueueService queueService = mock(IQueueService.class);
-    private LogDelegate logDelegate;
-    private FakeLogger logger;
-    private Farm farm;
+    private String backendId = backendJson.getString(IJsonable.ID_FIELDNAME);
+    private IQueueService queueService = null;
+    private LogDelegate logDelegate = null;
+    private FakeLogger logger = null;
+    private Farm farm = null;
 
     private void setUp() {
-        logDelegate = mock(LogDelegate.class);
-        logger = new FakeLogger(logDelegate);
-        ((FakeLogger)logger).setQuiet(false);
-        ((FakeLogger)logger).setTestId("");
-
-        farm = new Farm(this);
-        farm.setQueueService(queueService).setLogger(logger).start();
-
+        if (queueService==null) {
+            queueService = mock(IQueueService.class);
+        }
+        if (logDelegate==null) {
+            logDelegate = mock(LogDelegate.class);
+        }
+        if (logger==null) {
+            logger = new FakeLogger(logDelegate);
+            ((FakeLogger)logger).setQuiet(false);
+            ((FakeLogger)logger).setTestId("");
+        }
+        if (farm==null) {
+            farm = new Farm(this);
+            farm.setQueueService(queueService).setLogger(logger).start();
+        } else {
+            farm.clearBackendPools();
+            farm.clearEntities();
+        }
     }
 
     @Test
@@ -75,12 +89,63 @@ public class FarmTest extends TestVerticle {
     }
 
     @Test
+    public void insert10NewBackendPools() {
+        setUp();
+
+        for (int x=0; x<10;x++) {
+            String message = "";
+            String aBackendPoolId = UUID.randomUUID().toString();
+
+            JsonObject aBackendPoolJson =
+                    new JsonObject().putString(IJsonable.ID_FIELDNAME, aBackendPoolId);
+            message = new MessageBus().setEntity(aBackendPoolJson)
+                                      .setUri("/backendpool")
+                                      .make()
+                                      .toString();
+
+            farm.addToMap(message);
+        }
+
+        assertThat(farm.getBackendPools().getEntities()).hasSize(10);
+        testComplete();
+    }
+
+    @Test
     public void insert10NewBackends() {
         setUp();
 
         String message = "";
-        JsonObject virtualhostJson =
-                new JsonObject().putString(IJsonable.ID_FIELDNAME, "test.localdomain");
+        String aBackendPoolId = UUID.randomUUID().toString();
+        JsonObject aBackendPoolJson =
+                new JsonObject().putString(IJsonable.ID_FIELDNAME, aBackendPoolId);
+        message = new MessageBus().setEntity(aBackendPoolJson)
+                                  .setUri("/backendpool")
+                                  .make()
+                                  .toString();
+
+        farm.addToMap(message);
+
+        for (int x=0; x<10;x++) {
+            JsonObject aBackendJson =
+                    new JsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%d", x));
+            message = new MessageBus().setEntity(aBackendJson)
+                                      .setParentId(aBackendPoolId)
+                                      .setUri("/backend")
+                                      .make()
+                                      .toString();
+
+            farm.addToMap(message);
+        }
+
+        assertThat(farm.getBackendPoolById(aBackendPoolId).getEntities()).hasSize(10);
+        testComplete();
+    }
+
+    @Test
+    public void insert10NewRules() {
+        setUp();
+
+        String message = "";
         message = new MessageBus().setEntity(virtualhostJson)
                                   .setUri("/virtualhost")
                                   .make()
@@ -89,18 +154,101 @@ public class FarmTest extends TestVerticle {
         farm.addToMap(message);
 
         for (int x=0; x<10;x++) {
-            JsonObject backendJson =
-                    new JsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%d", x));
-            message = new MessageBus().setEntity(backendJson)
-                                      .setParentId("test.localdomain")
-                                      .setUri("/backend")
+            JsonObject aRuleJson =
+                    new JsonObject().putString(IJsonable.ID_FIELDNAME, UUID.randomUUID().toString())
+                                    .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()
+                                            .putString(Rule.RULETYPE_FIELDNAME, RuleFactory.DEFAULT_RULETYPE)
+                                            .putString(Rule.RETURNID_FIELDNAME, "0"));
+
+            message = new MessageBus().setEntity(aRuleJson)
+                                      .setParentId(virtualhostId)
+                                      .setUri("/rule")
                                       .make()
                                       .toString();
 
             farm.addToMap(message);
         }
 
-        assertThat(farm.getBackends()).hasSize(10);
+        assertThat(farm.getEntityById(virtualhostId).getEntities()).hasSize(10);
+        testComplete();
+    }
+
+    @Test
+    public void insertNewBackendPoolToRouteMap() {
+        setUp();
+
+        String uriStr = "/backendpool";
+        String message = new MessageBus()
+                                .setEntity(backendPoolJson)
+                                .setUri(uriStr)
+                                .make()
+                                .toString();
+
+        boolean isOk = farm.addToMap(message);
+
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNotNull();
+        assertThat(isOk).isTrue();
+        testComplete();
+    }
+
+    @Test
+    public void insertDuplicatedBackendPoolToRouteMap() {
+        setUp();
+        String uriStr = "/backendpool";
+        String message = new MessageBus()
+                                .setEntity(backendPoolJson)
+                                .setUri(uriStr)
+                                .make()
+                                .toString();
+
+        farm.addToMap(message);
+        boolean isOk = farm.addToMap(message);
+
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNotNull();
+        assertThat(isOk).isFalse();
+        testComplete();
+    }
+
+    @Test
+    public void removeExistingBackendPoolFromRouteMap() {
+        setUp();
+
+        String messageAdd = new MessageBus()
+                                .setEntity(backendPoolJson)
+                                .setUri("/backendpool")
+                                .make()
+                                .toString();
+        String uriStr = String.format("/backendpool/%s", backendPoolId);
+        String messageDel = new MessageBus()
+                                .setEntity(backendPoolJson)
+                                .setUri(uriStr)
+                                .make()
+                                .toString();
+
+        boolean isOkAdd = farm.addToMap(messageAdd);
+        boolean isOkDel = farm.delFromMap(messageDel);
+
+        assertThat(isOkAdd).isTrue();
+        assertThat(isOkDel).isTrue();
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNull();
+        testComplete();
+    }
+
+    @Test
+    public void removeAbsentBackendPoolFromRouteMap() {
+        setUp();
+
+        String uriStr = String.format("/backendpool/%s", backendPoolId);
+        String message = new MessageBus()
+                                .setEntity(backendPoolJson)
+                                .setUri(uriStr)
+                                .make()
+                                .toString();
+
+        boolean isOk = farm.delFromMap(message);
+
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNull();
+        assertThat(isOk).isFalse();
         testComplete();
     }
 
@@ -109,7 +257,6 @@ public class FarmTest extends TestVerticle {
         setUp();
 
         String uriStr = "/virtualhost";
-        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
         String message = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -118,7 +265,7 @@ public class FarmTest extends TestVerticle {
 
         boolean isOk = farm.addToMap(message);
 
-        assertThat(farm.getEntities()).containsKey(virtualhostId);
+        assertThat(farm.getEntityById(virtualhostId)).isNotNull();
         assertThat(isOk).isTrue();
         testComplete();
     }
@@ -128,7 +275,6 @@ public class FarmTest extends TestVerticle {
         setUp();
 
         String uriStr = "/virtualhost";
-        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
         String message = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -138,7 +284,7 @@ public class FarmTest extends TestVerticle {
         farm.addToMap(message);
         boolean isOk = farm.addToMap(message);
 
-        assertThat(farm.getEntities()).containsKey(virtualhostId);
+        assertThat(farm.getEntityById(virtualhostId)).isNotNull();
         assertThat(isOk).isFalse();
         testComplete();
     }
@@ -152,7 +298,7 @@ public class FarmTest extends TestVerticle {
                                 .setUri("/virtualhost")
                                 .make()
                                 .toString();
-        String uriStr = String.format("/virtualhost/%s", virtualhostJson);
+        String uriStr = String.format("/virtualhost/%s", virtualhostId);
         String messageDel = new MessageBus()
                                 .setEntity(virtualhostJson)
                                 .setUri(uriStr)
@@ -164,7 +310,7 @@ public class FarmTest extends TestVerticle {
 
         assertThat(isOkAdd).isTrue();
         assertThat(isOkDel).isTrue();
-        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
+        assertThat(farm.getEntityById(virtualhostId)).isNull();
         testComplete();
     }
 
@@ -181,33 +327,34 @@ public class FarmTest extends TestVerticle {
 
         boolean isOk = farm.delFromMap(message);
 
-        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
+        assertThat(farm.getEntityById(virtualhostId)).isNull();
         assertThat(isOk).isFalse();
         testComplete();
     }
 
     @Test
-    public void insertNewBackendToExistingVirtualhostSet() {
+    public void insertNewBackendToExistingBackendPool() {
         setUp();
 
-        String messageVirtualhost = new MessageBus()
-                                        .setEntity(virtualhostJson)
-                                        .setUri("/virtualhost")
+        String messageBackendPool = new MessageBus()
+                                        .setEntity(backendPoolJson)
+                                        .setUri("/backendpool")
                                         .make()
                                         .toString();
         String messageBackend = new MessageBus()
-                                        .setParentId(virtualhostId)
+                                        .setParentId(backendPoolId)
                                         .setUri("/backend")
                                         .setEntity(backendJson)
                                         .make()
                                         .toString();
 
-        boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
+        boolean isOkBackendPool = farm.addToMap(messageBackendPool);
         boolean isOkBackend = farm.addToMap(messageBackend);
 
-        assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
+        assertThat(isOkBackendPool).as("isOkBackendPool").isTrue();
         assertThat(isOkBackend).as("isOkBackend").isTrue();
-        assertThat(farm.getEntities()).containsKey(virtualhostId);
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNotNull();
+        assertThat(farm.getBackendPoolById(backendPoolId).getEntityById(backendId)).isNotNull();
         testComplete();
     }
 
@@ -216,129 +363,99 @@ public class FarmTest extends TestVerticle {
         setUp();
 
         String messageBackend = new MessageBus()
-                                    .setParentId(virtualhostId)
+                                    .setParentId(backendPoolId)
                                     .setUri("/backend")
                                     .setEntity(backendJson)
                                     .make()
                                     .toString();
 
-        boolean isOk = farm.addToMap(messageBackend);
+        boolean isOkBackend = farm.addToMap(messageBackend);
 
-        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
-        assertThat(isOk).isFalse();
+        assertThat(isOkBackend).as("isOkBackend").isFalse();
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNull();
         testComplete();
     }
 
     @Test
-    public void insertDuplicatedBackendToExistingVirtualhostSet() {
+    public void insertDuplicatedBackendToExistingBackendPool() {
         setUp();
 
-        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
-
-        String messageVirtualhost = new MessageBus()
-                                        .setEntity(virtualhostJson)
-                                        .setUri("/virtualhost")
-                                        .make()
-                                        .toString();
+        String messageBackendPool = new MessageBus()
+                .setEntity(backendPoolJson)
+                .setUri("/backendpool")
+                .make()
+                .toString();
         String messageBackend = new MessageBus()
-                                        .setParentId(virtualhostId)
-                                        .setUri("/backend")
-                                        .setEntity(backendJson)
-                                        .make()
-                                        .toString();
+                .setParentId(backendPoolId)
+                .setUri("/backend")
+                .setEntity(backendJson)
+                .make()
+                .toString();
 
-        boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
-        boolean isOkBackendAdd = farm.addToMap(messageBackend);
+        boolean isOkBackendPool = farm.addToMap(messageBackendPool);
+        boolean isOkBackend = farm.addToMap(messageBackend);
         boolean isOkBackendAddAgain = farm.addToMap(messageBackend);
-        Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
-        Backend backendExpected = (Backend) new Backend(backendJson).setPlataform(vertx);
 
-        assertThat(farm.getEntities()).containsKey(virtualhostId);
-        assertThat(virtualhost.getBackends(true).contains(backendExpected)).isTrue();
-        assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
-        assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
-        assertThat(isOkBackendAddAgain).as("isOkBackendRemove").isFalse();
+        assertThat(isOkBackendPool).as("isOkBackendPool").isTrue();
+        assertThat(isOkBackend).as("isOkBackend").isTrue();
+        assertThat(isOkBackendAddAgain).as("isOkBackendAddAgain").isFalse();
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNotNull();
+        assertThat(farm.getBackendPoolById(backendPoolId).getEntityById(backendId)).isNotNull();
         testComplete();
     }
 
     @Test
-    public void removeExistingBackendFromExistingVirtualhostSet() throws UnsupportedEncodingException {
+    public void removeExistingBackendFromExistingBackendPool() throws UnsupportedEncodingException {
         setUp();
 
-        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
+        String messageBackendPool = new MessageBus()
+                .setEntity(backendPoolJson)
+                .setUri("/backendpool")
+                .make()
+                .toString();
 
-        String messageVirtualhost = new MessageBus()
-                                        .setEntity(virtualhostJson)
-                                        .setUri("/virtualhost")
-                                        .make()
-                                        .toString();
         String messageBackend = new MessageBus()
-                                        .setParentId(virtualhostId)
-                                        .setUri("/backend/0.0.0.0:00")
-                                        .setEntity(backendJson)
-                                        .make()
-                                        .toString();
+                .setParentId(backendPoolId)
+                .setUri("/backend")
+                .setEntity(backendJson)
+                .make()
+                .toString();
 
-        boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
-        boolean isOkBackendAdd = farm.addToMap(messageBackend);
-        boolean isOkBackendRemove = farm.delFromMap(messageBackend);
-        Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
-        Backend backendNotExpected = (Backend) new Backend(backendJson).setPlataform(vertx);
+        String messageRemoveBackend = new MessageBus()
+                .setParentId(backendPoolId)
+                .setUri("/backend/0.0.0.0:00")
+                .setEntity(backendJson)
+                .make()
+                .toString();
 
-        assertThat(farm.getEntities()).containsKey(virtualhostId);
-        assertThat(virtualhost.getBackends(true).contains(backendNotExpected)).isFalse();
-        assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
-        assertThat(isOkBackendAdd).as("isOkBackendAdd").isTrue();
+        boolean isOkBackendPool = farm.addToMap(messageBackendPool);
+        boolean isOkBackend = farm.addToMap(messageBackend);
+        boolean isOkBackendRemove = farm.delFromMap(messageRemoveBackend);
+
+        assertThat(isOkBackendPool).as("isOkBackendPool").isTrue();
+        assertThat(isOkBackend).as("isOkBackend").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isTrue();
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNotNull();
+        assertThat(farm.getBackendPoolById(backendPoolId).getEntityById(backendId)).isNull();
         testComplete();
+
     }
 
     @Test
-    public void removeBackendFromAbsentVirtualhostSet() throws UnsupportedEncodingException {
+    public void removeBackendFromAbsentBackendPool() throws UnsupportedEncodingException {
         setUp();
 
-        String messageBackend = new MessageBus()
-                                        .setParentId(virtualhostId)
-                                        .setUri("/backend/0.0.0.0:00")
-                                        .setEntity(backendJson)
-                                        .make()
-                                        .toString();
+        String messageRemoveBackend = new MessageBus()
+                .setParentId(backendPoolId)
+                .setUri("/backend/0.0.0.0:00")
+                .setEntity(backendJson)
+                .make()
+                .toString();
 
-        boolean isOk = farm.delFromMap(messageBackend);
+        boolean isOkBackendRemove = farm.delFromMap(messageRemoveBackend);
 
-        assertThat(farm.getEntities()).doesNotContainKey(virtualhostJson.encode());
-        assertThat(isOk).isFalse();
-        testComplete();
-    }
-
-    @Test
-    public void removeAbsentBackendFromVirtualhostSet() throws UnsupportedEncodingException {
-        setUp();
-
-        String statusStr = "";
-        String virtualhostId = virtualhostJson.getString(IJsonable.ID_FIELDNAME);
-
-        String messageVirtualhost = new MessageBus()
-                                            .setEntity(virtualhostJson)
-                                            .setUri("/virtualhost/test.localdomain")
-                                            .make()
-                                            .toString();
-        String messageBackend = new MessageBus()
-                                            .setParentId(virtualhostId)
-                                            .setUri("/backend/0.0.0.0:00")
-                                            .setEntity(backendJson)
-                                            .make()
-                                            .toString();
-
-        boolean isOkVirtualhost = farm.addToMap(messageVirtualhost);
-        boolean isOkBackendRemove = farm.delFromMap(messageBackend);
-        Virtualhost virtualhost = farm.getEntities().get(virtualhostId);
-        Backend backendNotExpected = (Backend) new Backend(backendJson).setPlataform(vertx);
-
-        assertThat(farm.getEntities()).containsKey(virtualhostId);
-        assertThat(virtualhost.getBackends(!"0".equals(statusStr)).contains(backendNotExpected)).isFalse();
-        assertThat(isOkVirtualhost).as("isOkVirtualhost").isTrue();
         assertThat(isOkBackendRemove).as("isOkBackendRemove").isFalse();
+        assertThat(farm.getBackendPoolById(backendPoolId)).isNull();
         testComplete();
     }
 }
