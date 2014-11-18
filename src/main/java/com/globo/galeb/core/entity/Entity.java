@@ -334,6 +334,9 @@ public abstract class Entity implements IJsonable {
      */
     @Override
     public boolean equals(Object obj) {
+        if (obj==null) {
+            return false;
+        }
         return this.id.equals(obj.toString());
     }
 
