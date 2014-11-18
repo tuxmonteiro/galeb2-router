@@ -15,6 +15,8 @@
  */
 package com.globo.galeb.core;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.vertx.java.core.Handler;
@@ -111,15 +113,6 @@ public class BackendSession extends Entity {
         keepAliveMaxRequest = properties.getLong(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, Backend.DEFAULT_KEEPALIVE_MAXREQUEST);
         keepAliveTimeOut = properties.getLong(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, Backend.DEFAULT_KEEPALIVE_TIMEOUT);
         maxPoolSize = properties.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, Backend.DEFAULT_MAX_POOL_SIZE);
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Object#finalize()
-     */
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        keepAliveLimitScheduler.cancel();
     }
 
     /**
@@ -233,14 +226,9 @@ public class BackendSession extends Entity {
         } catch (IllegalStateException e) {
             httpClientClosed = true;
         } catch (RuntimeException e) {
-            e.printStackTrace();
+            logger.debug(getStackTrace(e));
         }
         return httpClientClosed;
-    }
-
-    @Override
-    public void start() {
-        // unnecessary
     }
 
     public BackendSession setRemoteUser(String remoteUser) {

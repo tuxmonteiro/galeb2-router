@@ -155,8 +155,8 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      *
      * @return the backends
      */
-    public Set<Backend> getBackends() {
-        Set<Backend> backends = new HashSet<>();
+    public Set<IBackend> getBackends() {
+        Set<IBackend> backends = new HashSet<>();
         for (BackendPool backendpool: backendPools.getEntities().values()) {
             backends.addAll(backendpool.getEntities().values());
         }
@@ -236,12 +236,13 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /* (non-Javadoc)
      * @see com.globo.galeb.core.bus.ICallbackSharedData#updateSharedData()
      */
+    @SuppressWarnings("unchecked")
     @Override
     public void updateSharedData() {
         if (verticle instanceof RouterVerticle) {
             this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
             String backendClassName = Backend.class.getSimpleName().toLowerCase();
-            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, collectionToJson("", getBackends(), backendClassName));
+            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, collectionToJson("", (Collection<? extends Entity>) getBackends(), backendClassName));
         }
     }
 

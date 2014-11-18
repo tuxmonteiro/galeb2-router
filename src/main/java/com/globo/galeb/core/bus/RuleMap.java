@@ -21,7 +21,7 @@ public class RuleMap extends MessageToMap<Virtualhost> {
             final Virtualhost virtualhost = farm.getEntityById(parentId);
 
             if (virtualhost!=null) {
-                Rule rule = RuleFactory.createRule(entity);
+                Rule rule = new RuleFactory().setLogger(log).createRule(entity);
                 rule.setFarm(farm).start();
                 isOk  = virtualhost.addEntity(rule);
                 log.info(String.format("[%s] Rule %s (%s) added", verticleId, entityId, parentId));

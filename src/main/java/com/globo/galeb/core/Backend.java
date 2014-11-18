@@ -41,7 +41,7 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Backend extends EntitiesMap<BackendSession> implements ICallbackConnectionCounter {
+public class Backend extends EntitiesMap<BackendSession> implements ICallbackConnectionCounter, IBackend {
 
     /** The Constant KEEPALIVE_FIELDNAME. */
     public static final String KEEPALIVE_FIELDNAME             = "keepalive";
@@ -216,15 +216,6 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     }
 
     /* (non-Javadoc)
-     * @see java.lang.Object#finalize()
-     */
-    @Override
-    protected void finalize() throws Throwable {
-        super.finalize();
-        cleanupSessionScheduler.cancel();
-    }
-
-    /* (non-Javadoc)
      * @see com.globo.galeb.core.entity.Entity#start()
      */
     @Override
@@ -233,191 +224,167 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         publishConnection(0);
     }
 
-    /**
-     * Gets the host.
-     *
-     * @return the host
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getHost()
      */
+    @Override
     public String getHost() {
         return host;
     }
 
-    /**
-     * Gets the port.
-     *
-     * @return the port
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getPort()
      */
+    @Override
     public Integer getPort() {
         return port;
     }
 
-    /**
-     * Gets the connection timeout.
-     *
-     * @return the connection timeout
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getConnectionTimeout()
      */
+    @Override
     public Integer getConnectionTimeout() {
         return (Integer) getOrCreateProperty(CONNECTION_TIMEOUT_FIELDNAME, DEFAULT_CONNECTION_TIMEOUT);
     }
 
-    /**
-     * Sets the connection timeout.
-     *
-     * @param timeout the timeout
-     * @return the backend
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#setConnectionTimeout(java.lang.Integer)
      */
-    public Backend setConnectionTimeout(Integer timeout) {
+    @Override
+    public IBackend setConnectionTimeout(Integer timeout) {
         properties.putNumber(CONNECTION_TIMEOUT_FIELDNAME, timeout);
         updateModifiedTimestamp();
         return this;
     }
 
-    /**
-     * Checks if is keepalive.
-     *
-     * @return the boolean
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#isKeepalive()
      */
+    @Override
     public Boolean isKeepalive() {
         return (Boolean) getOrCreateProperty(KEEPALIVE_FIELDNAME, DEFAULT_KEEPALIVE);
 
     }
 
-    /**
-     * Sets the keep alive.
-     *
-     * @param keepalive the keepalive
-     * @return the backend
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#setKeepAlive(boolean)
      */
-    public Backend setKeepAlive(boolean keepalive) {
+    @Override
+    public IBackend setKeepAlive(boolean keepalive) {
         properties.putBoolean(KEEPALIVE_FIELDNAME, keepalive);
         updateModifiedTimestamp();
         return this;
     }
 
-    /**
-     * Gets the keep alive max request.
-     *
-     * @return the keep alive max request
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getKeepAliveMaxRequest()
      */
+    @Override
     public Long getKeepAliveMaxRequest() {
         return (Long) getOrCreateProperty(KEEPALIVE_MAXREQUEST_FIELDNAME, DEFAULT_KEEPALIVE_MAXREQUEST);
     }
 
-    /**
-     * Sets the keep alive max request.
-     *
-     * @param maxRequestCount the max request count
-     * @return the backend
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#setKeepAliveMaxRequest(java.lang.Long)
      */
-    public Backend setKeepAliveMaxRequest(Long maxRequestCount) {
+    @Override
+    public IBackend setKeepAliveMaxRequest(Long maxRequestCount) {
       properties.putNumber(KEEPALIVE_MAXREQUEST_FIELDNAME, maxRequestCount);
       updateModifiedTimestamp();
       return this;
     }
 
-    /**
-     * Gets the keep alive time out.
-     *
-     * @return the keep alive time out
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getKeepAliveTimeOut()
      */
+    @Override
     public Long getKeepAliveTimeOut() {
         return (Long) getOrCreateProperty(KEEPALIVE_TIMEOUT_FIELDNAME, DEFAULT_KEEPALIVE_TIMEOUT);
     }
 
-    /**
-     * Sets the keep alive time out.
-     *
-     * @param keepAliveTimeOut the keep alive time out
-     * @return the backend
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#setKeepAliveTimeOut(java.lang.Long)
      */
-    public Backend setKeepAliveTimeOut(Long keepAliveTimeOut) {
+    @Override
+    public IBackend setKeepAliveTimeOut(Long keepAliveTimeOut) {
         properties.putNumber(KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
         updateModifiedTimestamp();
         return this;
     }
 
-    /**
-     * Gets the max pool size.
-     *
-     * @return the max pool size
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getMaxPoolSize()
      */
+    @Override
     public Integer getMaxPoolSize() {
         return (Integer) getOrCreateProperty(MAXPOOL_SIZE_FIELDNAME, DEFAULT_MAX_POOL_SIZE);
     }
 
-    /**
-     * Sets the max pool size.
-     *
-     * @param maxPoolSize the max pool size
-     * @return the backend
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#setMaxPoolSize(java.lang.Integer)
      */
-    public Backend setMaxPoolSize(Integer maxPoolSize) {
+    @Override
+    public IBackend setMaxPoolSize(Integer maxPoolSize) {
         properties.putNumber(MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
         updateModifiedTimestamp();
         return this;
     }
 
-    /**
-     * Checks if is use pooled buffers.
-     *
-     * @return the boolean
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#isUsePooledBuffers()
      */
+    @Override
     public Boolean isUsePooledBuffers() {
         return (Boolean) getOrCreateProperty(USE_POOLED_BUFFERS_FIELDNAME, DEFAULT_USE_POOLED_BUFFERS);
     }
 
-    /**
-     * Gets the send buffer size.
-     *
-     * @return the send buffer size
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getSendBufferSize()
      */
+    @Override
     public Integer getSendBufferSize() {
         return (Integer) getOrCreateProperty(SEND_BUFFER_SIZE_FIELDNAME, DEFAULT_SEND_BUFFER_SIZE);
     }
 
-    /**
-     * Gets the receive buffer size.
-     *
-     * @return the receive buffer size
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getReceiveBufferSize()
      */
+    @Override
     public Integer getReceiveBufferSize() {
         return (Integer) getOrCreateProperty(RECEIVED_BUFFER_SIZE_FIELDNAME, DEFAULT_RECEIVE_BUFFER_SIZE);
 
     }
 
-    /**
-     * Checks if is pipelining.
-     *
-     * @return the boolean
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#isPipelining()
      */
+    @Override
     public Boolean isPipelining() {
         return (Boolean) getOrCreateProperty(PIPELINING_FIELDNAME, DEFAULT_PIPELINING);
     }
 
-    /**
-     * Gets the min session pool size.
-     *
-     * @return the min session pool size
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getMinSessionPoolSize()
      */
+    @Override
     public int getMinSessionPoolSize() {
         return minSessionPoolSize;
     }
 
-    /**
-     * Sets the min session pool size.
-     *
-     * @param minPoolSize the new min session pool size
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#setMinSessionPoolSize(int)
      */
+    @Override
     public Backend setMinSessionPoolSize(int minPoolSize) {
         this.minSessionPoolSize = minPoolSize;
         return this;
     }
 
-    /**
-     * Connect and gets HttpClient instance (through BackendSession).
-     *
-     * @return the http client
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#connect(com.globo.galeb.core.RemoteUser)
      */
+    @Override
     public HttpClient connect(RemoteUser remoteUser) {
         if (remoteUser==null) {
             return null;
@@ -471,9 +438,10 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         return backendSession.connect();
     }
 
-    /**
-     * Close connection and destroy backendSession instance.
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#close(java.lang.String)
      */
+    @Override
     public void close(String remoteUser) {
         if (!(remoteUser==null) && getEntityById(remoteUser)!=null) {
             BackendSession backendSession = getEntityById(remoteUser);
@@ -489,20 +457,18 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         }
     }
 
-    /**
-     * Gets the active connections.
-     *
-     * @return the active connections
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#getActiveConnections()
      */
+    @Override
     public int getActiveConnections() {
         return getEntities().size() + numExternalSessions;
     }
 
-    /**
-     * Checks if is closed.
-     *
-     * @return true, if is closed
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#isClosed(java.lang.String)
      */
+    @Override
     public boolean isClosed(String remoteUser) {
         if (!(remoteUser==null) && getEntityById(remoteUser)!=null) {
             return getEntityById(remoteUser).isClosed();
@@ -542,7 +508,9 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     }
 
     /**
-     * Publish zero to all instances.
+     * Publish connection.
+     *
+     * @param numConnections the num connections
      */
     public void publishConnection(int numConnections) {
         if (queueService!=null) {
@@ -595,12 +563,11 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         }
     }
 
-    /**
-     * Start session pool.
-     *
-     * @return the backend
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#startSessionPool()
      */
-    public Backend startSessionPool() {
+    @Override
+    public IBackend startSessionPool() {
 
         for (int i=0 ; i<minSessionPoolSize ; i++) {
             BackendSession backendSession = new BackendSession(
@@ -619,9 +586,10 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         return this;
     }
 
-    /**
-     * Close all forced.
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#closeAllForced()
      */
+    @Override
     public void closeAllForced() {
         for (BackendSession backendSession: getEntities().values()) {
             backendSession.close();
@@ -641,12 +609,25 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         }
     }
 
-    /**
-     * Close all.
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#closeAll()
      */
+    @Override
     public void closeAll() {
         for (String remoteUser: getEntities().keySet()) {
             close(remoteUser);
         }
     }
+
+    /* (non-Javadoc)
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(IBackend otherBackend) {
+        if (otherBackend==null) {
+            return 0;
+        }
+        return this.getActiveConnections()-otherBackend.getActiveConnections();
+    }
+
 }

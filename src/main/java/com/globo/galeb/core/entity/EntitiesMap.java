@@ -30,7 +30,7 @@ import com.globo.galeb.criteria.impl.NullCriterion;
  * @version 1.0.0, Nov 7, 2014.
  * @param <T> the generic type
  */
-public abstract class EntitiesMap<T extends Entity> extends Entity {
+public abstract class EntitiesMap<T> extends Entity {
 
     /** The entities. */
     private Map<String, T> entities        = new IndexedMap<>();
@@ -67,13 +67,13 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
      * @return true, if successful
      */
     public boolean addEntity(final T entity) {
-        String id = entity.getId();
+        String id = ((Entity) entity).getId();
 
         if (entities.containsKey(id)) {
             return false;
         }
 
-        entity.setFarm(farm)
+        ((Entity) entity).setFarm(farm)
               .setLogger(logger)
               .setQueueService(queueService)
               .setPlataform(plataform)
@@ -81,7 +81,7 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
               .setCounter(counter)
               .setStatus(StatusType.RUNNING_STATUS.toString());
 
-        entity.start();
+        ((Entity) entity).start();
 
         entities.put(id, entity);
         if (entities.containsKey(id)) {
@@ -117,7 +117,7 @@ public abstract class EntitiesMap<T extends Entity> extends Entity {
      * @return true, if successful
      */
     public boolean removeEntity(final T entity) {
-        String entityId = entity.getId();
+        String entityId = ((Entity) entity).getId();
         return removeEntity(entityId);
     }
 

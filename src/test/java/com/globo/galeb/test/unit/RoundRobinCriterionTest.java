@@ -66,7 +66,7 @@ public class RoundRobinCriterionTest {
         MultiMap headers = new CaseInsensitiveMultiMap();
         headers.add(httpHeaderHost, "test.localdomain");
 
-        requestData = new RequestData(headers, null, null, "0.0.0.0", "0");
+        requestData = new RequestData().setHeaders(headers);
     }
 
     @Ignore

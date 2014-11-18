@@ -27,7 +27,7 @@ import com.globo.galeb.criteria.impl.RandomCriterion;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 10, 2014.
  */
-public class BadBackendPool extends EntitiesMap<Backend> {
+public class BadBackendPool extends EntitiesMap<IBackend> {
 
     /**
      * Instantiates a new bad backend pool.
@@ -60,7 +60,7 @@ public class BadBackendPool extends EntitiesMap<Backend> {
      */
     @Override
     public void start() {
-        setCriterion(new RandomCriterion<Backend>().setLog(logger));
+        setCriterion(new RandomCriterion<IBackend>().setLog(logger));
     }
 
 }

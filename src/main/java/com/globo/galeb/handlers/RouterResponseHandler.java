@@ -15,19 +15,27 @@
  */
 package com.globo.galeb.handlers;
 
-import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.BackendSession;
+import com.globo.galeb.core.IBackend;
+import com.globo.galeb.core.NullBackend;
 import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.bus.NullQueueService;
+import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
+import com.globo.galeb.logger.SafeLogger;
+import com.globo.galeb.metrics.CounterConsoleOut;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.scheduler.impl.NullScheduler;
 import com.globo.galeb.streams.Pump;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.HttpServerResponse;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 /**
@@ -39,25 +47,22 @@ import org.vertx.java.core.logging.Logger;
 public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     /** the scheduler instance */
-    private final IScheduler scheduler;
+    private IScheduler scheduler = new NullScheduler();
 
     /** The http server response. */
-    private final HttpServerResponse httpServerResponse;
+    private HttpServerResponse httpServerResponse = null;
 
-    /** The server response instance. */
-    private final ServerResponse sResponse;
-
-    /** The backend id. */
-    private final Backend backend;
+    /** The backend. */
+    private IBackend backend = new NullBackend(new JsonObject());
 
     /** The counter. */
-    private final ICounter counter;
+    private ICounter counter = new CounterConsoleOut();
 
-    /** The log. */
-    private final Logger log;
+    /** The safelog. */
+    private SafeLogger safelog = new SafeLogger();
 
     /** The queue service. */
-    private final IQueueService queueService;
+    private IQueueService queueService = new NullQueueService();
 
     /** The header host. */
     private String headerHost = "UNDEF";
@@ -69,35 +74,53 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private boolean connectionKeepalive = true;
 
     /** The remote user. */
-    private  final RemoteUser remoteUser;
+    private RemoteUser remoteUser = new RemoteUser();
+
+    /** The server response instance. */
+    private ServerResponse sResponse = null;
 
     /* (non-Javadoc)
      * @see org.vertx.java.core.Handler#handle(java.lang.Object)
      */
     @Override
     public void handle(final HttpClientResponse cResponse) throws RuntimeException {
-        log.debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
+        if (sResponse==null||httpServerResponse==null) {
+            getLog().error("Response is NULL");
+            return;
+        }
+        getLog().debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
 
         scheduler.cancel();
 
-        final int statusCode = cResponse.statusCode();
+        adjustStatusAndHeaderResponse(cResponse.statusCode(), cResponse);
+
+        pumpStream(cResponse);
+
+    }
+
+    private void adjustStatusAndHeaderResponse(int statusCode, final HttpClientResponse httpClientResponse) {
         sResponse.setStatusCode(statusCode);
-        sResponse.setHeaders(cResponse.headers());
+        sResponse.setHeaders(httpClientResponse.headers());
 
         if (!connectionKeepalive) {
             httpServerResponse.headers().set("Connection", "close");
         }
 
-        // Pump cResponse => sResponse
-        final Pump pump = new Pump(cResponse, httpServerResponse);
+    }
+
+    private void pumpStream(final HttpClientResponse httpClientResponse) {
+
+        final Pump pump = new Pump(httpClientResponse, httpServerResponse);
+
         pump.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable throwable) {
                 scheduler.cancel();
-                log.error(String.format("FAIL: RouterResponse.pump with %s", throwable.getMessage()));
+                getLog().error(String.format("FAIL: RouterResponse.pump with %s", throwable.getMessage()));
                 sResponse.showErrorAndClose(new ServiceUnavailableException());
             }
         });
+
         pump.writeHandler(new Handler<Void>() {
             @Override
             public void handle(Void v) {
@@ -107,7 +130,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         });
         pump.start();
 
-        cResponse.endHandler(new VoidHandler() {
+        httpClientResponse.endHandler(new VoidHandler() {
             @Override
             public void handle() {
 
@@ -124,31 +147,31 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     sResponse.closeResponse();
                     backend.close(remoteUser.toString());
                 }
-                log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
+                getLog().debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }
         });
 
-        cResponse.exceptionHandler(new Handler<Throwable>() {
+        httpClientResponse.exceptionHandler(new Handler<Throwable>() {
+            @SuppressWarnings("unchecked")
             @Override
             public void handle(Throwable event) {
                 String backendId = backend.toString();
 
-                log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
+                getLog().error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
                 queueService.publishBackendFail(backendId);
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
 
-                backend.removeEntity(remoteUser.toString());
+                ((EntitiesMap<BackendSession>) backend).removeEntity(remoteUser.toString());
             }
         });
-
     }
 
     /**
      * Sets the header host.
      *
      * @param headerHost the header host
-     * @return the router response handler
+     * @return this
      */
     public RouterResponseHandler setHeaderHost(String headerHost) {
         this.headerHost = headerHost;
@@ -168,7 +191,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * Sets the initial request time.
      *
      * @param initialRequestTime the initial request time
-     * @return the router response handler
+     * @return this
      */
     public RouterResponseHandler setInitialRequestTime(Long initialRequestTime) {
         this.initialRequestTime = initialRequestTime;
@@ -188,7 +211,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * Sets the connection keepalive.
      *
      * @param connectionKeepalive the connection keepalive
-     * @return the router response handler
+     * @return this
      */
     public RouterResponseHandler setConnectionKeepalive(boolean connectionKeepalive) {
         this.connectionKeepalive = connectionKeepalive;
@@ -196,56 +219,163 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     }
 
     /**
-     * Instantiates a new router response handler.
+     * Gets the scheduler.
      *
-     * @param vertx the vertx
-     * @param log the log
-     * @param requestTimeoutTimer the request timeout timer
-     * @param httpServerResponse the http server response
-     * @param sResponse the s response
-     * @param backend the backend
-     * @param remoteUser the remote user
+     * @return the scheduler
      */
-    public RouterResponseHandler(
-            final IScheduler scheduler,
-            final IQueueService queueService,
-            final Logger log,
-            final HttpServerResponse httpServerResponse,
-            final ServerResponse sResponse,
-            final Backend backend,
-            final RemoteUser remoteUser) {
-        this(scheduler, queueService, log, httpServerResponse, sResponse, backend, remoteUser, null);
+    public IScheduler getScheduler() {
+        return scheduler;
     }
 
     /**
-     * Instantiates a new router response handler.
+     * Sets the scheduler.
      *
-     * @param vertx the vertx
-     * @param log the log
-     * @param requestTimeoutTimer the request timeout timer
-     * @param httpServerResponse the http server response
-     * @param sResponse the s response
-     * @param backend the backend
-     * @param remoteUser the remote user
-     * @param counter the counter
+     * @param scheduler the scheduler
+     * @return this
      */
-    public RouterResponseHandler(
-            final IScheduler scheduler,
-            final IQueueService queueService,
-            final Logger log,
-            final HttpServerResponse httpServerResponse,
-            final ServerResponse sResponse,
-            final Backend backend,
-            final RemoteUser remoteUser,
-            final ICounter counter) {
+    public RouterResponseHandler setScheduler(final IScheduler scheduler) {
         this.scheduler = scheduler;
-        this.queueService = queueService;
+        return this;
+    }
+
+    /**
+     * Gets the http server response.
+     *
+     * @return the http server response
+     */
+    public HttpServerResponse getHttpServerResponse() {
+        return httpServerResponse;
+    }
+
+    /**
+     * Sets the http server response.
+     *
+     * @param httpServerResponse the http server response
+     * @return this
+     */
+    public RouterResponseHandler setHttpServerResponse(final HttpServerResponse httpServerResponse) {
         this.httpServerResponse = httpServerResponse;
+        return this;
+    }
+
+    /**
+     * Gets the s response.
+     *
+     * @return the s response
+     */
+    public ServerResponse getsResponse() {
+        return sResponse;
+    }
+
+    /**
+     * Sets response.
+     *
+     * @param sResponse the s response
+     * @return this
+     */
+    public RouterResponseHandler setsResponse(final ServerResponse sResponse) {
         this.sResponse = sResponse;
+        return this;
+    }
+
+    /**
+     * Gets the backend.
+     *
+     * @return the backend
+     */
+    public IBackend getBackend() {
+        return backend;
+    }
+
+    /**
+     * Sets the backend.
+     *
+     * @param backend the backend
+     * @return this
+     */
+    public RouterResponseHandler setBackend(final IBackend backend) {
         this.backend = backend;
-        this.remoteUser = remoteUser;
-        this.log = log;
+        return this;
+    }
+
+    /**
+     * Gets the counter.
+     *
+     * @return the counter
+     */
+    public ICounter getCounter() {
+        return counter;
+    }
+
+    /**
+     * Sets the counter.
+     *
+     * @param counter the counter
+     * @return this
+     */
+    public RouterResponseHandler setCounter(final ICounter counter) {
         this.counter = counter;
+        return this;
+    }
+
+    /**
+     * Gets the log.
+     *
+     * @return the log
+     */
+    public Logger getLog() {
+        return safelog.getLogger();
+    }
+
+    /**
+     * Sets the log.
+     *
+     * @param log the log
+     * @return this
+     */
+    public RouterResponseHandler setLog(final Logger log) {
+        this.safelog.setLogger(log);
+        return this;
+    }
+
+    /**
+     * Gets the queue service.
+     *
+     * @return the queue service
+     */
+    public IQueueService getQueueService() {
+        return queueService;
+    }
+
+    /**
+     * Sets the queue service.
+     *
+     * @param queueService the queue service
+     * @return this
+     */
+    public RouterResponseHandler setQueueService(final IQueueService queueService) {
+        this.queueService = queueService;
+        return this;
+    }
+
+    /**
+     * Gets the remote user.
+     *
+     * @return the remote user
+     */
+    public RemoteUser getRemoteUser() {
+        return remoteUser;
+    }
+
+    /**
+     * Sets the remote user.
+     *
+     * @param remoteUser the remote user
+     * @return this
+     */
+    public RouterResponseHandler setRemoteUser(final RemoteUser remoteUser) {
+        this.remoteUser = remoteUser;
+        return this;
     }
 
 }

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
@@ -34,7 +35,7 @@ public class RandomPolicy implements ILoadBalancePolicy {
      * @see com.globo.galeb.loadbalance.ILoadBalancePolicy#getChoice(java.util.List, com.globo.galeb.core.RequestData)
      */
     @Override
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
+    public IBackend getChoice(final List<Backend> backends, final RequestData requestData) {
 
         if (backends!=null && !backends.isEmpty() && backends instanceof ArrayList<?>) {
             return ((ArrayList<Backend>)backends).get(getIntRandom(backends.size()));

@@ -18,6 +18,7 @@ package com.globo.galeb.loadbalance.impl;
 import java.util.List;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
@@ -36,7 +37,7 @@ public class RoundRobinPolicy implements ILoadBalancePolicy {
      * @see com.globo.galeb.loadbalance.ILoadBalancePolicy#getChoice(java.util.List, com.globo.galeb.core.RequestData)
      */
     @Override
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
+    public IBackend getChoice(final List<Backend> backends, final RequestData requestData) {
 
         int size = backends.size();
         pos = pos+1>=size ? 0 : pos+1;

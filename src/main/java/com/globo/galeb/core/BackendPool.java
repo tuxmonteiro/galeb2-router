@@ -19,6 +19,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.entity.EntitiesMap;
+import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
 import com.globo.galeb.rules.IRuleReturn;
@@ -30,7 +31,7 @@ import com.globo.galeb.rules.IRuleReturn;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 6, 2014.
  */
-public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
+public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
 
     /** The Constant LOADBALANCE_POLICY_FIELDNAME. */
     public static final String LOADBALANCE_POLICY_FIELDNAME  = "loadBalancePolicy";
@@ -49,13 +50,13 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
 
 
     /** The rule return type. */
-    private final String               returnType          = BackendPool.class.getSimpleName();
+    private final String               returnType           = BackendPool.class.getSimpleName();
 
     /** The bad backends. */
-    private final EntitiesMap<Backend> badBackends         = new BadBackendPool("badbackends");
+    private final EntitiesMap<IBackend> badBackends         = new BadBackendPool("badbackends");
 
     /** The load balance policy. */
-    private ICriterion<Backend>        loadBalanceCriterion   = new LoadBalanceCriterion();
+    private ICriterion<IBackend>        loadBalanceCriterion   = new LoadBalanceCriterion();
 
     /** The request time out. */
     private Long                       requestTimeOut      = 60000L;
@@ -77,6 +78,9 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
 
     /** The min session pool size. */
     private int                        minSessionPoolSize  =  1;
+
+    /** The keep alive. */
+    private boolean                    keepAlive           = true;
 
     /**
      * Instantiates a new backend pool.
@@ -128,7 +132,8 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
      * @param requestData the request data
      * @return backend
      */
-    public Backend getChoice(RequestData requestData) {
+    public IBackend getChoice(RequestData requestData) {
+        keepAlive = requestData.getKeepAlive();
         return loadBalanceCriterion.setLog(logger)
                                    .given(getEntities())
                                    .when(requestData)
@@ -150,21 +155,28 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.EntitiesMap#addEntity(com.globo.galeb.core.entity.Entity)
+     */
     @Override
-    public boolean addEntity(Backend backend) {
+    public boolean addEntity(IBackend backend) {
 
-        ((Backend) backend.setMaxPoolSize(maxPoolSize)
-                          .setKeepAliveMaxRequest(keepAliveMaxRequest)
-                          .setKeepAliveTimeOut(keepAliveTimeOut)
-                          .setMinSessionPoolSize(minSessionPoolSize)
-                          .setStatus(StatusType.RUNNING_STATUS.toString()))
-                          .startSessionPool();
+        ((IBackend) ((Entity) backend.setMaxPoolSize(maxPoolSize)
+                                     .setKeepAlive(keepAlive)
+                                     .setKeepAliveMaxRequest(keepAliveMaxRequest)
+                                     .setKeepAliveTimeOut(keepAliveTimeOut)
+                                     .setMinSessionPoolSize(minSessionPoolSize))
+                                     .setStatus(StatusType.RUNNING_STATUS.toString()))
+                                     .startSessionPool();
 
         return super.addEntity(backend);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.EntitiesMap#removeEntity(com.globo.galeb.core.entity.Entity)
+     */
     @Override
-    public boolean removeEntity(Backend backend) {
+    public boolean removeEntity(IBackend backend) {
         backend.closeAllForced();
         return super.removeEntity(backend);
     }
@@ -174,12 +186,15 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
      */
     @Override
     public void clearEntities() {
-        for (Backend backend: getEntities().values()) {
+        for (IBackend backend: getEntities().values()) {
             backend.closeAllForced();
         }
         super.clearEntities();
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.entity.Entity#toJson()
+     */
     @Override
     public JsonObject toJson() {
         properties.putNumber(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
@@ -192,15 +207,15 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
 
         JsonArray backendsJson = new JsonArray();
 
-        for (Backend backend: getEntities().values()) {
+        for (IBackend backend: getEntities().values()) {
             if (backend!=null) {
-                backendsJson.addObject(backend.toJson());
+                backendsJson.addObject(((Entity) backend).toJson());
             }
         }
 
-        for (Backend badBackend: getBadBackends().getEntities().values()) {
+        for (IBackend badBackend: getBadBackends().getEntities().values()) {
             if (badBackend!=null) {
-                backendsJson.addObject(badBackend.toJson());
+                backendsJson.addObject(((Entity) badBackend).toJson());
             }
         }
 
@@ -231,7 +246,7 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
      *
      * @return the bad backends map
      */
-    public EntitiesMap<Backend> getBadBackends() {
+    public EntitiesMap<IBackend> getBadBackends() {
         return badBackends;
     }
 
@@ -250,7 +265,7 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
      * @param entityId the entity id
      * @return the bad backend by id
      */
-    public Backend getBadBackendById(String entityId) {
+    public IBackend getBadBackendById(String entityId) {
         return badBackends.getEntityById(entityId);
     }
 
@@ -258,7 +273,7 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
      * Clear bad backend.
      */
     public void clearBadBackend() {
-        for (Backend backend: badBackends.getEntities().values()) {
+        for (IBackend backend: badBackends.getEntities().values()) {
             backend.closeAllForced();
         }
         badBackends.clearEntities();
@@ -281,10 +296,16 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
      * @param entity the entity
      * @return true, if successful
      */
-    public boolean removeBadBackend(Backend entity) {
+    public boolean removeBadBackend(IBackend entity) {
         return badBackends.removeEntity(entity);
     }
 
+    /**
+     * Removes the bad backend.
+     *
+     * @param json the json
+     * @return true, if successful
+     */
     public boolean removeBadBackend(JsonObject json) {
         return badBackends.removeEntity(json);
     }
@@ -297,10 +318,15 @@ public class BackendPool extends EntitiesMap<Backend> implements IRuleReturn {
         clearBadBackend();
     }
 
+    /**
+     * Interchange backend status.
+     *
+     * @param entity the entity
+     */
     public void interchangeBackendStatus(Backend entity) {
         if (entity!=null) {
             String backendStatus = entity.getStatus();
-            if (backendStatus.equals(UNDEF)||backendStatus.equals(StatusType.FAILED_STATUS)) {
+            if (backendStatus.equals(UNDEF)||backendStatus.equals(StatusType.FAILED_STATUS.toString())) {
                 removeBadBackend(entity);
                 addEntity(entity);
             } else {

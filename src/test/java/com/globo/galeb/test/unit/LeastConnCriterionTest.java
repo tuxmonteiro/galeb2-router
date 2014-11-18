@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.vertx.testtools.VertxAssert.testComplete;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.BackendPool;
@@ -47,7 +48,7 @@ public class LeastConnCriterionTest extends TestVerticle {
 
         for (int x=0; x<numBackends; x++) {
             backendPool.addEntity(new Backend(new JsonObject().putString(IJsonable.ID_FIELDNAME, String.format("0:%s", x))));
-            Backend backend = backendPool.getEntityById(String.format("0:%s", x));
+            IBackend backend = backendPool.getEntityById(String.format("0:%s", x));
             for (int c = 1; c <= x+1; c++) {
                 backend.connect(new RemoteUser("0",c));
             }
@@ -55,10 +56,10 @@ public class LeastConnCriterionTest extends TestVerticle {
 
         for (int c=1 ; c<=1000; c++) {
 
-            Backend backendWithLeastConn = backendPool.getChoice(new RequestData());
+            IBackend backendWithLeastConn = backendPool.getChoice(new RequestData());
             int numConnectionsInBackendWithLeastConn = backendWithLeastConn.getActiveConnections();
 
-            for (Backend backendSample: backendPool.getEntities().values()) {
+            for (IBackend backendSample: backendPool.getEntities().values()) {
 
                 int numConnectionsInBackendSample = backendSample.getActiveConnections();
                 if (backendSample!=backendWithLeastConn) {

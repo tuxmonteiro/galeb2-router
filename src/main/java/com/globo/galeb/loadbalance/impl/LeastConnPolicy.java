@@ -18,6 +18,7 @@ package com.globo.galeb.loadbalance.impl;
 import java.util.List;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
@@ -39,7 +40,7 @@ public class LeastConnPolicy implements ILoadBalancePolicy {
      * @see com.globo.galeb.loadbalance.ILoadBalancePolicy#getChoice(java.util.List, com.globo.galeb.core.RequestData)
      */
     @Override
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
+    public IBackend getChoice(final List<Backend> backends, final RequestData requestData) {
 
 //        JsonObject properties = requestData.getProperties();
 //        long timeout = properties.getLong(ILoadBalancePolicy.CACHE_TIMEOUT_FIELDNAME, 2000L);

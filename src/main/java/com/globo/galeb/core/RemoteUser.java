@@ -27,14 +27,20 @@ import java.net.InetSocketAddress;
 public class RemoteUser {
 
     /** The remote ip. */
-    private InetAddress remoteIP;
+    private InetAddress remoteIP = null;
 
     /** The remote port. */
-    private final Integer remotePort;
+    private Integer remotePort = 0;
 
     /** The remote user id. */
     private String remoteUserId;
 
+    /**
+     * Instantiates a new remote user.
+     */
+    public RemoteUser() {
+        this("127.0.0.1", 0);
+    }
 
     /**
      * Instantiates a new remote user.

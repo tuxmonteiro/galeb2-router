@@ -9,6 +9,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.BackendPool;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.entity.IJsonable;
 
 public class BackendPoolTest {
@@ -87,7 +88,7 @@ public class BackendPoolTest {
         JsonObject json = new JsonObject();
         json.putString(IJsonable.ID_FIELDNAME, backendId);
 
-        Backend backend = (Backend) new Backend(json).setPlataform(vertx);
+        IBackend backend = (IBackend) new Backend(json).setPlataform(vertx);
         if (isElegible) {
             return backendPool.removeEntity(backend);
         } else {

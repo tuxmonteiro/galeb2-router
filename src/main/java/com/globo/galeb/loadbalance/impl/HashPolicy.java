@@ -24,6 +24,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
@@ -51,7 +52,7 @@ public class HashPolicy implements ILoadBalancePolicy {
      * @see com.globo.galeb.loadbalance.ILoadBalancePolicy#getChoice(java.util.List, com.globo.galeb.core.RequestData)
      */
     @Override
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData) {
+    public IBackend getChoice(final List<Backend> backends, final RequestData requestData) {
 
         String sourceIp = requestData.getRemoteAddress();
         JsonObject properties = requestData.getProperties();

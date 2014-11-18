@@ -16,6 +16,7 @@ package com.globo.galeb.test.integration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
 import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
@@ -87,9 +88,8 @@ public class RouteManagerTest extends UtilTestVerticle {
 
         JsonObject getExpectedJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
-//            .putString(IJsonable.STATUS_FIELDNAME, IJsonable.UNDEF)
-            .putObject(IJsonable.PROPERTIES_FIELDNAME,
-                    new JsonObject());
+            .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject())
+            .putArray(Virtualhost.RULES_FIELDNAME, new JsonArray());
 
         newGet().onPort(9000).atUri("/virtualhost/"+vhostId).expectBodyJson(getExpectedJson).after(action1);
 

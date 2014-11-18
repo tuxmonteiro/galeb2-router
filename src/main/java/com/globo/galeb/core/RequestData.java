@@ -34,68 +34,44 @@ import org.vertx.java.core.json.JsonObject;
  */
 public class RequestData {
 
+    /** The Constant HTTP_VERSION_DEFAULT. */
+    private static final String HTTP_VERSION_DEFAULT = "HTTP_1_1";
+
     /** The headers. */
-    private final MultiMap headers;
+    private MultiMap headers = new CaseInsensitiveMultiMap();
 
     /** The params. */
-    private final MultiMap params;
+    private MultiMap params = new CaseInsensitiveMultiMap();
+
+    /** The version. */
+    private String version = HTTP_VERSION_DEFAULT;
+
+    /** The keep alive. */
+    private boolean keepAlive = true;
 
     /** The uri. */
-    private URI uri;
+    private URI uri = null;
 
     /** The remote address. */
-    private String remoteAddress;
+    private String remoteAddress = "0.0.0.0";
 
     /** The remote port. */
-    private String remotePort;
+    private String remotePort = "0";
 
     /** The properties. */
-    private JsonObject properties;
+    private final JsonObject properties = new JsonObject();
 
     /** The http header host. */
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
+
+    /** The http header connection. */
+    private final String httpHeaderConnection = HttpHeaders.CONNECTION.toString();
 
     /**
      * Instantiates a new request data.
      */
     public RequestData() {
-        this("", "");
-    }
-
-    /**
-     * Instantiates a new request data.
-     *
-     * @param remoteAddress the remote address
-     * @param remotePort the remote port
-     */
-    public RequestData(final String remoteAddress,
-                       final String remotePort) {
-        this(new CaseInsensitiveMultiMap(),
-             new CaseInsensitiveMultiMap(),
-             null,
-             remoteAddress,
-             remotePort);
-    }
-
-    /**
-     * Instantiates a new request data.
-     *
-     * @param headers the headers
-     * @param params the params
-     * @param uri the uri
-     * @param remoteAddress the remote address
-     * @param remotePort the remote port
-     */
-    public RequestData(final MultiMap headers,
-                       final MultiMap params,
-                       final URI uri,
-                       final String remoteAddress,
-                       final String remotePort) {
-        this.headers = headers;
-        this.params = params;
-        this.uri = uri;
-        this.remoteAddress = remoteAddress;
-        this.remotePort = remotePort;
+        this((HttpServerRequest)null);
     }
 
     /**
@@ -107,16 +83,14 @@ public class RequestData {
         if (request!=null) {
             this.headers = request.headers();
             this.params = request.params();
+            this.version = request.version().toString();
             this.uri = request.absoluteURI();
             InetSocketAddress localRemoteAddress = request.remoteAddress();
             this.remoteAddress = localRemoteAddress.getHostString();
             this.remotePort = Integer.toString(localRemoteAddress.getPort());
-        } else {
-            this.headers = new CaseInsensitiveMultiMap();
-            this.params = new CaseInsensitiveMultiMap();
-            this.uri = null;
-            this.remoteAddress = "";
-            this.remotePort = "";
+            this.keepAlive = headers.contains(httpHeaderConnection) ?
+                    !"close".equalsIgnoreCase(headers.get(httpHeaderConnection)) :
+                        request.version().equals(HTTP_VERSION_DEFAULT);
         }
     }
 
@@ -137,13 +111,20 @@ public class RequestData {
             InetSocketAddress localRemoteAddress = request.remoteAddress();
             this.remoteAddress = localRemoteAddress.getHostString();
             this.remotePort = Integer.toString(localRemoteAddress.getPort());
-        } else {
-            this.headers = new CaseInsensitiveMultiMap();
-            this.params = new CaseInsensitiveMultiMap();
-            this.uri = null;
-            this.remoteAddress = "";
-            this.remotePort = "";
         }
+        this.version = HTTP_VERSION_DEFAULT;
+        this.keepAlive = true;
+    }
+
+    /**
+     * Sets the headers.
+     *
+     * @param headers the headers
+     * @return the request data
+     */
+    public RequestData setHeaders(MultiMap headers) {
+        this.headers = headers;
+        return this;
     }
 
     /**
@@ -156,12 +137,74 @@ public class RequestData {
     }
 
     /**
+     * Sets the params.
+     *
+     * @param params the params
+     * @return the request data
+     */
+    public RequestData setParams(MultiMap params) {
+        this.params = params;
+        return this;
+    }
+
+    /**
      * Gets the params.
      *
      * @return the params
      */
     public MultiMap getParams() {
         return params;
+    }
+
+    /**
+     * Sets the version.
+     *
+     * @param version the version
+     * @return the request data
+     */
+    public RequestData setVersion(String version) {
+        this.version = version;
+        return this;
+    }
+
+    /**
+     * Gets the version.
+     *
+     * @return the version
+     */
+    public String getVersion() {
+        return version;
+    }
+
+    /**
+     * Sets the keep alive.
+     *
+     * @param keepAlive the keep alive
+     * @return the request data
+     */
+    public RequestData setKeepAlive(boolean keepAlive) {
+        this.keepAlive = keepAlive;
+        return this;
+    }
+
+    /**
+     * Gets the keep alive.
+     *
+     * @return the keep alive
+     */
+    public boolean getKeepAlive() {
+        return this.keepAlive;
+    }
+
+    /**
+     * Sets the uri.
+     *
+     * @param uri the uri
+     * @return the request data
+     */
+    public RequestData setUri(URI uri) {
+        this.uri = uri;
+        return this;
     }
 
     /**
@@ -174,12 +217,34 @@ public class RequestData {
     }
 
     /**
+     * Sets the remote address.
+     *
+     * @param remoteAddress the remote address
+     * @return the request data
+     */
+    public RequestData setRemoteAddress(String remoteAddress) {
+        this.remoteAddress = remoteAddress;
+        return this;
+    }
+
+    /**
      * Gets the remote address.
      *
      * @return the remote address
      */
     public String getRemoteAddress() {
         return remoteAddress;
+    }
+
+    /**
+     * Sets the remote port.
+     *
+     * @param remotePort the remote port
+     * @return the request data
+     */
+    public RequestData setRemotePort(String remotePort) {
+        this.remotePort = remotePort;
+        return this;
     }
 
     /**
@@ -201,6 +266,16 @@ public class RequestData {
     }
 
     /**
+     * Sets the properties.
+     *
+     * @param properties the new properties
+     */
+    public RequestData setProperties(JsonObject properties) {
+        this.properties.mergeIn(properties);
+        return this;
+    }
+
+    /**
      * Gets the properties.
      *
      * @return the properties
@@ -209,12 +284,4 @@ public class RequestData {
         return properties;
     }
 
-    /**
-     * Sets the properties.
-     *
-     * @param properties the new properties
-     */
-    public void setProperties(final JsonObject properties) {
-        this.properties = properties;
-    }
 }

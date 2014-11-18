@@ -9,7 +9,7 @@ import java.util.EnumSet;
 
 import org.junit.Test;
 
-import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 
@@ -22,25 +22,25 @@ public class LoadBalanceCriterionFactoryTest {
         RoundRobin
     }
 
-    private ICriterion<Backend> loadbalanceCriterionDefault = LoadBalanceCriterionFactory.create(DEFAULT_LOADBALANCE);
+    private ICriterion<IBackend> loadbalanceCriterionDefault = LoadBalanceCriterionFactory.create(DEFAULT_LOADBALANCE);
 
     @Test
     public void loadDefaultIfInvalid() {
-        ICriterion<Backend> loadbalanceCriterion = LoadBalanceCriterionFactory.create("Invalid Class");
+        ICriterion<IBackend> loadbalanceCriterion = LoadBalanceCriterionFactory.create("Invalid Class");
 
         assertThat(loadbalanceCriterion).hasSameClassAs(loadbalanceCriterionDefault);
     }
 
     @Test
     public void loadDefaultIfNull() {
-        ICriterion<Backend> loadbalanceCriterion = LoadBalanceCriterionFactory.create(null);
+        ICriterion<IBackend> loadbalanceCriterion = LoadBalanceCriterionFactory.create(null);
 
         assertThat(loadbalanceCriterion).hasSameClassAs(loadbalanceCriterionDefault);
     }
 
     @Test
     public void loadDefaultIfBlank() {
-        ICriterion<Backend> loadbalanceCriterion = LoadBalanceCriterionFactory.create("");
+        ICriterion<IBackend> loadbalanceCriterion = LoadBalanceCriterionFactory.create("");
 
         assertThat(loadbalanceCriterion).hasSameClassAs(loadbalanceCriterionDefault);
     }
@@ -51,7 +51,7 @@ public class LoadBalanceCriterionFactoryTest {
             String loadBalance = supportedLoadBalance.toString();
             String expectedClassName = CLASS_PACKAGE+loadBalance+CLASS_SUFFIX;
 
-            ICriterion<Backend> loadbalanceCriterion = LoadBalanceCriterionFactory.create(loadBalance);
+            ICriterion<IBackend> loadbalanceCriterion = LoadBalanceCriterionFactory.create(loadBalance);
             String loadbalanceCriterionName = loadbalanceCriterion.getClass().getName();
 
             assertThat(loadbalanceCriterionName).as("Testing "+loadBalance).isEqualTo(expectedClassName);

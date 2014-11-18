@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 
 /**
  * Class LeastConnectionsFinder: Find the backend with least connection
@@ -88,8 +89,8 @@ public class LeastConnectionsFinder {
      *
      * @return the backend
      */
-    public Backend get() {
-        Backend chosen;
+    public IBackend get() {
+        IBackend chosen;
         if (!mapBackends.isEmpty()) {
             chosen = Collections.min(mapBackends.entrySet(), new Comparator<Entry<Backend, Integer>>() {
                 @Override

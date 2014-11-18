@@ -19,6 +19,7 @@ import static org.vertx.testtools.VertxAssert.testComplete;
 import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.entity.IJsonable;
@@ -39,7 +40,7 @@ public class BackendTest extends TestVerticle {
     @Test
     public void equalsObject() {
         Backend backend1 = (Backend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
-        Backend backend2 = (Backend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
+        IBackend backend2 = (IBackend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
 
         assertThat(backend1).isEqualTo(backend2);
 
@@ -49,7 +50,7 @@ public class BackendTest extends TestVerticle {
     @Test
     public void notEqualsObject() {
         Backend backend1 = (Backend) new Backend(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
-        Backend backend2 = (Backend) new Backend(buildJsonEntity("127.0.0.2:0")).setPlataform(vertx);
+        IBackend backend2 = (IBackend) new Backend(buildJsonEntity("127.0.0.2:0")).setPlataform(vertx);
 
         assertThat(backend1).isNotEqualTo(backend2);
 

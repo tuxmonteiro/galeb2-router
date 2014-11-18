@@ -23,6 +23,7 @@ import java.util.Set;
 
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RequestData;
 import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.entity.IJsonable;
@@ -64,14 +65,14 @@ public class IPHashCriterionTest {
     public void checkPersistentChoice() {
         long numTests = 256L*256L;
 
-        for (int counter=0; counter<numTests; counter++) {
+        for (Integer counter=0; counter<numTests; counter++) {
 
-            RequestData requestData1 = new RequestData(Long.toString(counter), null);
-            Backend backend1 = backendPool.getChoice(requestData1);
-            RequestData requestData2 = new RequestData(Long.toString(counter), null);
-            Backend backend2 = backendPool.getChoice(requestData2);
-            RequestData requestData3 = new RequestData(Long.toString(counter), null);
-            Backend backend3 = backendPool.getChoice(requestData3);
+            RequestData requestData1 = new RequestData().setRemoteAddress(counter.toString());
+            IBackend backend1 = backendPool.getChoice(requestData1);
+            RequestData requestData2 = new RequestData().setRemoteAddress(counter.toString());
+            IBackend backend2 = backendPool.getChoice(requestData2);
+            RequestData requestData3 = new RequestData().setRemoteAddress(counter.toString());
+            IBackend backend3 = backendPool.getChoice(requestData3);
 
             assertThat(backend1).isEqualTo(backend2);
             assertThat(backend1).isEqualTo(backend3);
@@ -92,8 +93,8 @@ public class IPHashCriterionTest {
 
                 long sum = 0L;
                 long initialTime = System.currentTimeMillis();
-                for (int counter=0; counter<samples; counter++) {
-                    RequestData requestData = new RequestData(Long.toString(counter), null);
+                for (Integer counter=0; counter<samples; counter++) {
+                    RequestData requestData = new RequestData().setRemoteAddress(counter.toString());
                     backendPool.getProperties().putString(HashPolicy.HASH_ALGORITHM_FIELDNAME, hash.toString());
                     sum += backendPool.getChoice(requestData).getPort();
                 }

@@ -57,7 +57,7 @@ public abstract class Rule extends Entity {
     private IRuleReturn   ruleReturn    = null;
 
     /** The priority order. */
-    private Integer       priorityOrder = 0;
+    private Integer       priorityOrder = 999;
 
     /** The match. */
     protected Object      match         = new Object();
@@ -107,7 +107,7 @@ public abstract class Rule extends Entity {
     public Rule(JsonObject json) {
         super(json);
         ruleDefault = properties.getBoolean(DEFAULT_FIELDNAME, false);
-        priorityOrder = properties.getInteger(ORDERNUM_FIELDNAME, 0);
+        priorityOrder = properties.getInteger(ORDERNUM_FIELDNAME, 999);
         match = properties.getString(MATCH_FIELDNAME, UNDEF);
         entityType = Rule.class.getSimpleName().toLowerCase();
     }

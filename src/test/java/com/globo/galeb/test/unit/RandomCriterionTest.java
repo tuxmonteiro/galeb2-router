@@ -63,7 +63,7 @@ public class RandomCriterionTest {
 
         long initialTime = System.currentTimeMillis();
         for (int x=0; x<samples; x++) {
-            RequestData requestData = new RequestData("127.0.0.1", null);
+            RequestData requestData = new RequestData().setRemoteAddress("127.0.0.1");
             sum += backendPool.getChoice(requestData).getPort();
         }
         long finishTime = System.currentTimeMillis();

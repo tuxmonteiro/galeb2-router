@@ -18,6 +18,7 @@ package com.globo.galeb.loadbalance;
 import java.util.List;
 
 import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.RequestData;
 
 /**
@@ -38,7 +39,7 @@ public interface ILoadBalancePolicy {
      * @param requestData the request data
      * @return the backend chosen
      */
-    public Backend getChoice(final List<Backend> backends, final RequestData requestData);
+    public IBackend getChoice(final List<Backend> backends, final RequestData requestData);
 
     /**
      * Checks if is default.

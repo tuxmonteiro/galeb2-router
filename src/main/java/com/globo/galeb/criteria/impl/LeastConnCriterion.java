@@ -17,11 +17,9 @@ package com.globo.galeb.criteria.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import com.globo.galeb.core.Backend;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;
 
@@ -35,13 +33,15 @@ import org.vertx.java.core.logging.Logger;
  * @version 1.0.0, Nov 9, 2014.
  * @param <T> the generic type
  */
-public class LeastConnCriterion<T> implements ICriterion<T> {
+public class LeastConnCriterion<T extends Comparable<T>> implements ICriterion<T> {
 
     /** The log. */
     private final SafeLogger log            = new SafeLogger();
 
     /** The backends. */
     private List<T>          backends       = new ArrayList<T>();
+
+    private Map<String, T> map;
 
     /* (non-Javadoc)
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
@@ -57,6 +57,7 @@ public class LeastConnCriterion<T> implements ICriterion<T> {
      */
     @Override
     public ICriterion<T> given(final Map<String, T> map) {
+        this.map = map;
         if (map!=null) {
             this.backends = (List<T>) map.values();
         }
@@ -81,25 +82,7 @@ public class LeastConnCriterion<T> implements ICriterion<T> {
             return null;
         }
 
-        Collections.sort(backends, new Comparator<T>() {
-
-            @Override
-            public int compare(Object o1, Object o2) {
-                if (o1 instanceof Backend) {
-                    Backend backend1 = (Backend) o1;
-                    Backend backend2 = (Backend) o2;
-
-                    return backend1.getActiveConnections() - backend2.getActiveConnections();
-                } else {
-                    log.error(String.format("%s support only %s class",
-                            this.getClass().getName(), Backend.class.getName()));
-                }
-                return 0;
-            }
-
-        });
-
-        return backends.get(0);
+        return Collections.min(map.values());
     }
 
 }

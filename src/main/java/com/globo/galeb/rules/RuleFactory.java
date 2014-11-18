@@ -1,19 +1,24 @@
 package com.globo.galeb.rules;
 
+import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
+
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
 import org.vertx.java.core.json.JsonObject;
+import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.logger.SafeLogger;
 
 public class RuleFactory {
 
-    public static  String CLASS_PACKAGE     = Rule.class.getPackage().getName();
-    public static  String DEFAULT_RULETYPE  = NullRule.class.getSimpleName();
+    public static final String CLASS_PACKAGE     = Rule.class.getPackage().getName();
+    public static final String DEFAULT_RULETYPE  = NullRule.class.getSimpleName();
 
-    @SuppressWarnings("unchecked")
-    public static Rule createRule(JsonObject json) {
+    private SafeLogger log = new SafeLogger();
+
+    public Rule createRule(JsonObject json) {
 
         JsonObject properties = json.getObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject());
         String ruleType = properties.getString(Rule.RULETYPE_FIELDNAME, "");
@@ -27,6 +32,7 @@ public class RuleFactory {
 
         try {
 
+            @SuppressWarnings("unchecked")
             Class<Rule> clazz = (Class<Rule>) loader.loadClass(ruleFullName);
             Constructor<Rule> classWithConstructor = clazz.getConstructor(JsonObject.class);
             Rule instance = classWithConstructor.newInstance(json);
@@ -41,9 +47,15 @@ public class RuleFactory {
                 IllegalArgumentException |
                 InvocationTargetException e) {
 
-            e.printStackTrace();
+            log.debug(getStackTrace(e));
+
             return null;
         }
+    }
+
+    public RuleFactory setLogger(Logger logger) {
+        log.setLogger(logger);
+        return this;
     }
 
 }

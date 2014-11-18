@@ -27,11 +27,13 @@ import com.globo.galeb.core.Backend;
 import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.HttpCode;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.bus.ICallbackHealthcheck;
 import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.VertxQueueService;
+import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
@@ -220,9 +222,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                 JsonObject backendJson = null;
                 if (backendPool!=null) {
 
-                    Backend backendSearched = elegible ? backendPool.getEntityById(backend) : backendPool.getBadBackendById(backend);
+                    IBackend backendSearched = elegible ? backendPool.getEntityById(backend) : backendPool.getBadBackendById(backend);
                     if (backendSearched!=null) {
-                        backendJson = backendSearched.toJson();
+                        backendJson = ((Entity) backendSearched).toJson();
                     }
 
                     if (backendJson!=null) {

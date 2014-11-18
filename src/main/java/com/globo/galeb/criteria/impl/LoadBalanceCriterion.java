@@ -5,27 +5,27 @@ import java.util.Map;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.collection.IndexedMap;
-import com.globo.galeb.core.Backend;
+import com.globo.galeb.core.IBackend;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.logger.SafeLogger;
 
-public class LoadBalanceCriterion implements ICriterion<Backend> {
+public class LoadBalanceCriterion implements ICriterion<IBackend> {
 
     private SafeLogger             log                  = new SafeLogger();
-    private Map<String, Backend>   map                  = null;
+    private Map<String, IBackend>  map                  = null;
     private String                 loadBalanceName      = "";
-    private ICriterion<Backend>    loadBalanceCriterion = null;
+    private ICriterion<IBackend>   loadBalanceCriterion = null;
     private Object                 param                = null;
 
     @Override
-    public ICriterion<Backend> setLog(Logger log) {
+    public ICriterion<IBackend> setLog(Logger log) {
         this.log.setLogger(log);
         return this;
     }
 
     @Override
-    public ICriterion<Backend> given(Map<String, Backend> map) {
+    public ICriterion<IBackend> given(Map<String, IBackend> map) {
         if (map!=null) {
             this.map = map;
         } else {
@@ -35,7 +35,7 @@ public class LoadBalanceCriterion implements ICriterion<Backend> {
     }
 
     @Override
-    public ICriterion<Backend> when(Object aParam) {
+    public ICriterion<IBackend> when(Object aParam) {
 
         if (aParam instanceof String) {
             this.loadBalanceName = aParam.toString();
@@ -60,7 +60,7 @@ public class LoadBalanceCriterion implements ICriterion<Backend> {
     }
 
     @Override
-    public Backend thenGetResult() {
+    public IBackend thenGetResult() {
         if (loadBalanceCriterion==null) {
             loadBalanceCriterion = LoadBalanceCriterionFactory.create(loadBalanceName);
         }

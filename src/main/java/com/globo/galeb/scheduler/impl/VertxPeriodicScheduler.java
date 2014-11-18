@@ -61,10 +61,10 @@ public class VertxPeriodicScheduler implements IScheduler {
      */
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();
         if (id!=0L) {
             vertx.cancelTimer(id);
         }
+        super.finalize();
     }
 
     /* (non-Javadoc)
