@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.verticles;
+
 
 /**
  * Class Constants.
@@ -28,15 +29,6 @@ public class Constants {
      */
     private Constants() {
     }
-
-    /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final boolean TCP_NODELAY              = true;
-
-    /** The Constant TCP_SEND_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final int     TCP_SEND_BUFFER_SIZE     = 8 * 1024;
-
-    /** The Constant TCP_RECEIVED_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final int     TCP_RECEIVED_BUFFER_SIZE = 32 * 1024;
 
     /** The json attribute name used in configuration: CONF_ROOT_ROUTER. */
     public static final String CONF_ROOT_ROUTER          = "router";
