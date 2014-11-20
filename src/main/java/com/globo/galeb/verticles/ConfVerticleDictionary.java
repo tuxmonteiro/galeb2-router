@@ -22,12 +22,12 @@ package com.globo.galeb.verticles;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Constants {
+public class ConfVerticleDictionary {
 
     /**
      * Instantiates a new constants.
      */
-    private Constants() {
+    private ConfVerticleDictionary() {
     }
 
     /** The json attribute name used in configuration: CONF_ROOT_ROUTER. */
