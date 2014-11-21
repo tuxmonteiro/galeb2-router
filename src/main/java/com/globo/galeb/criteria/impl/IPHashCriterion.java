@@ -74,7 +74,7 @@ public class IPHashCriterion<T> implements ICriterion<T> {
     public ICriterion<T> given(final Map<String, T> map) {
         if (map!=null) {
             this.consistentHash = null;
-            this.collection     = (List<T>) map.values();
+            this.collection     = new ArrayList<T>(map.values());
         }
         return this;
     }

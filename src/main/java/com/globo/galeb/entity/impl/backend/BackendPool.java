@@ -19,7 +19,9 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.criteria.ICriterion;
+import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
+import com.globo.galeb.criteria.impl.RandomCriterion;
 import com.globo.galeb.entity.EntitiesMap;
 import com.globo.galeb.entity.Entity;
 import com.globo.galeb.request.RequestData;
@@ -83,6 +85,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The keep alive. */
     private boolean                    keepAlive           = true;
 
+    /** The loadBalance Name */
+    private String                     loadBalanceName     = RandomCriterion.class.getSimpleName()
+                                                                 .replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, "");
+
     /**
      * Instantiates a new backend pool.
      */
@@ -109,6 +115,11 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public BackendPool(JsonObject json) {
         super(json);
         this.status = StatusType.RUNNING_STATUS.toString();
+        this.loadBalanceName = json.getObject(PROPERTIES_FIELDNAME, new JsonObject())
+                                       .getString(LOADBALANCE_POLICY_FIELDNAME,
+                                               RandomCriterion.class.getSimpleName()
+                                                   .replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
+
     }
 
     /* (non-Javadoc)
@@ -137,6 +148,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
         keepAlive = requestData.getKeepAlive();
         return loadBalanceCriterion.setLog(logger)
                                    .given(getEntities())
+                                   .when(loadBalanceName)
                                    .when(requestData)
                                    .thenGetResult();
     }
