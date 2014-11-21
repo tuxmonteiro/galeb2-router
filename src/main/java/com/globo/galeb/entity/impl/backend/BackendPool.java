@@ -146,6 +146,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     public IBackend getChoice(RequestData requestData) {
         keepAlive = requestData.getKeepAlive();
+        requestData.getProperties().mergeIn(properties);
         return loadBalanceCriterion.setLog(logger)
                                    .given(getEntities())
                                    .when(loadBalanceName)
