@@ -56,9 +56,7 @@ public class CounterWithEventBus implements ICounter {
     /**
      * Instantiates a new counter with statsd.
      *
-     * @param conf the conf
-     * @param vertx the vertx
-     * @param log the log
+     * @param eb the EventBus
      */
     public CounterWithEventBus(final EventBus eb) {
         this.eb = eb;

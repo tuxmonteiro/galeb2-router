@@ -103,9 +103,7 @@ public class BackendSession extends Entity {
     /**
      * Instantiates a new backend session.
      *
-     * @param vertx the vertx
-     * @param serverHost the server host
-     * @param backendId the backend id
+     * @param json the json object
      */
     public BackendSession(final JsonObject json) {
         super(json);

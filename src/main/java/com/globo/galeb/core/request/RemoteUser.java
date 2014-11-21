@@ -45,8 +45,8 @@ public class RemoteUser {
     /**
      * Instantiates a new remote user.
      *
-     * @param remoteIP the remote ip
-     * @param remotePort the remote port
+     * @param ip the remote ip
+     * @param port the remote port
      */
     public RemoteUser(String ip, int port) {
         this(new InetSocketAddress(ip, port));

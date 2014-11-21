@@ -144,7 +144,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /**
      * Sets the load balance policy.
      *
-     * @param loadBalanceCriterion the load balance policy
+     * @param loadbalanceName the load balance policy name
      * @return the backend pool
      */
     public BackendPool setLoadBalancePolicy(String loadbalanceName) {

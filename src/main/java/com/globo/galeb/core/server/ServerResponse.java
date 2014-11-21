@@ -83,9 +83,6 @@ public class ServerResponse {
      * Instantiates a new server response.
      *
      * @param req the req
-     * @param log the log
-     * @param counter the counter
-     * @param enableAccessLog the enable access log
      */
     public ServerResponse(final HttpServerRequest req) {
         this.req = req;

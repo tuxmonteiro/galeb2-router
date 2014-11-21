@@ -89,7 +89,6 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      * Instantiates a new farm.
      *
      * @param verticle the verticle
-     * @param queueService the queue service
      */
     public Farm(final Verticle verticle) {
         super("farm");
