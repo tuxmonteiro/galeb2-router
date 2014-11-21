@@ -33,7 +33,7 @@ public class LoadBalanceCriterionFactory {
     public static final String DEFAULT_LOADBALANCE = RandomCriterion.class.getSimpleName().replaceFirst(CLASS_SUFFIX, "");
 
     /**
-     * Creates the.
+     * Creates the load balance by name
      *
      * @param loadBalanceName the load balance name
      * @return the criterion
