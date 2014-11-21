@@ -201,8 +201,8 @@ public class RouterRequest {
      */
     public void start() {
 
-        headers = httpServerRequest.headers();
-        httpVersion = httpServerRequest.version();
+        setUpHeadersAndVersion();
+
         remoteUser = new RemoteUser(httpServerRequest.remoteAddress());
         connectionKeepalive = isHttpKeepAlive();
 
@@ -279,6 +279,12 @@ public class RouterRequest {
 
         pumpStream();
 
+    }
+
+    public RouterRequest setUpHeadersAndVersion() {
+        headers = httpServerRequest.headers();
+        httpVersion = httpServerRequest.version();
+        return this;
     }
 
     /**
@@ -448,6 +454,7 @@ public class RouterRequest {
      * @return true, if is http keep alive
      */
     public boolean isHttpKeepAlive() {
+
         return headers.contains(RouterRequest.HTTP_HEADER_CONNECTION) ?
                 !"close".equalsIgnoreCase(headers.get(RouterRequest.HTTP_HEADER_CONNECTION)) :
                 httpVersion.equals(HttpVersion.HTTP_1_1);
