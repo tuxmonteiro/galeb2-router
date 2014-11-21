@@ -18,11 +18,11 @@ package com.globo.galeb.handlers;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.bus.NullQueueService;
-import com.globo.galeb.core.server.ServerResponse;
+import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.bus.NullQueueService;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.impl.NullScheduler;
+import com.globo.galeb.server.ServerResponse;
 
 
 /**

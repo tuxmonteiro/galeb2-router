@@ -26,11 +26,11 @@ import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.impl.LogDelegate;
 
-import com.globo.galeb.core.bus.BackendPoolMap;
-import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.bus.BackendMap;
-import com.globo.galeb.core.entity.Entity;
-import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.bus.BackendMap;
+import com.globo.galeb.bus.BackendPoolMap;
+import com.globo.galeb.bus.MessageBus;
+import com.globo.galeb.entity.Entity;
+import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class BackendMapTest {

@@ -21,10 +21,10 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.entity.impl.Farm;
-import com.globo.galeb.core.request.RouterRequest;
+import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.request.RouterRequest;
 
 /**
  * Class RouterRequestHandler.

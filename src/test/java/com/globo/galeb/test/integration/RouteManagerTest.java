@@ -15,9 +15,9 @@
 package com.globo.galeb.test.integration;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
-import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.impl.frontend.Virtualhost;
+import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 

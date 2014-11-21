@@ -15,8 +15,8 @@
  */
 package com.globo.galeb.criteria;
 
-import com.globo.galeb.core.entity.impl.backend.IBackend;
 import com.globo.galeb.criteria.impl.RandomCriterion;
+import com.globo.galeb.entity.impl.backend.IBackend;
 
 /**
  * A factory for creating LoadBalanceCriterion objects.

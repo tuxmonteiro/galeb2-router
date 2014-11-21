@@ -23,11 +23,11 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.entity.impl.Farm;
-import com.globo.galeb.core.rulereturn.HttpCode;
-import com.globo.galeb.core.server.ManagerService;
-import com.globo.galeb.core.server.Server;
-import com.globo.galeb.core.server.ServerResponse;
+import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.rulereturn.HttpCode;
+import com.globo.galeb.server.ManagerService;
+import com.globo.galeb.server.Server;
+import com.globo.galeb.server.ServerResponse;
 
 /**
  * Class GetMatcherHandler.

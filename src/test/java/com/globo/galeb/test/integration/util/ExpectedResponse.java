@@ -16,7 +16,7 @@ package com.globo.galeb.test.integration.util;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.rulereturn.HttpCode;
 
 public class ExpectedResponse {
     private int code = HttpCode.OK;

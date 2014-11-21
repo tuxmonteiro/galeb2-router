@@ -15,14 +15,14 @@
  */
 package com.globo.galeb.verticles;
 
-import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.bus.VertxQueueService;
-import com.globo.galeb.core.entity.impl.Farm;
-import com.globo.galeb.core.server.Server;
+import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.bus.VertxQueueService;
+import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.handlers.RouterRequestHandler;
 import com.globo.galeb.handlers.ws.FrontendWebSocketHandler;
 import com.globo.galeb.metrics.CounterWithEventBus;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.server.Server;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpServerRequest;

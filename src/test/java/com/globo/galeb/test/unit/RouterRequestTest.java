@@ -10,7 +10,7 @@ import org.vertx.java.core.http.CaseInsensitiveMultiMap;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpVersion;
 
-import com.globo.galeb.core.request.RouterRequest;
+import com.globo.galeb.request.RouterRequest;
 
 public class RouterRequestTest {
 

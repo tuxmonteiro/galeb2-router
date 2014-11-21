@@ -15,20 +15,20 @@
  */
 package com.globo.galeb.handlers;
 
-import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.bus.NullQueueService;
-import com.globo.galeb.core.entity.EntitiesMap;
-import com.globo.galeb.core.entity.impl.backend.BackendSession;
-import com.globo.galeb.core.entity.impl.backend.IBackend;
-import com.globo.galeb.core.entity.impl.backend.NullBackend;
-import com.globo.galeb.core.request.RemoteUser;
-import com.globo.galeb.core.server.ServerResponse;
+import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.bus.NullQueueService;
+import com.globo.galeb.entity.EntitiesMap;
+import com.globo.galeb.entity.impl.backend.BackendSession;
+import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.entity.impl.backend.NullBackend;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.CounterConsoleOut;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.request.RemoteUser;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.impl.NullScheduler;
+import com.globo.galeb.server.ServerResponse;
 import com.globo.galeb.streams.Pump;
 
 import org.vertx.java.core.Handler;

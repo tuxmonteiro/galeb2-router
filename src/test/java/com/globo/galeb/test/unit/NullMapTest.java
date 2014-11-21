@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import com.globo.galeb.core.bus.NullMap;
+import com.globo.galeb.bus.NullMap;
 
 public class NullMapTest {
 

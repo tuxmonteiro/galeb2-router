@@ -21,10 +21,10 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.bus.IQueueService;
-import com.globo.galeb.core.rulereturn.HttpCode;
-import com.globo.galeb.core.server.ManagerService;
-import com.globo.galeb.core.server.ServerResponse;
+import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.rulereturn.HttpCode;
+import com.globo.galeb.server.ManagerService;
+import com.globo.galeb.server.ServerResponse;
 
 /**
  * Class PutMatcherHandler.

@@ -17,8 +17,8 @@ package com.globo.galeb.handlers.ws;
 
 import java.util.Map.Entry;
 
-import com.globo.galeb.core.entity.impl.Farm;
-import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
+import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.entity.impl.frontend.Virtualhost;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;

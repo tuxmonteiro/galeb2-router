@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.test.unit.assertj.custom;
 
-import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.entity.impl.Farm;
 
 import org.assertj.core.api.AbstractAssert;
 

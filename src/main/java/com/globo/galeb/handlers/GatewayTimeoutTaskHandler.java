@@ -1,8 +1,8 @@
 package com.globo.galeb.handlers;
 
-import com.globo.galeb.core.server.ServerResponse;
 import com.globo.galeb.exceptions.GatewayTimeoutException;
 import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.server.ServerResponse;
 
 /**
  * Class GatewayTimeoutTaskHandler.

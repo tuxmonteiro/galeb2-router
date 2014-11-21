@@ -32,7 +32,7 @@ import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
-import com.globo.galeb.core.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.backend.BackendPool;
 import com.globo.galeb.verticles.RouteManagerVerticle;
 import com.globo.galeb.verticles.RouterVerticle;
 

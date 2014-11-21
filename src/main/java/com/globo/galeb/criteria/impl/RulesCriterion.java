@@ -17,9 +17,9 @@ package com.globo.galeb.criteria.impl;
 
 import java.util.Map;
 
-import com.globo.galeb.core.entity.impl.frontend.NullRule;
-import com.globo.galeb.core.entity.impl.frontend.Rule;
 import com.globo.galeb.criteria.ICriterion;
+import com.globo.galeb.entity.impl.frontend.NullRule;
+import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.logger.SafeLogger;
 
 import org.vertx.java.core.http.HttpServerRequest;

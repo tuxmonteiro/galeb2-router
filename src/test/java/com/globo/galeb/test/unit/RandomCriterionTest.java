@@ -18,12 +18,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.core.entity.impl.backend.Backend;
-import com.globo.galeb.core.entity.impl.backend.BackendPool;
-import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.criteria.impl.RandomCriterion;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.impl.backend.Backend;
+import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.request.RequestData;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;

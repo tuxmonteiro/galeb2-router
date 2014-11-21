@@ -15,7 +15,7 @@
  */
 package com.globo.galeb.exceptions;
 
-import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.rulereturn.HttpCode;
 
 /**
  * Class BadRequestException.

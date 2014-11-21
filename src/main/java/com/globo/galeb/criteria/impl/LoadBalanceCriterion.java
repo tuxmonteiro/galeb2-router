@@ -20,9 +20,9 @@ import java.util.Map;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.collection.IndexedMap;
-import com.globo.galeb.core.entity.impl.backend.IBackend;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.logger.SafeLogger;
 
 /**

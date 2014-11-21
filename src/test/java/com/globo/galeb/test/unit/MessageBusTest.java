@@ -23,8 +23,8 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.logging.impl.LogDelegate;
 
-import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.bus.MessageBus;
+import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class MessageBusTest {

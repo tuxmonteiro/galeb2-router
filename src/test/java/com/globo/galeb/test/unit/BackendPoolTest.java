@@ -7,10 +7,10 @@ import org.junit.Test;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.core.entity.impl.backend.Backend;
-import com.globo.galeb.core.entity.impl.backend.BackendPool;
-import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.impl.backend.Backend;
+import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.backend.IBackend;
 
 public class BackendPoolTest {
 

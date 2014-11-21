@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.exceptions;
 
-import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.rulereturn.HttpCode;
 
 public class ServiceUnavailableException extends AbstractHttpException {
 

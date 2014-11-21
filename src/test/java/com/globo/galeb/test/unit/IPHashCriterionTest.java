@@ -22,13 +22,14 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import com.globo.galeb.consistenthash.HashAlgorithm;
-import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.core.entity.impl.backend.Backend;
-import com.globo.galeb.core.entity.impl.backend.BackendPool;
-import com.globo.galeb.core.entity.impl.backend.IBackend;
-import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.criteria.impl.IPHashCriterion;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.impl.backend.Backend;
+import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.request.RequestData;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;

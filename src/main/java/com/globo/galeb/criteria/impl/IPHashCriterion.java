@@ -23,9 +23,9 @@ import java.util.Map;
 
 import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
-import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;
+import com.globo.galeb.request.RequestData;
 
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;

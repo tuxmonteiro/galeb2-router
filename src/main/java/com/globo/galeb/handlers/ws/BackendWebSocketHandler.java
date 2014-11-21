@@ -26,7 +26,7 @@ import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.http.WebSocket;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.bus.IQueueService;
 
 /**
  * Class BackendWebSocketHandler.

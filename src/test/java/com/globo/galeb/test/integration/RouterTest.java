@@ -18,12 +18,12 @@ import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.globo.galeb.core.bus.MessageBus;
-import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.core.entity.impl.backend.BackendPool;
-import com.globo.galeb.core.entity.impl.frontend.Rule;
-import com.globo.galeb.core.entity.impl.frontend.UriPath;
-import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.bus.MessageBus;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.frontend.Rule;
+import com.globo.galeb.entity.impl.frontend.UriPath;
+import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.test.integration.util.Action;
 import com.globo.galeb.test.integration.util.UtilTestVerticle;
 
