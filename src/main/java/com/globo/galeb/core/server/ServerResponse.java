@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.server;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 
+import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.rulereturn.HttpCode;
 import com.globo.galeb.exceptions.AbstractHttpException;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
 
@@ -35,20 +38,17 @@ import org.vertx.java.core.logging.Logger;
  */
 public class ServerResponse {
 
-    /** The Constant UNDEF. */
-    private static final String UNDEF = "UNDEF";
-
     /** The httpServerRequest. */
     private final HttpServerRequest req;
 
     /** The logger. */
-    private final Logger log;
+    private final SafeLogger log = new SafeLogger();
 
     /** The counter. */
-    private final ICounter counter;
+    private ICounter counter = null;
 
     /** is enabled access log? */
-    private final boolean enableAccessLog;
+    private boolean enableAccessLog = false;
 
     /** The httpServerResponse. */
     private final HttpServerResponse resp;
@@ -87,13 +87,7 @@ public class ServerResponse {
      * @param counter the counter
      * @param enableAccessLog the enable access log
      */
-    public ServerResponse(final HttpServerRequest req,
-                          final Logger log,
-                          final ICounter counter,
-                          boolean enableAccessLog) {
-        this.log = log;
-        this.counter = counter;
-        this.enableAccessLog = enableAccessLog;
+    public ServerResponse(final HttpServerRequest req) {
         this.req = req;
         this.resp = req.response();
         resp.exceptionHandler(new Handler<Throwable>() {
@@ -268,17 +262,57 @@ public class ServerResponse {
             code = resp.getStatusCode();
         }
         if (counter!=null) {
-            if (!"".equals(headerHost) && !UNDEF.equals(headerHost) &&
-                    !"".equals(backendId) && !UNDEF.equals(backendId)) {
+            if (!"".equals(headerHost) && !IJsonable.UNDEF.equals(headerHost) &&
+                    !"".equals(backendId) && !IJsonable.UNDEF.equals(backendId)) {
                 counter.httpCode(headerHost, backendId, code);
-            } else if (!"".equals(id) && !UNDEF.equals(id)) {
+            } else if (!"".equals(id) && !IJsonable.UNDEF.equals(id)) {
                 counter.httpCode(id, code);
             }
         }
     }
 
-    public void setChunked(Boolean enableChunked) {
+    /**
+     * Sets the chunked.
+     *
+     * @param enableChunked the enable chunked
+     * @return the server response
+     */
+    public ServerResponse setChunked(Boolean enableChunked) {
         this.resp.setChunked(enableChunked);
+        return this;
+    }
+
+    /**
+     * Sets the counter.
+     *
+     * @param counter the counter
+     * @return the server response
+     */
+    public ServerResponse setCounter(final ICounter counter) {
+        this.counter = counter;
+        return this;
+    }
+
+    /**
+     * Sets the enable access log.
+     *
+     * @param enableAccessLog the enable access log
+     * @return the server response
+     */
+    public ServerResponse setEnableAccessLog(boolean enableAccessLog) {
+        this.enableAccessLog = enableAccessLog;
+        return this;
+    }
+
+    /**
+     * Sets the log.
+     *
+     * @param log the log
+     * @return the server response
+     */
+    public ServerResponse setLog(final Logger log) {
+        this.log.setLogger(log);
+        return this;
     }
 
 }
