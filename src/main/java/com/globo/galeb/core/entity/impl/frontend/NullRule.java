@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.rules;
+package com.globo.galeb.core.entity.impl.frontend;
 
 import java.util.UUID;
 

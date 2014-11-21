@@ -1,4 +1,4 @@
-package com.globo.galeb.rules;
+package com.globo.galeb.core.entity.impl.frontend;
 
 import static org.apache.commons.lang3.exception.ExceptionUtils.getStackTrace;
 

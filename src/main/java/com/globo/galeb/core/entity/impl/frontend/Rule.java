@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.rules;
+package com.globo.galeb.core.entity.impl.frontend;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -24,6 +24,8 @@ import java.util.List;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.rulereturn.IRuleReturn;
+import com.globo.galeb.core.rulereturn.RuleReturnFactory;
 import com.globo.galeb.criteria.impl.RequestMatch;
 
 
