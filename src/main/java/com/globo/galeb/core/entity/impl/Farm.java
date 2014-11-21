@@ -163,10 +163,11 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      *
      * @return the backends
      */
-    public Set<IBackend> getBackends() {
-        Set<IBackend> backends = new HashSet<>();
+    @SuppressWarnings("unchecked")
+    public Set<Entity> getBackends() {
+        Set<Entity> backends = new HashSet<>();
         for (BackendPool backendpool: backendPools.getEntities().values()) {
-            backends.addAll(backendpool.getEntities().values());
+            backends.addAll((Collection<? extends Entity>) backendpool.getEntities().values());
         }
         return backends;
     }
@@ -250,7 +251,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         if (verticle instanceof RouterVerticle) {
             this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
             String backendClassName = Backend.class.getSimpleName().toLowerCase();
-            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, collectionToJson("", (Collection<? extends Entity>) getBackends(), backendClassName));
+            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, collectionToJson("", getBackends(), backendClassName));
         }
     }
 
