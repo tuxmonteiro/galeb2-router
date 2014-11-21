@@ -1,8 +1,8 @@
 package com.globo.galeb.core.bus;
 
-import com.globo.galeb.core.Virtualhost;
-import com.globo.galeb.rules.Rule;
-import com.globo.galeb.rules.RuleFactory;
+import com.globo.galeb.core.entity.impl.frontend.Rule;
+import com.globo.galeb.core.entity.impl.frontend.RuleFactory;
+import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
 
 public class RuleMap extends MessageToMap<Virtualhost> {
 

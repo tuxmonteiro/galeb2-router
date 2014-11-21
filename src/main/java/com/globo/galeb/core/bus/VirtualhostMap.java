@@ -15,7 +15,7 @@
  */
 package com.globo.galeb.core.bus;
 
-import com.globo.galeb.core.Virtualhost;
+import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
 
 /**
  * Class VirtualhostMap.

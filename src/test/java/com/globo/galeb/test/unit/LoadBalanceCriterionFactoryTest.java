@@ -9,7 +9,7 @@ import java.util.EnumSet;
 
 import org.junit.Test;
 
-import com.globo.galeb.core.IBackend;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 

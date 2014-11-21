@@ -21,7 +21,7 @@ import java.util.Map;
 
 import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
-import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.loadbalance.impl.HashPolicy;
 import com.globo.galeb.logger.SafeLogger;

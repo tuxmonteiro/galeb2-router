@@ -15,17 +15,17 @@
  */
 package com.globo.galeb.verticles;
 
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.Server;
-import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.VertxQueueService;
-import com.globo.galeb.handlers.rest.DeleteMatcherHandler;
-import com.globo.galeb.handlers.rest.GetMatcherHandler;
-import com.globo.galeb.handlers.rest.PostMatcherHandler;
-import com.globo.galeb.handlers.rest.PutMatcherHandler;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.core.server.Server;
+import com.globo.galeb.core.server.ServerResponse;
+import com.globo.galeb.handlers.DeleteMatcherHandler;
+import com.globo.galeb.handlers.GetMatcherHandler;
+import com.globo.galeb.handlers.PostMatcherHandler;
+import com.globo.galeb.handlers.PutMatcherHandler;
 import com.globo.galeb.metrics.CounterWithEventBus;
 import com.globo.galeb.metrics.ICounter;
 
@@ -134,7 +134,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
 
             @Override
             public void handle(HttpServerRequest req) {
-                final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
+                final ServerResponse serverResponse = new ServerResponse(req).setLog(log);
 
                 if (httpServerName==null) {
                     httpServerName = req.headers().contains(HttpHeaders.HOST) ? req.headers().get(HttpHeaders.HOST) : "SERVER";

@@ -15,14 +15,14 @@
  */
 package com.globo.galeb.handlers;
 
-import com.globo.galeb.core.BackendSession;
-import com.globo.galeb.core.IBackend;
-import com.globo.galeb.core.NullBackend;
-import com.globo.galeb.core.RemoteUser;
-import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.NullQueueService;
 import com.globo.galeb.core.entity.EntitiesMap;
+import com.globo.galeb.core.entity.impl.backend.BackendSession;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.entity.impl.backend.NullBackend;
+import com.globo.galeb.core.request.RemoteUser;
+import com.globo.galeb.core.server.ServerResponse;
 import com.globo.galeb.exceptions.ServiceUnavailableException;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.CounterConsoleOut;
@@ -35,7 +35,6 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.HttpServerResponse;
-import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 /**
@@ -53,13 +52,13 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private HttpServerResponse httpServerResponse = null;
 
     /** The backend. */
-    private IBackend backend = new NullBackend(new JsonObject());
+    private IBackend backend = new NullBackend();
 
     /** The counter. */
     private ICounter counter = new CounterConsoleOut();
 
     /** The safelog. */
-    private SafeLogger safelog = new SafeLogger();
+    private SafeLogger log = new SafeLogger();
 
     /** The queue service. */
     private IQueueService queueService = new NullQueueService();
@@ -85,20 +84,26 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     @Override
     public void handle(final HttpClientResponse cResponse) throws RuntimeException {
         if (sResponse==null||httpServerResponse==null) {
-            getLog().error("Response is NULL");
+            log.error("Response is NULL");
             return;
         }
-        getLog().debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
+        log.debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));
 
         scheduler.cancel();
 
-        adjustStatusAndHeaderResponse(cResponse.statusCode(), cResponse);
+        updateResponseHeadersAndStatus(cResponse.statusCode(), cResponse);
 
         pumpStream(cResponse);
 
     }
 
-    private void adjustStatusAndHeaderResponse(int statusCode, final HttpClientResponse httpClientResponse) {
+    /**
+     * Adjust status and header response.
+     *
+     * @param statusCode the status code
+     * @param httpClientResponse the http client response
+     */
+    private void updateResponseHeadersAndStatus(int statusCode, final HttpClientResponse httpClientResponse) {
         sResponse.setStatusCode(statusCode);
         sResponse.setHeaders(httpClientResponse.headers());
 
@@ -108,6 +113,11 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
     }
 
+    /**
+     * Pump stream.
+     *
+     * @param httpClientResponse the http client response
+     */
     private void pumpStream(final HttpClientResponse httpClientResponse) {
 
         final Pump pump = new Pump(httpClientResponse, httpServerResponse);
@@ -116,7 +126,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             @Override
             public void handle(Throwable throwable) {
                 scheduler.cancel();
-                getLog().error(String.format("FAIL: RouterResponse.pump with %s", throwable.getMessage()));
+                log.error(String.format("FAIL: RouterResponse.pump with %s", throwable.getMessage()));
                 sResponse.showErrorAndClose(new ServiceUnavailableException());
             }
         });
@@ -147,7 +157,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     sResponse.closeResponse();
                     backend.close(remoteUser.toString());
                 }
-                getLog().debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
+                log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }
         });
 
@@ -157,7 +167,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             public void handle(Throwable event) {
                 String backendId = backend.toString();
 
-                getLog().error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
+                log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
                 queueService.publishBackendFail(backendId);
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
                     .showErrorAndClose(event);
@@ -179,15 +189,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     }
 
     /**
-     * Gets the initial request time.
-     *
-     * @return the initial request time
-     */
-    public Long getInitialRequestTime() {
-        return initialRequestTime;
-    }
-
-    /**
      * Sets the initial request time.
      *
      * @param initialRequestTime the initial request time
@@ -196,15 +197,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     public RouterResponseHandler setInitialRequestTime(Long initialRequestTime) {
         this.initialRequestTime = initialRequestTime;
         return this;
-    }
-
-    /**
-     * Checks if is connection keepalive.
-     *
-     * @return true, if is connection keepalive
-     */
-    public boolean isConnectionKeepalive() {
-        return connectionKeepalive;
     }
 
     /**
@@ -219,15 +211,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     }
 
     /**
-     * Gets the scheduler.
-     *
-     * @return the scheduler
-     */
-    public IScheduler getScheduler() {
-        return scheduler;
-    }
-
-    /**
      * Sets the scheduler.
      *
      * @param scheduler the scheduler
@@ -236,15 +219,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     public RouterResponseHandler setScheduler(final IScheduler scheduler) {
         this.scheduler = scheduler;
         return this;
-    }
-
-    /**
-     * Gets the http server response.
-     *
-     * @return the http server response
-     */
-    public HttpServerResponse getHttpServerResponse() {
-        return httpServerResponse;
     }
 
     /**
@@ -259,15 +233,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     }
 
     /**
-     * Gets the s response.
-     *
-     * @return the s response
-     */
-    public ServerResponse getsResponse() {
-        return sResponse;
-    }
-
-    /**
      * Sets response.
      *
      * @param sResponse the s response
@@ -276,15 +241,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     public RouterResponseHandler setsResponse(final ServerResponse sResponse) {
         this.sResponse = sResponse;
         return this;
-    }
-
-    /**
-     * Gets the backend.
-     *
-     * @return the backend
-     */
-    public IBackend getBackend() {
-        return backend;
     }
 
     /**
@@ -299,15 +255,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     }
 
     /**
-     * Gets the counter.
-     *
-     * @return the counter
-     */
-    public ICounter getCounter() {
-        return counter;
-    }
-
-    /**
      * Sets the counter.
      *
      * @param counter the counter
@@ -319,32 +266,14 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     }
 
     /**
-     * Gets the log.
-     *
-     * @return the log
-     */
-    public Logger getLog() {
-        return safelog.getLogger();
-    }
-
-    /**
      * Sets the log.
      *
      * @param log the log
      * @return this
      */
     public RouterResponseHandler setLog(final Logger log) {
-        this.safelog.setLogger(log);
+        this.log.setLogger(log);
         return this;
-    }
-
-    /**
-     * Gets the queue service.
-     *
-     * @return the queue service
-     */
-    public IQueueService getQueueService() {
-        return queueService;
     }
 
     /**
@@ -356,15 +285,6 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     public RouterResponseHandler setQueueService(final IQueueService queueService) {
         this.queueService = queueService;
         return this;
-    }
-
-    /**
-     * Gets the remote user.
-     *
-     * @return the remote user
-     */
-    public RemoteUser getRemoteUser() {
-        return remoteUser;
     }
 
     /**

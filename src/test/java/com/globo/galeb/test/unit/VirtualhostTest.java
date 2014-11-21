@@ -9,12 +9,12 @@ import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.entity.impl.frontend.Rule;
+import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
 import com.globo.galeb.metrics.ICounter;
-import com.globo.galeb.rules.Rule;
 
 public class VirtualhostTest {
 

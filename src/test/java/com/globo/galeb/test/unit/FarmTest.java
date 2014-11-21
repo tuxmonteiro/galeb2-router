@@ -26,12 +26,12 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.impl.LogDelegate;
 import org.vertx.testtools.TestVerticle;
 
-import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.entity.IJsonable;
-import com.globo.galeb.rules.Rule;
-import com.globo.galeb.rules.RuleFactory;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.entity.impl.frontend.Rule;
+import com.globo.galeb.core.entity.impl.frontend.RuleFactory;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class FarmTest extends TestVerticle {

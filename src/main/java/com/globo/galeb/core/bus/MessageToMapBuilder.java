@@ -18,7 +18,7 @@ package com.globo.galeb.core.bus;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
+import com.globo.galeb.core.entity.impl.Farm;
 
 /**
  * Class MessageToMapBuilder.

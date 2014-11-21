@@ -17,9 +17,9 @@ package com.globo.galeb.loadbalance.impl;
 
 import java.util.List;
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IBackend;
-import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 /**

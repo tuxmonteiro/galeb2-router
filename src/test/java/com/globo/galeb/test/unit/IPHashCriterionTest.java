@@ -22,11 +22,11 @@ import java.util.EnumSet;
 import java.util.Set;
 
 import com.globo.galeb.consistenthash.HashAlgorithm;
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IBackend;
-import com.globo.galeb.core.RequestData;
-import com.globo.galeb.core.BackendPool;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.BackendPool;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.loadbalance.impl.HashPolicy;
 
 import org.junit.Before;

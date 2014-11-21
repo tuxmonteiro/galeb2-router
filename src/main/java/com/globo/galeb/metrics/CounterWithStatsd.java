@@ -16,10 +16,10 @@
 package com.globo.galeb.metrics;
 
 import static org.vertx.java.core.datagram.InternetProtocolFamily.IPv4;
-import static com.globo.galeb.core.Constants.CONF_STATSD_ENABLE;
-import static com.globo.galeb.core.Constants.CONF_STATSD_HOST;
-import static com.globo.galeb.core.Constants.CONF_STATSD_PORT;
-import static com.globo.galeb.core.Constants.CONF_STATSD_PREFIX;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_STATSD_ENABLE;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_STATSD_HOST;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_STATSD_PORT;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_STATSD_PREFIX;
 
 import com.globo.galeb.metrics.StatsdClient.TypeStatsdMessage;
 

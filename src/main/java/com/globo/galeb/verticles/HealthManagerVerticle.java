@@ -23,17 +23,17 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.BackendPool;
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.IBackend;
 import com.globo.galeb.core.bus.ICallbackHealthcheck;
 import com.globo.galeb.core.bus.IEventObserver;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.VertxQueueService;
 import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.BackendPool;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.rulereturn.HttpCode;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 

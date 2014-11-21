@@ -23,9 +23,9 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IBackend;
-import com.globo.galeb.core.RequestData;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.loadbalance.ILoadBalancePolicy;
 
 /**

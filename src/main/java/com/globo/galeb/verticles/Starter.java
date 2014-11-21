@@ -15,7 +15,7 @@
  */
 package com.globo.galeb.verticles;
 
-import static com.globo.galeb.core.Constants.*;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.*;
 
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;

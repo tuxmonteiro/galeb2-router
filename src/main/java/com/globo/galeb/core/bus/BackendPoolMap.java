@@ -15,7 +15,7 @@
  */
 package com.globo.galeb.core.bus;
 
-import com.globo.galeb.core.BackendPool;
+import com.globo.galeb.core.entity.impl.backend.BackendPool;
 
 /**
  * Class BackendPoolMap.

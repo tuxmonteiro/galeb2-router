@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IBackend;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
 
 /**
  * Class LeastConnectionsFinder: Find the backend with least connection

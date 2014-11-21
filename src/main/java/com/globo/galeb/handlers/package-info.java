@@ -1,4 +1,4 @@
 /**
- * Provides router handlers
+ * Provides event handlers
  */
 package com.globo.galeb.handlers;

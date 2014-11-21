@@ -23,14 +23,14 @@ import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.BackendPools;
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.Virtualhost;
 import com.globo.galeb.core.bus.BackendMap;
 import com.globo.galeb.core.bus.MessageBus;
 import com.globo.galeb.core.bus.MessageToMapBuilder;
 import com.globo.galeb.core.bus.NullMap;
 import com.globo.galeb.core.bus.VirtualhostMap;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.entity.impl.backend.BackendPools;
+import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
 
 public class MessageToMapBuilderTest {
 

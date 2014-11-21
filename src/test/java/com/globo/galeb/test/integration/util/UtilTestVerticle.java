@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.test.integration.util;
 
-import static com.globo.galeb.core.Constants.CONF_INSTANCES;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_INSTANCES;
 import static org.vertx.testtools.VertxAssert.assertEquals;
 import static org.vertx.testtools.VertxAssert.assertNotNull;
 import static org.vertx.testtools.VertxAssert.assertTrue;
@@ -32,7 +32,7 @@ import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
-import com.globo.galeb.core.BackendPool;
+import com.globo.galeb.core.entity.impl.backend.BackendPool;
 import com.globo.galeb.verticles.RouteManagerVerticle;
 import com.globo.galeb.verticles.RouterVerticle;
 

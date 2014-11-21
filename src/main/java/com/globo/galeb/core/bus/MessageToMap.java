@@ -19,8 +19,8 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.entity.impl.Farm;
 
 /**
  * Class MessageToMap.

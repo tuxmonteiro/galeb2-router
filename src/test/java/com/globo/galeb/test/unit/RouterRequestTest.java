@@ -38,6 +38,7 @@ public class RouterRequestTest {
         HttpServerRequest httpServerRequest = getHttpServerRequestHTTP_1_0();
         httpServerRequest.headers().set("Connection", "keep-alive");
         RouterRequest routerRequest = new RouterRequest(httpServerRequest);
+        routerRequest.setUpHeadersAndVersion();
 
         boolean isKeepAlive = routerRequest.isHttpKeepAlive();
 
@@ -51,6 +52,7 @@ public class RouterRequestTest {
         HttpServerRequest httpServerRequest = getHttpServerRequestHTTP_1_0();
         httpServerRequest.headers().set("Connection", "close");
         RouterRequest routerRequest = new RouterRequest(httpServerRequest);
+        routerRequest.setUpHeadersAndVersion();
 
         boolean isKeepAlive = routerRequest.isHttpKeepAlive();
 
@@ -63,6 +65,7 @@ public class RouterRequestTest {
 
         HttpServerRequest httpServerRequest = getHttpServerRequestHTTP_1_0();
         RouterRequest routerRequest = new RouterRequest(httpServerRequest);
+        routerRequest.setUpHeadersAndVersion();
 
         boolean isKeepAlive = routerRequest.isHttpKeepAlive();
 
@@ -76,6 +79,7 @@ public class RouterRequestTest {
         HttpServerRequest httpServerRequest = getHttpServerRequestHTTP_1_1();
         httpServerRequest.headers().set("Connection", "keep-alive");
         RouterRequest routerRequest = new RouterRequest(httpServerRequest);
+        routerRequest.setUpHeadersAndVersion();
 
         boolean isKeepAlive = routerRequest.isHttpKeepAlive();
 
@@ -89,6 +93,7 @@ public class RouterRequestTest {
         HttpServerRequest httpServerRequest = getHttpServerRequestHTTP_1_1();
         httpServerRequest.headers().set("Connection", "close");
         RouterRequest routerRequest = new RouterRequest(httpServerRequest);
+        routerRequest.setUpHeadersAndVersion();
 
         boolean isKeepAlive = routerRequest.isHttpKeepAlive();
 
@@ -101,6 +106,7 @@ public class RouterRequestTest {
 
         HttpServerRequest httpServerRequest = getHttpServerRequestHTTP_1_1();
         RouterRequest routerRequest = new RouterRequest(httpServerRequest);
+        routerRequest.setUpHeadersAndVersion();
 
         boolean isKeepAlive = routerRequest.isHttpKeepAlive();
 

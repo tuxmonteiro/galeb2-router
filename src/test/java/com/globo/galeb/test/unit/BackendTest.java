@@ -18,11 +18,11 @@ import static org.assertj.core.api.Assertions.*;
 import static org.vertx.testtools.VertxAssert.testComplete;
 import static org.mockito.Mockito.mock;
 
-import com.globo.galeb.core.Backend;
-import com.globo.galeb.core.IBackend;
-import com.globo.galeb.core.RemoteUser;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.request.RemoteUser;
 
 import org.junit.Test;
 import org.vertx.java.core.http.HttpClient;

@@ -19,9 +19,9 @@ import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.Server;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.server.Server;
 import com.globo.galeb.metrics.CounterConsoleOut;
 import com.globo.galeb.metrics.ICounter;
 

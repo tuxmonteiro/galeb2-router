@@ -20,9 +20,9 @@ import java.util.Iterator;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.BackendPool;
-import com.globo.galeb.core.Farm;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.entity.impl.backend.BackendPool;
 
 /**
  * Class FarmMap.
