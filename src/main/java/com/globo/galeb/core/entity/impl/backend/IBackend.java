@@ -13,9 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.entity.impl.backend;
 
 import org.vertx.java.core.http.HttpClient;
+
+import com.globo.galeb.core.request.RemoteUser;
 
 /**
  * Interface IBackend.

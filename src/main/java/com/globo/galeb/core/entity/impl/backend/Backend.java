@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.entity.impl.backend;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -31,6 +31,7 @@ import com.globo.galeb.core.bus.ICallbackConnectionCounter;
 import com.globo.galeb.core.bus.IQueueService;
 import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.request.RemoteUser;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
@@ -106,10 +107,10 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     public static final Boolean DEFAULT_USE_POOLED_BUFFERS    = false;
 
     /** The Constant DEFAULT_SEND_BUFFER_SIZE. */
-    public static final Integer DEFAULT_SEND_BUFFER_SIZE      = Constants.TCP_SEND_BUFFER_SIZE;
+    public static final Integer DEFAULT_SEND_BUFFER_SIZE      = Backend.TCP_SEND_BUFFER_SIZE;
 
     /** The Constant DEFAULT_RECEIVE_BUFFER_SIZE. */
-    public static final Integer DEFAULT_RECEIVE_BUFFER_SIZE   = Constants.TCP_RECEIVED_BUFFER_SIZE;
+    public static final Integer DEFAULT_RECEIVE_BUFFER_SIZE   = Backend.TCP_RECEIVED_BUFFER_SIZE;
 
     /** The Constant DEFAULT_PIPELINING. */
     public static final Boolean DEFAULT_PIPELINING            = false;
@@ -144,6 +145,15 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
 
     /** The num external sessions. */
     private int numExternalSessions = 0;
+
+    /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
+    public static final boolean TCP_NODELAY              = true;
+
+    /** The Constant TCP_SEND_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
+    public static final int     TCP_SEND_BUFFER_SIZE     = 8 * 1024;
+
+    /** The Constant TCP_RECEIVED_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
+    public static final int     TCP_RECEIVED_BUFFER_SIZE = 32 * 1024;
 
     /**
      * Class CleanUpSessionHandler.

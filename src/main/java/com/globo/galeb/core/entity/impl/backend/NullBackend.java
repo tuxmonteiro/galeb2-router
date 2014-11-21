@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.entity.impl.backend;
 
 import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.json.JsonObject;
+
+import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.request.RemoteUser;
 
 /**
  * Class NullBackend.
@@ -34,10 +36,8 @@ public class NullBackend implements IBackend {
 
     /**
      * Instantiates a new null backend.
-     *
-     * @param json the json
      */
-    public NullBackend(JsonObject json) {
+    public NullBackend() {
         this.host = "0.0.0.0";
         this.port = 0;
     }
@@ -248,6 +248,14 @@ public class NullBackend implements IBackend {
     @Override
     public void closeAll() {
         //
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return IJsonable.UNDEF;
     }
 
 }

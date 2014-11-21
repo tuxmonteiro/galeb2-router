@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.entity.impl.backend;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.Entity;
+import com.globo.galeb.core.request.RequestData;
+import com.globo.galeb.core.rulereturn.IRuleReturn;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
-import com.globo.galeb.rules.IRuleReturn;
 
 
 /**
