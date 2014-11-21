@@ -15,6 +15,8 @@
  */
 package com.globo.galeb.criteria.impl;
 
+import static com.globo.galeb.consistenthash.HashAlgorithm.HashType.*;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +25,6 @@ import com.globo.galeb.consistenthash.ConsistentHash;
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.core.request.RequestData;
 import com.globo.galeb.criteria.ICriterion;
-import com.globo.galeb.loadbalance.impl.HashPolicy;
 import com.globo.galeb.logger.SafeLogger;
 
 import org.vertx.java.core.json.JsonObject;
@@ -38,6 +39,12 @@ import org.vertx.java.core.logging.Logger;
  * @param <T> the generic type
  */
 public class IPHashCriterion<T> implements ICriterion<T> {
+
+    /** The Constant DEFAULT_HASH_ALGORITHM. */
+    public static final String DEFAULT_HASH_ALGORITHM     = SIP24.toString();
+
+    /** The Constant HASH_ALGORITHM_FIELDNAME. */
+    public static final String HASH_ALGORITHM_FIELDNAME   = "hashAlgorithm";
 
     /** The log. */
     private final SafeLogger  log            = new SafeLogger();
@@ -108,8 +115,8 @@ public class IPHashCriterion<T> implements ICriterion<T> {
         if ("".equals(sourceIp)||properties==null) {
             return null;
         }
-        String hashType = properties.getString(HashPolicy.HASH_ALGORITHM_FIELDNAME,
-                                               HashPolicy.DEFAULT_HASH_ALGORITHM);
+        String hashType = properties.getString(HASH_ALGORITHM_FIELDNAME,
+                                               DEFAULT_HASH_ALGORITHM);
 
         int numberOfReplicas = 1;
 
