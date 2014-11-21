@@ -163,7 +163,6 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      *
      * @return the backends
      */
-    @SuppressWarnings("unchecked")
     public Set<IBackend> getBackends() {
         Set<IBackend> backends = new HashSet<>();
         for (BackendPool backendpool: backendPools.getEntities().values()) {
@@ -245,7 +244,6 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /* (non-Javadoc)
      * @see com.globo.galeb.core.bus.ICallbackSharedData#updateSharedData()
      */
-    @SuppressWarnings("unchecked")
     @Override
     public void updateSharedData() {
         if (verticle instanceof RouterVerticle) {
