@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.handlers.rest;
+package com.globo.galeb.handlers;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
@@ -21,10 +21,10 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.ManagerService;
-import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.core.server.ManagerService;
+import com.globo.galeb.core.server.ServerResponse;
 
 /**
  * Class PostMatcherHandler.
@@ -61,7 +61,7 @@ public class PostMatcherHandler implements Handler<HttpServerRequest> {
      */
     @Override
     public void handle(final HttpServerRequest req) {
-        final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
+        final ServerResponse serverResponse = new ServerResponse(req).setLog(log);
         final ManagerService managerService = new ManagerService(classId, log);
 
         managerService.setRequest(req).setResponse(serverResponse);

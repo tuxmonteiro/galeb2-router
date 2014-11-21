@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.handlers.rest;
+package com.globo.galeb.handlers;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
@@ -21,39 +21,39 @@ import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
-import com.globo.galeb.core.HttpCode;
-import com.globo.galeb.core.ManagerService;
-import com.globo.galeb.core.ServerResponse;
 import com.globo.galeb.core.bus.IQueueService;
+import com.globo.galeb.core.rulereturn.HttpCode;
+import com.globo.galeb.core.server.ManagerService;
+import com.globo.galeb.core.server.ServerResponse;
 
 /**
- * Class DeleteMatcherHandler.
+ * Class PutMatcherHandler.
  *
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
+public class PutMatcherHandler implements Handler<HttpServerRequest> {
 
-    /** The log. */
+    /** The logger. */
     private final Logger log;
-
-    /** The class id. */
-    private final String classId;
 
     /** The queue service. */
     private final IQueueService queueService;
 
+    /** The class id. */
+    private final String classId;
+
     /**
-     * Instantiates a new delete matcher handler.
+     * Instantiates a new put matcher handler.
      *
      * @param id the id from uri
      * @param log the logger
      * @param queueService the queue service
      */
-    public DeleteMatcherHandler(String id, final Logger log, final IQueueService queueService) {
+    public PutMatcherHandler(String id, final Logger log, final IQueueService queueService) {
         this.log = log;
-        this.classId = id;
         this.queueService = queueService;
+        this.classId = id;
     }
 
     /* (non-Javadoc)
@@ -61,12 +61,14 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
      */
     @Override
     public void handle(final HttpServerRequest req) {
-        final ServerResponse serverResponse = new ServerResponse(req, log, null, false);
+        final ServerResponse serverResponse = new ServerResponse(req).setLog(log);
         final ManagerService managerService = new ManagerService(classId, log);
 
         managerService.setRequest(req).setResponse(serverResponse);
 
-        if (!managerService.checkMethodOk("DELETE") || !managerService.checkUriOk()) {
+        if (!managerService.checkMethodOk("PUT") ||
+            !managerService.checkUriOk() ||
+            !managerService.checkIdPresent()) {
             return;
         }
 
@@ -74,26 +76,23 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
             @Override
             public void handle(Buffer body) {
                 String bodyStr = body.toString();
+                String uri = req.uri();
                 String id = "";
-                if ("".equals(bodyStr)) {
-                    log.error("DELETE: body is null");
-                    return;
-                }
-                JsonObject bodyJson = new JsonObject(bodyStr);
+
                 if (req.params()!=null) {
                     id = req.params().contains("param1") ? req.params().get("param1") : "";
                 }
 
-                if (!"".equals(id) && !managerService.checkIdConsistency(bodyJson, id)) {
+                JsonObject bodyJson = new JsonObject(bodyStr);
+
+                if (!managerService.checkIdConsistency(bodyJson, id)) {
                     return;
                 }
 
-                String uri = req.uri();
                 int statusCode = managerService.statusFromMessageSchema(bodyStr, uri);
 
                 if (statusCode==HttpCode.OK) {
-                    queueService.queueToDel(bodyJson, uri);
-                    log.info(String.format("[%s] DEL %s : json '%s'", this.toString(), uri, bodyStr));
+                    queueService.queueToChange(bodyJson, uri);
                     statusCode = HttpCode.ACCEPTED;
                 }
 
@@ -105,5 +104,4 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
         });
 
     }
-
 }
