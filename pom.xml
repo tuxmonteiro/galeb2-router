@@ -11,8 +11,8 @@
   <url>https://github.com/galeb/galeb-router</url>
 
   <scm>
-    <connection>scm:git:git@github.com:galeb/galeb-router.git</connection>
-    <url>https://github.com/galeb/galeb-router.git</url>
+    <connection>scm:git:git@github.com:globocom/galeb-router.git</connection>
+    <url>https://github.com/globocom/galeb-router.git</url>
   </scm>
 
   <licenses>
