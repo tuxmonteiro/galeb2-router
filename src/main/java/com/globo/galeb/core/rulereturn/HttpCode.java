@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.rulereturn;
 
 import org.vertx.java.core.json.JsonObject;
-
-import com.globo.galeb.rules.IRuleReturn;
 
 import io.netty.handler.codec.http.HttpResponseStatus;
 

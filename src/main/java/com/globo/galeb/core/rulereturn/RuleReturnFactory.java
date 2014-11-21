@@ -1,10 +1,10 @@
-package com.globo.galeb.rules;
+package com.globo.galeb.core.rulereturn;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.globo.galeb.core.Farm;
-import com.globo.galeb.core.HttpCode;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.entity.impl.Farm;
+import com.globo.galeb.core.entity.impl.frontend.Rule;
 
 public class RuleReturnFactory {
 
