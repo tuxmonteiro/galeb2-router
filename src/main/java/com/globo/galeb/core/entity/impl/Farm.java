@@ -164,10 +164,10 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      * @return the backends
      */
     @SuppressWarnings("unchecked")
-    public Set<Entity> getBackends() {
-        Set<Entity> backends = new HashSet<>();
+    public Set<IBackend> getBackends() {
+        Set<IBackend> backends = new HashSet<>();
         for (BackendPool backendpool: backendPools.getEntities().values()) {
-            backends.addAll((Collection<? extends Entity>) backendpool.getEntities().values());
+            backends.addAll(backendpool.getEntities().values());
         }
         return backends;
     }
@@ -335,20 +335,22 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      * @param clazz the clazz
      * @return the string
      */
-    public String collectionToJson(String key, Collection<? extends Entity> collection, String clazz) {
+    public String collectionToJson(String key, Collection<?> collection, String clazz) {
         String result = "";
         boolean isArray = false;
         JsonArray entityArray = new JsonArray();
 
-        for (Entity entityObj: collection) {
-            entityArray.add(entityObj.toJson());
-            if (!"".equals(key)) {
-                if (entityObj.toString().equalsIgnoreCase(key)) {
-                    result = entityObj.toJson().encodePrettily();
-                    break;
+        for (Object entityObj: collection) {
+            if (entityObj instanceof Entity) {
+                entityArray.add(((Entity) entityObj).toJson());
+                if (!"".equals(key)) {
+                    if (entityObj.toString().equalsIgnoreCase(key)) {
+                        result = ((Entity) entityObj).toJson().encodePrettily();
+                        break;
+                    }
+                } else {
+                    isArray = true;
                 }
-            } else {
-                isArray = true;
             }
         }
         return !isArray ? result : new JsonObject().putArray(String.format("%ss", clazz), entityArray).encodePrettily();
