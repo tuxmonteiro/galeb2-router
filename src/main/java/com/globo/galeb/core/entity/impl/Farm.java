@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.entity.impl;
+
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_STARTER_CONF;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_ROOT_ROUTER;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -34,6 +37,11 @@ import com.globo.galeb.core.bus.MessageToMapBuilder;
 import com.globo.galeb.core.entity.EntitiesMap;
 import com.globo.galeb.core.entity.Entity;
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.entity.impl.backend.Backend;
+import com.globo.galeb.core.entity.impl.backend.BackendPool;
+import com.globo.galeb.core.entity.impl.backend.BackendPools;
+import com.globo.galeb.core.entity.impl.backend.IBackend;
+import com.globo.galeb.core.entity.impl.frontend.Virtualhost;
 import com.globo.galeb.criteria.impl.HostHeaderCriterion;
 import com.globo.galeb.verticles.RouterVerticle;
 
@@ -203,10 +211,10 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     public boolean addToMap(String message) {
         @SuppressWarnings("rawtypes")
         MessageToMap messageToMap = MessageToMapBuilder.getInstance(message, this);
-        if (properties.containsField(Constants.CONF_STARTER_CONF)) {
-            JsonObject starterConf = properties.getObject(Constants.CONF_STARTER_CONF);
-            if (starterConf.containsField(Constants.CONF_ROOT_ROUTER)) {
-                JsonObject staticConf = starterConf.getObject(Constants.CONF_ROOT_ROUTER);
+        if (properties.containsField(CONF_STARTER_CONF)) {
+            JsonObject starterConf = properties.getObject(CONF_STARTER_CONF);
+            if (starterConf.containsField(CONF_ROOT_ROUTER)) {
+                JsonObject staticConf = starterConf.getObject(CONF_ROOT_ROUTER);
                 return messageToMap.staticConf(staticConf.encode()).add();
             }
         }
