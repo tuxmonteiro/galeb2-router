@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.server;
 
-import static com.globo.galeb.core.Constants.CONF_PORT;
+import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_PORT;
 
 import com.globo.galeb.metrics.ICounter;
 

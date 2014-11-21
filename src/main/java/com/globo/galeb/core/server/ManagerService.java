@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.globo.galeb.core;
+package com.globo.galeb.core.server;
 
 import java.io.UnsupportedEncodingException;
 import java.util.EnumSet;
@@ -23,6 +23,7 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.core.entity.IJsonable;
+import com.globo.galeb.core.rulereturn.HttpCode;
 
 /**
  * Class ManagerService.
