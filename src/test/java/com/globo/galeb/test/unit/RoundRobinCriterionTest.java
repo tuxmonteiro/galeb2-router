@@ -21,8 +21,8 @@ import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.core.entity.impl.backend.Backend;
 import com.globo.galeb.core.entity.impl.backend.BackendPool;
 import com.globo.galeb.core.request.RequestData;
-import com.globo.galeb.loadbalance.impl.RoundRobinPolicy;
-
+import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.criteria.impl.RoundRobinCriterion;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -53,7 +53,8 @@ public class RoundRobinCriterionTest {
         when(vertx.sharedData()).thenReturn(sharedData);
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME, RoundRobinPolicy.class.getSimpleName());
+            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+                    RoundRobinCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);

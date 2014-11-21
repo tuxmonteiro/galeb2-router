@@ -27,10 +27,9 @@ import com.globo.galeb.core.entity.impl.backend.Backend;
 import com.globo.galeb.core.entity.impl.backend.BackendPool;
 import com.globo.galeb.core.entity.impl.backend.IBackend;
 import com.globo.galeb.core.request.RequestData;
-import com.globo.galeb.loadbalance.impl.HashPolicy;
-
+import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.criteria.impl.IPHashCriterion;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpClient;
@@ -49,7 +48,8 @@ public class IPHashCriterionTest {
         when(vertx.createHttpClient()).thenReturn(httpClient);
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME, HashPolicy.class.getSimpleName());
+            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+                    IPHashCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
@@ -60,7 +60,6 @@ public class IPHashCriterionTest {
         }
     }
 
-    @Ignore
     @Test
     public void checkPersistentChoice() {
         long numTests = 256L*256L;
@@ -74,8 +73,8 @@ public class IPHashCriterionTest {
             RequestData requestData3 = new RequestData().setRemoteAddress(counter.toString());
             IBackend backend3 = backendPool.getChoice(requestData3);
 
-            assertThat(backend1).isEqualTo(backend2);
-            assertThat(backend1).isEqualTo(backend3);
+            assertThat(backend1).as("backend1 = backend2").isEqualTo(backend2);
+            assertThat(backend1).as("backend1 = backend3").isEqualTo(backend3);
         }
     }
 
@@ -95,7 +94,7 @@ public class IPHashCriterionTest {
                 long initialTime = System.currentTimeMillis();
                 for (Integer counter=0; counter<samples; counter++) {
                     RequestData requestData = new RequestData().setRemoteAddress(counter.toString());
-                    backendPool.getProperties().putString(HashPolicy.HASH_ALGORITHM_FIELDNAME, hash.toString());
+                    backendPool.getProperties().putString(IPHashCriterion.HASH_ALGORITHM_FIELDNAME, hash.toString());
                     sum += backendPool.getChoice(requestData).getPort();
                 }
                 long finishTime = System.currentTimeMillis();

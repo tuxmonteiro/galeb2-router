@@ -22,8 +22,8 @@ import com.globo.galeb.core.entity.IJsonable;
 import com.globo.galeb.core.entity.impl.backend.Backend;
 import com.globo.galeb.core.entity.impl.backend.BackendPool;
 import com.globo.galeb.core.request.RequestData;
-import com.globo.galeb.loadbalance.impl.RandomPolicy;
-
+import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.criteria.impl.RandomCriterion;
 import org.junit.Before;
 import org.junit.Test;
 import org.vertx.java.core.Vertx;
@@ -44,7 +44,8 @@ public class RandomCriterionTest {
         when(vertx.createHttpClient()).thenReturn(httpClient);
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME, RandomPolicy.class.getSimpleName());
+            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+                    RandomCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);

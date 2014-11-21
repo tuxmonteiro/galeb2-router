@@ -23,8 +23,8 @@ import com.globo.galeb.core.entity.impl.backend.BackendPool;
 import com.globo.galeb.core.entity.impl.backend.IBackend;
 import com.globo.galeb.core.request.RemoteUser;
 import com.globo.galeb.core.request.RequestData;
-import com.globo.galeb.loadbalance.impl.LeastConnPolicy;
-
+import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.criteria.impl.LeastConnCriterion;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
@@ -40,7 +40,8 @@ public class LeastConnCriterionTest extends TestVerticle {
     public void leastConnection() {
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME, LeastConnPolicy.class.getSimpleName());
+            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+                    LeastConnCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
