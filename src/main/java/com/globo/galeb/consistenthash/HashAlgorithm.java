@@ -44,21 +44,21 @@ public class HashAlgorithm {
         /** It's not so bad, but is a little slow. */
         MD5,
         /** Slow. */
-        MURMUR3_128,
+        //MURMUR3_128,
         /** Fast and reliable, but not so good for small keys. */
         MURMUR3_32,
         /** Super Fast, but with excessive collisions. Why this was released? */
-        GOOD_FAST_32,
+        //GOOD_FAST_32,
         /** Unreliable. */
-        ADLER_32,
+        //ADLER_32,
         /** Unreliable. */
-        CRC_32,
+        //CRC_32,
         /** Slow and Unreliable. */
-        SHA1,
+        //SHA1,
         /** Reliable. Its a little slow, but not quite. */
         SHA256,
         /** Reliable, but very slow. */
-        SHA512,
+        //SHA512,
         /** Fast and reliable. The best for small keys. */
         SIP24
     }
