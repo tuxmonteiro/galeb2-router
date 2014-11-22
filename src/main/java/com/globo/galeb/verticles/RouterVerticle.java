@@ -19,14 +19,12 @@ import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.VertxQueueService;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.handlers.RouterRequestHandler;
-import com.globo.galeb.handlers.ws.FrontendWebSocketHandler;
 import com.globo.galeb.metrics.CounterWithEventBus;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.server.Server;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
@@ -62,12 +60,9 @@ public class RouterVerticle extends Verticle {
           final Handler<HttpServerRequest> handlerHttpServerRequest =
                   new RouterRequestHandler(vertx, farm, counter, queueService, log);
 
-          final Handler<ServerWebSocket> serverWebSocketHandler =
-                  new FrontendWebSocketHandler(vertx, container, farm);
-
           server.setDefaultPort(8000)
-              .setHttpServerRequestHandler(handlerHttpServerRequest)
-              .setWebsocketServerRequestHandler(serverWebSocketHandler).start(this);
+              .setHttpServerRequestHandler(handlerHttpServerRequest).start(this);
+
       } catch (RuntimeException e) {
           log.debug(e);
       }
