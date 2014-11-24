@@ -30,7 +30,6 @@ import org.vertx.java.core.json.JsonObject;
 import com.globo.galeb.bus.ICallbackConnectionCounter;
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.entity.EntitiesMap;
-import com.globo.galeb.entity.Entity;
 import com.globo.galeb.request.RemoteUser;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
@@ -73,9 +72,6 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
 
     /** The Constant MIN_SESSION_POOL_SIZE_FIELDNAME. */
     public static final String MIN_SESSION_POOL_SIZE_FIELDNAME = "minSessionPoolSize";
-
-    /** The Constant ELEGIBLE_FIELDNAME. */
-    public static final String ELEGIBLE_FIELDNAME              = "_elegible";
 
     /** The Constant ACTIVE_CONNECTIONS_FIELDNAME. */
     public static final String ACTIVE_CONNECTIONS_FIELDNAME    = "_activeConnections";
@@ -492,7 +488,6 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     @Override
     public JsonObject toJson() {
         prepareJson();
-        idObj.putString(Entity.PARENT_ID_FIELDNAME, parentId);
         idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, getActiveConnections());
 
         return super.toJson();

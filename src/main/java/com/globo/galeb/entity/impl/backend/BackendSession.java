@@ -229,6 +229,12 @@ public class BackendSession extends Entity {
         return httpClientClosed;
     }
 
+    /**
+     * Sets the remote user.
+     *
+     * @param remoteUser the remote user
+     * @return this
+     */
     public BackendSession setRemoteUser(String remoteUser) {
         this.id = remoteUser;
         return this;

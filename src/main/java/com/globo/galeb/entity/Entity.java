@@ -20,6 +20,7 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.bus.NullQueueService;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.metrics.CounterConsoleOut;
 import com.globo.galeb.metrics.ICounter;
@@ -61,7 +62,7 @@ public abstract class Entity implements IJsonable {
     protected Farm                 farm          = null;
 
     /** The queue service */
-    protected IQueueService        queueService  = null;
+    protected IQueueService        queueService  = new NullQueueService();
 
     /** The Logger */
     protected Logger               logger        = null;
@@ -73,7 +74,7 @@ public abstract class Entity implements IJsonable {
     protected ICounter             counter       = new CounterConsoleOut();
 
     /** The entity status */
-    protected String               status        = UNDEF;
+    protected StatusType           status        = StatusType.CREATED;
 
     /**
      * Instantiates a new entity.
@@ -201,13 +202,15 @@ public abstract class Entity implements IJsonable {
      */
     protected Entity prepareJson() {
         idObj.putString(ID_FIELDNAME, id);
-        idObj.putString(STATUS_FIELDNAME, status);
+        if (!"".equals(parentId)) {
+            idObj.putString(Entity.PARENT_ID_FIELDNAME, parentId);
+        }
+        idObj.putString(STATUS_FIELDNAME, status.toString());
         idObj.putObject(LINKS_FIELDNAME, new JsonObject()
             .putString(LINKS_REL_FIELDNAME, "self")
             .putString(LINKS_HREF_FIELDNAME,
                     String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
         );
-        idObj.putString(STATUS_FIELDNAME, "created");
         idObj.putNumber(CREATED_AT_FIELDNAME, createdAt);
         idObj.putNumber(MODIFIED_AT_FIELDNAME, modifiedAt);
         idObj.putObject(PROPERTIES_FIELDNAME, properties);
@@ -257,7 +260,7 @@ public abstract class Entity implements IJsonable {
      *
      * @return the status
      */
-    public String getStatus() {
+    public StatusType getStatus() {
         return status;
     }
 
@@ -267,9 +270,18 @@ public abstract class Entity implements IJsonable {
      * @param status the status
      * @return the entity
      */
-    public Entity setStatus(String status) {
+    public Entity setStatus(StatusType status) {
         this.status = status;
         return this;
+    }
+
+    /**
+     * Gets the entity type.
+     *
+     * @return the entity type
+     */
+    public String getEntityType() {
+        return entityType;
     }
 
     /**
@@ -334,7 +346,7 @@ public abstract class Entity implements IJsonable {
      */
     @Override
     public boolean equals(Object obj) {
-        if (obj==null) {
+        if (obj==null || !(obj instanceof Entity)) {
             return false;
         }
         return this.id.equals(obj.toString());

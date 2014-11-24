@@ -19,9 +19,7 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.criteria.ICriterion;
-import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
-import com.globo.galeb.criteria.impl.RandomCriterion;
 import com.globo.galeb.entity.EntitiesMap;
 import com.globo.galeb.entity.Entity;
 import com.globo.galeb.request.RequestData;
@@ -36,9 +34,6 @@ import com.globo.galeb.rulereturn.IRuleReturn;
  */
 public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
 
-    /** The Constant LOADBALANCE_POLICY_FIELDNAME. */
-    public static final String LOADBALANCE_POLICY_FIELDNAME  = "loadBalancePolicy";
-
     /** The Constant BACKENDS_FIELDNAME. */
     public static final String BACKENDS_FIELDNAME            = "backends";
 
@@ -51,7 +46,6 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The Constant ENABLE_ACCESSLOG_FIELDNAME. */
     public static final String ENABLE_ACCESSLOG_FIELDNAME    = "enableAccessLog";
 
-
     /** The rule return type. */
     private final String               returnType           = BackendPool.class.getSimpleName();
 
@@ -59,7 +53,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     private final EntitiesMap<IBackend> badBackends         = new BadBackendPool("badbackends");
 
     /** The load balance policy. */
-    private ICriterion<IBackend>        loadBalanceCriterion   = new LoadBalanceCriterion();
+    private ICriterion<IBackend>        loadBalanceCriterion = new LoadBalanceCriterion<IBackend>();
 
     /** The request time out. */
     private Long                       requestTimeOut      = 60000L;
@@ -85,16 +79,12 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The keep alive. */
     private boolean                    keepAlive           = true;
 
-    /** The loadBalance Name */
-    private String                     loadBalanceName     = RandomCriterion.class.getSimpleName()
-                                                                 .replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, "");
-
     /**
      * Instantiates a new backend pool.
      */
     public BackendPool() {
         super();
-        this.status = StatusType.RUNNING_STATUS.toString();
+        this.status = StatusType.RUNNING_STATUS;
     }
 
     /**
@@ -104,7 +94,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     public BackendPool(String id) {
         super(id);
-        this.status = StatusType.RUNNING_STATUS.toString();
+        this.status = StatusType.RUNNING_STATUS;
     }
 
     /**
@@ -114,12 +104,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     public BackendPool(JsonObject json) {
         super(json);
-        this.status = StatusType.RUNNING_STATUS.toString();
-        this.loadBalanceName = json.getObject(PROPERTIES_FIELDNAME, new JsonObject())
-                                       .getString(LOADBALANCE_POLICY_FIELDNAME,
-                                               RandomCriterion.class.getSimpleName()
-                                                   .replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
-
+        this.status = StatusType.RUNNING_STATUS;
     }
 
     /* (non-Javadoc)
@@ -145,27 +130,24 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      * @return backend
      */
     public IBackend getChoice(RequestData requestData) {
+
         keepAlive = requestData.getKeepAlive();
+
         requestData.getProperties().mergeIn(properties);
+
         return loadBalanceCriterion.setLog(logger)
                                    .given(getEntities())
-                                   .when(loadBalanceName)
                                    .when(requestData)
                                    .thenGetResult();
     }
 
     /**
-     * Sets the load balance policy.
+     * Reset load balance.
      *
-     * @param loadbalanceName the load balance policy name
-     * @return the backend pool
+     * @return this
      */
-    public BackendPool setLoadBalancePolicy(String loadbalanceName) {
-        loadBalanceCriterion.setLog(logger)
-                            .given(getEntities())
-                            .when(loadbalanceName)
-                            .when(ICriterion.CriterionAction.RESET_REQUIRED)
-                            .thenGetResult();
+    public BackendPool resetLoadBalance() {
+        loadBalanceCriterion.action(ICriterion.CriterionAction.RESET_REQUIRED);
         return this;
     }
 
@@ -174,14 +156,15 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     @Override
     public boolean addEntity(IBackend backend) {
-
         ((IBackend) ((Entity) backend.setMaxPoolSize(maxPoolSize)
                                      .setKeepAlive(keepAlive)
                                      .setKeepAliveMaxRequest(keepAliveMaxRequest)
                                      .setKeepAliveTimeOut(keepAliveTimeOut)
                                      .setMinSessionPoolSize(minSessionPoolSize))
-                                     .setStatus(StatusType.RUNNING_STATUS.toString()))
+                                     .setStatus(StatusType.RUNNING_STATUS))
                                      .startSessionPool();
+
+        resetLoadBalance();
 
         return super.addEntity(backend);
     }
@@ -192,6 +175,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     @Override
     public boolean removeEntity(IBackend backend) {
         backend.closeAllForced();
+        resetLoadBalance();
         return super.removeEntity(backend);
     }
 
@@ -203,6 +187,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
         for (IBackend backend: getEntities().values()) {
             backend.closeAllForced();
         }
+        resetLoadBalance();
         super.clearEntities();
     }
 
@@ -216,23 +201,19 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
         properties.putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
         properties.putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
         properties.putNumber(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
-
+        if (properties.containsField(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME)) {
+            properties.putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME, LoadBalanceCriterion.LOADBALANCE_POLICY_DEFAULT);
+        }
         prepareJson();
 
         JsonArray backendsJson = new JsonArray();
-
         for (IBackend backend: getEntities().values()) {
-            if (backend!=null) {
-                backendsJson.addObject(((Entity) backend).toJson());
-            }
+            backendsJson.addObject(backend.toJson());
         }
-
-        for (IBackend badBackend: getBadBackends().getEntities().values()) {
-            if (badBackend!=null) {
-                backendsJson.addObject(((Entity) badBackend).toJson());
-            }
+        for (IBackend backend: getBadBackends().getEntities().values()) {
+            ((Entity) backend).setStatus(StatusType.FAILED_STATUS);
+            backendsJson.addObject(backend.toJson());
         }
-
         idObj.putArray(BACKENDS_FIELDNAME, backendsJson);
 
         return super.toJson();
@@ -299,8 +280,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      * @param entity the entity
      * @return true, if successful
      */
-    public boolean addBadBackend(Backend entity) {
-        entity.setStatus(StatusType.FAILED_STATUS.toString());
+    public boolean addBadBackend(IBackend entity) {
+        ((Entity) entity).setStatus(StatusType.FAILED_STATUS);
+        entity.closeAllForced();
         return badBackends.addEntity(entity);
     }
 
@@ -312,6 +294,16 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     public boolean removeBadBackend(IBackend entity) {
         return badBackends.removeEntity(entity);
+    }
+
+    /**
+     * Removes the bad backend by id.
+     *
+     * @param id the id
+     * @return true, if successful
+     */
+    public boolean removeBadBackend(String id) {
+        return badBackends.removeEntity(id);
     }
 
     /**
@@ -330,24 +322,6 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public void clearAll() {
         clearEntities();
         clearBadBackend();
-    }
-
-    /**
-     * Interchange backend status.
-     *
-     * @param entity the entity
-     */
-    public void interchangeBackendStatus(Backend entity) {
-        if (entity!=null) {
-            String backendStatus = entity.getStatus();
-            if (backendStatus.equals(UNDEF)||backendStatus.equals(StatusType.FAILED_STATUS.toString())) {
-                removeBadBackend(entity);
-                addEntity(entity);
-            } else {
-                removeEntity(entity);
-                addBadBackend(entity);
-            }
-        }
     }
 
     /**

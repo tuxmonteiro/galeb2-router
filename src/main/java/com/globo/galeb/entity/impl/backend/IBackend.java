@@ -17,6 +17,7 @@ package com.globo.galeb.entity.impl.backend;
 
 import org.vertx.java.core.http.HttpClient;
 
+import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.request.RemoteUser;
 
 /**
@@ -25,7 +26,7 @@ import com.globo.galeb.request.RemoteUser;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 18, 2014.
  */
-public interface IBackend extends Comparable<IBackend> {
+public interface IBackend extends Comparable<IBackend>, IJsonable {
 
     /**
      * Gets the host.

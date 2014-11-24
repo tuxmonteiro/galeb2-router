@@ -59,7 +59,8 @@ public interface IJsonable {
 
         ACCEPTED_STATUS("accepted"),
         FAILED_STATUS("failed"),
-        RUNNING_STATUS("running");
+        RUNNING_STATUS("running"),
+        CREATED("created");
 
         final String statusType;
         private StatusType(String statusType) {

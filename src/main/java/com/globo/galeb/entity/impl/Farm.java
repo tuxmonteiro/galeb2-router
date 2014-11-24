@@ -20,30 +20,24 @@ import static com.globo.galeb.verticles.ConfVerticleDictionary.CONF_ROOT_ROUTER;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
 import com.globo.galeb.bus.ICallbackQueueAction;
-import com.globo.galeb.bus.ICallbackSharedData;
 import com.globo.galeb.bus.MessageToMap;
 import com.globo.galeb.bus.MessageToMapBuilder;
 import com.globo.galeb.criteria.impl.HostHeaderCriterion;
 import com.globo.galeb.entity.EntitiesMap;
-import com.globo.galeb.entity.Entity;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
 import com.globo.galeb.entity.impl.backend.BackendPools;
 import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.Virtualhost;
-import com.globo.galeb.verticles.RouterVerticle;
 
 /**
  * Class Farm.
@@ -51,7 +45,7 @@ import com.globo.galeb.verticles.RouterVerticle;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueAction, ICallbackSharedData {
+public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueAction {
 
     /** The Constant FARM_MAP. */
     public static final String FARM_MAP                    = "farm";
@@ -68,7 +62,6 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /** The Constant FARM_VERSION_FIELDNAME. */
     public static final String FARM_VERSION_FIELDNAME      = "version";
 
-
     /** The Constant REQUEST_TIMEOUT_FIELDNAME. */
     public static final String REQUEST_TIMEOUT_FIELDNAME   = "requestTimeOut";
 
@@ -78,11 +71,11 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /** The version. */
     private Long version = 0L;
 
-    /** The shared map. */
-    private ConcurrentMap<String, String> sharedMap = new ConcurrentHashMap<String, String>();
-
     /** The backend pools. */
-    private EntitiesMap<BackendPool> backendPools = new BackendPools("backendpools");
+    private EntitiesMap<BackendPool> backendPools          = new BackendPools("backendpools");
+
+    /** The messageToMapBuilder instance */
+    private MessageToMapBuilder messageToMapBuilder        = new MessageToMapBuilder();
 
 
     /**
@@ -96,15 +89,11 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         this.verticle = verticle;
     }
 
-    private Farm prepareSharedMap() {
-        if (plataform instanceof Vertx) {
-            this.sharedMap = ((Vertx)plataform).sharedData().getMap(FARM_SHAREDDATA_ID);
-            this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
-            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, "{}");
-        }
-        return this;
-    }
-
+    /**
+     * Prepare backend pools.
+     *
+     * @return the farm
+     */
     private Farm prepareBackendPools() {
         backendPools.setFarm(farm)
                     .setLogger(logger)
@@ -114,12 +103,14 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.Entity#start()
+     */
     @Override
     public void start() {
         if (verticle!=null) {
             properties.mergeIn(verticle.getContainer().config());
         }
-        prepareSharedMap();
         prepareBackendPools();
         registerQueueAction();
         setCriterion(new HostHeaderCriterion<Virtualhost>().setLog(logger));
@@ -157,48 +148,15 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
         return (verticle!=null) ? verticle.toString() : "";
     }
 
-    /**
-     * Gets the backends.
-     *
-     * @return the backends
-     */
-    public Set<IBackend> getBackends() {
-        Set<IBackend> backends = new HashSet<>();
-        for (BackendPool backendpool: backendPools.getEntities().values()) {
-            backends.addAll(backendpool.getEntities().values());
-        }
-        return backends;
-    }
-
     /* (non-Javadoc)
      * @see com.globo.galeb.core.Entity#toJson()
      */
     @Override
     public JsonObject toJson() {
         prepareJson();
-
-        idObj.removeField(STATUS_FIELDNAME);
         idObj.putNumber(FARM_VERSION_FIELDNAME, version);
-        JsonArray virtualServerArray = new JsonArray();
-        JsonArray backendPoolArray = new JsonArray();
-
-        for (String vhost : getEntities().keySet()) {
-            Virtualhost virtualserver = getEntityById(vhost);
-            if (virtualserver==null) {
-                continue;
-            }
-            virtualServerArray.add(virtualserver.toJson());
-        }
-        idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, virtualServerArray);
-
-        for (String bepool : getBackendPools().getEntities().keySet()) {
-            BackendPool backendPool = getBackendPoolById(bepool);
-            if (backendPool==null) {
-                continue;
-            }
-            backendPoolArray.add(backendPool.toJson());
-        }
-        idObj.putArray(FARM_BACKENDPOOLS_FIELDNAME, backendPoolArray);
+        idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, getEntitiesJson());
+        idObj.putArray(FARM_BACKENDPOOLS_FIELDNAME, getBackendPoolJson());
 
         return super.toJson();
     }
@@ -209,7 +167,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     @Override
     public boolean addToMap(String message) {
         @SuppressWarnings("rawtypes")
-        MessageToMap messageToMap = MessageToMapBuilder.getInstance(message, this);
+        MessageToMap messageToMap = messageToMapBuilder.getMessageToMap(message, this);
         if (properties.containsField(CONF_STARTER_CONF)) {
             JsonObject starterConf = properties.getObject(CONF_STARTER_CONF);
             if (starterConf.containsField(CONF_ROOT_ROUTER)) {
@@ -225,132 +183,43 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     @Override
     public boolean delFromMap(String message) {
-        return MessageToMapBuilder.getInstance(message, this).del();
+        return messageToMapBuilder.getMessageToMap(message, this).del();
     }
 
     /**
      * Register queue action.
      */
     private void registerQueueAction() {
-        if (queueService!=null) {
-            queueService.registerQueueAdd(verticle, this);
-            queueService.registerQueueDel(verticle, this);
-            queueService.registerQueueVersion(verticle, this);
-            queueService.registerUpdateSharedData(verticle, this);
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.ICallbackSharedData#updateSharedData()
-     */
-    @Override
-    public void updateSharedData() {
-        if (verticle instanceof RouterVerticle) {
-            this.sharedMap.put(FARM_MAP, toJson().encodePrettily());
-            String backendClassName = Backend.class.getSimpleName().toLowerCase();
-            this.sharedMap.put(FARM_BACKENDPOOLS_FIELDNAME, collectionToJson("", getBackends(), backendClassName));
-        }
+        queueService.registerQueueAdd(verticle, this);
+        queueService.registerQueueDel(verticle, this);
+        queueService.registerQueueVersion(verticle, this);
     }
 
     /**
-     * Gets the farm json.
+     * Collection to json.
      *
-     * @return the farm json
-     */
-    public String getFarmJson() {
-        queueService.updateSharedData();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ignore) {}
-        return this.sharedMap.get(FARM_MAP);
-    }
-
-    /**
-     * Gets the virtualhost json by virtualhostId.
-     *
-     * @param id the id
-     * @return the virtualhost json
-     */
-    public String getVirtualhostJson(String id) {
-        queueService.updateSharedData();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ignore) {}
-        return getJsonObject(id, this.sharedMap.get(FARM_MAP), Virtualhost.class.getSimpleName().toLowerCase());
-    }
-
-    /**
-     * Gets the backend json by backendId.
-     *
-     * @param id the id
-     * @return the backend json
-     */
-    public String getBackendJson(String id) {
-        queueService.updateSharedData();
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException ignore) {}
-        return getJsonObject(id, this.sharedMap.get(FARM_BACKENDPOOLS_FIELDNAME), Backend.class.getSimpleName().toLowerCase());
-    }
-
-    /**
-     * Gets the json object.
-     *
-     * @param key the key
-     * @param jsonCollection the json collection
      * @param clazz the clazz
-     * @return the json object
-     */
-    private String getJsonObject(String key, String jsonCollection, String clazz) {
-        if ("".equals(jsonCollection)) {
-            return "{}";
-        }
-        JsonObject json = new JsonObject(jsonCollection);
-        JsonArray jsonArray = json.getArray(String.format("%ss", clazz));
-        if (jsonArray!=null) {
-            if ("".equals(key)) {
-                return jsonArray.encodePrettily();
-            }
-            Iterator<Object> jsonArrayIterator = jsonArray.iterator();
-            while (jsonArrayIterator.hasNext()) {
-                JsonObject entity = (JsonObject)jsonArrayIterator.next();
-                String id = entity.getString(IJsonable.ID_FIELDNAME);
-                if (id.equals(key)) {
-                    return entity.encodePrettily();
-                }
-            }
-            return jsonArray.encodePrettily();
-        }
-        return "{}";
-    }
-
-    /**
-     * Convert Collection to json.
-     *
-     * @param key the key
      * @param collection the collection
-     * @param clazz the clazz
      * @return the string
      */
-    public String collectionToJson(String key, Collection<?> collection, String clazz) {
-        String result = "";
-        boolean isArray = false;
-        JsonArray entityArray = new JsonArray();
+    private String collectionToJson(String clazz, final Collection<?> collection) {
+        if ("".equals(clazz)||collection==null) {
+            return "{}";
+        }
 
-        for (Object entityObj: collection) {
-            if (entityObj instanceof Entity) {
-                entityArray.add(((Entity) entityObj).toJson());
-                if (!"".equals(key)) {
-                    if (entityObj.toString().equalsIgnoreCase(key)) {
-                        result = ((Entity) entityObj).toJson().encodePrettily();
-                        break;
-                    }
-                } else {
-                    isArray = true;
-                }
+        String arrayName = clazz.toLowerCase()+"s";
+        JsonArray jsonArray = new JsonArray();
+
+        for (Object obj: collection) {
+            if (obj instanceof IJsonable) {
+                IJsonable entity = (IJsonable)obj;
+                jsonArray.add(entity.toJson());
+            } else {
+                return "{}";
             }
         }
-        return !isArray ? result : new JsonObject().putArray(String.format("%ss", clazz), entityArray).encodePrettily();
+
+        return new JsonObject().putArray(arrayName, jsonArray).encodePrettily();
     }
 
     /**
@@ -396,6 +265,140 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     public BackendPool getBackendPoolById(String id) {
         return backendPools.getEntityById(id);
+    }
+
+    /**
+     * Gets the backend pool json.
+     *
+     * @return the backend pool json
+     */
+    public JsonArray getBackendPoolJson() {
+        return new JsonArray(getBackendPoolJson(""));
+    }
+
+    /**
+     * Gets the backend pool json.
+     *
+     * @param id the id
+     * @return the backend pool json
+     */
+    public String getBackendPoolJson(String id) {
+        if ("".equals(id)||id==null) {
+            return getBackendPools().getEntitiesJson().encodePrettily();
+        }
+        BackendPool backendPool = getBackendPoolById(id);
+        if (backendPool!=null) {
+            return backendPool.toJson().encodePrettily();
+        }
+        return "{}";
+    }
+
+    /**
+     * Gets the virtualhost json.
+     *
+     * @return the virtualhost json
+     */
+    public JsonArray getVirtualhostJson() {
+        return new JsonArray(getVirtualhostJson(""));
+    }
+
+    /**
+     * Gets the virtualhost json.
+     *
+     * @param id the id
+     * @return the virtualhost json
+     */
+    public String getVirtualhostJson(String id) {
+        if ("".equals(id)||id==null) {
+            return getEntitiesJson().encodePrettily();
+        }
+        Virtualhost virtualhost = getEntityById(id);
+        if (virtualhost!=null) {
+            return virtualhost.toJson().encodePrettily();
+        }
+        return "{}";
+    }
+
+    /**
+     * Gets the rule json.
+     *
+     * @return the rule json
+     */
+    public JsonArray getRuleJson() {
+        return new JsonArray(getRuleJson(""));
+    }
+
+    /**
+     * Gets the rules.
+     *
+     * @return the rules
+     */
+    public Set<Rule> getRules() {
+        Set<Rule> rules = new HashSet<>();
+        for (Virtualhost virtualhost: getEntities().values()) {
+            rules.addAll(virtualhost.getEntities().values());
+        }
+        return rules;
+    }
+
+    /**
+     * Gets the rule json.
+     *
+     * @param id the id
+     * @return the rule json
+     */
+    public String getRuleJson(String id) {
+        if ("".equals(id)||id==null) {
+            return collectionToJson(Rule.class.getName(), getRules());
+        }
+        for (Virtualhost virtualhost : getEntities().values()) {
+            Rule rule = virtualhost.getEntityById(id);
+            if (rule!=null) {
+                return rule.toJson().encodePrettily();
+            }
+        }
+        return "{}";
+    }
+
+    /**
+     * Gets the backends.
+     *
+     * @return the backends
+     */
+    public Set<IBackend> getBackends() {
+        Set<IBackend> backends = new HashSet<>();
+        for (BackendPool backendpool: backendPools.getEntities().values()) {
+            backends.addAll(backendpool.getEntities().values());
+        }
+        return backends;
+    }
+
+    /**
+     * Gets the backend json.
+     *
+     * @return the backend json
+     */
+    public JsonArray getBackendJson() {
+        return new JsonArray(getBackendJson(""));
+    }
+
+    /**
+     * Gets the backend json.
+     *
+     * @param id the id
+     * @return the backend json
+     */
+    public String getBackendJson(String id) {
+        if ("".equals(id)||id==null) {
+            return collectionToJson(Backend.class.getName(), getBackends());
+        }
+        for (BackendPool backendPool : getBackendPools().getEntities().values()) {
+            IBackend backend = backendPool.getEntityById(id);
+            if (backend!=null) {
+                return backend.toJson().encodePrettily();
+            }
+        }
+        return "{}";
     }
 
 }

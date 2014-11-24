@@ -16,6 +16,7 @@
 package com.globo.galeb.entity.impl.backend;
 
 import org.vertx.java.core.http.HttpClient;
+import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.request.RemoteUser;
@@ -256,6 +257,14 @@ public class NullBackend implements IBackend {
     @Override
     public String toString() {
         return IJsonable.UNDEF;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.IJsonable#toJson()
+     */
+    @Override
+    public JsonObject toJson() {
+        return new JsonObject().putString(ID_FIELDNAME, UNDEF);
     }
 
 }

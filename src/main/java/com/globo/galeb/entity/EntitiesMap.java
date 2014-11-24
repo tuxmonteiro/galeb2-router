@@ -17,6 +17,7 @@ package com.globo.galeb.entity;
 
 import java.util.Map;
 
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.collection.IndexedMap;
@@ -56,6 +57,9 @@ public abstract class EntitiesMap<T> extends Entity {
         super(json);
     }
 
+    /**
+     * Instantiates a new entities map.
+     */
     public EntitiesMap() {
         super(UNDEF);
     }
@@ -79,7 +83,7 @@ public abstract class EntitiesMap<T> extends Entity {
               .setPlataform(plataform)
               .setStaticConf(staticConf)
               .setCounter(counter)
-              .setStatus(StatusType.RUNNING_STATUS.toString());
+              .setStatus(StatusType.RUNNING_STATUS);
 
         ((Entity) entity).start();
 
@@ -91,6 +95,12 @@ public abstract class EntitiesMap<T> extends Entity {
         return false;
     }
 
+    /**
+     * Removes the entity.
+     *
+     * @param entityId the entity id
+     * @return true, if successful
+     */
     public boolean removeEntity(String entityId) {
         if (!entities.containsKey(entityId)) {
             return false;
@@ -104,6 +114,12 @@ public abstract class EntitiesMap<T> extends Entity {
         return false;
     }
 
+    /**
+     * Removes the entity.
+     *
+     * @param json the json
+     * @return true, if successful
+     */
     public boolean removeEntity(JsonObject json) {
         String entityId = json.getString(ID_FIELDNAME, UNDEF);
         return removeEntity(entityId);
@@ -183,5 +199,19 @@ public abstract class EntitiesMap<T> extends Entity {
     public EntitiesMap<T> setCriterion(final ICriterion<T> criterion) {
         this.criterion = criterion.given(entities);
         return this;
+    }
+
+    /**
+     * Gets the entities json.
+     *
+     * @return the entities json
+     */
+    public JsonArray getEntitiesJson() {
+        JsonArray jsonArray = new JsonArray();
+
+        for (T t: getEntities().values()) {
+            jsonArray.add(((IJsonable) t).toJson());
+        }
+        return jsonArray;
     }
 }
