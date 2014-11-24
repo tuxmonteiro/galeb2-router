@@ -15,9 +15,8 @@
  */
 package com.globo.galeb.bus;
 
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.logging.Logger;
-
+import java.util.HashMap;
+import java.util.Map;
 import com.globo.galeb.entity.impl.Farm;
 
 /**
@@ -28,10 +27,31 @@ import com.globo.galeb.entity.impl.Farm;
  */
 public class MessageToMapBuilder {
 
+    /** The path supported map. */
+    private final Map<String, MessageToMap<?>> pathSupportedMap = new HashMap<>();
+
+    /** The farm instance. */
+    private Farm farm = null;
+
     /**
      * Instantiates a new MessageToMapBuilder.
      */
-    private MessageToMapBuilder() {}
+    public MessageToMapBuilder() {
+
+        // TODO: Dynamic loader
+
+        MessageToMap<?> farmMap = new FarmMap();
+        MessageToMap<?> virtualhostMap = new VirtualhostMap();
+        MessageToMap<?> ruleMap = new RuleMap();
+        MessageToMap<?> backendPoolMap = new BackendPoolMap();
+        MessageToMap<?> backendMap = new BackendMap();
+
+        pathSupportedMap.put(farmMap.getUriBase(), farmMap);
+        pathSupportedMap.put(virtualhostMap.getUriBase(), virtualhostMap);
+        pathSupportedMap.put(ruleMap.getUriBase(), ruleMap);
+        pathSupportedMap.put(backendPoolMap.getUriBase(), backendPoolMap);
+        pathSupportedMap.put(backendMap.getUriBase(), backendMap);
+    }
 
     /**
      * Gets the single instance of MessageToMap.
@@ -40,59 +60,27 @@ public class MessageToMapBuilder {
      * @param farm the farm
      * @return single instance of MessageToMap
      */
-    @SuppressWarnings("rawtypes")
-    public static MessageToMap getInstance(String message, Farm farm) {
-
-        if (farm==null) {
-            return new NullMap();
-        }
+    public MessageToMap<?> getMessageToMap(String message) {
 
         final MessageBus messageBus = new MessageBus(message);
-        final Logger log = farm.getLogger();
-        Object plataform = farm.getPlataform();
-        final Vertx vertx = (plataform instanceof Vertx) ? (Vertx) plataform : null;
-        final String verticleId = farm.getVerticleId();
+        MessageToMap<?> messageToMap = pathSupportedMap.get(messageBus.getUriBase());
 
-        switch (messageBus.getUriBase()) {
-            case "farm":
-                return new FarmMap()
-                    .setMessageBus(messageBus)
-                    .setLogger(log)
-                    .setVertx(vertx)
-                    .setFarm(farm)
-                    .setVerticleId(verticleId);
-            case "virtualhost":
-                return new VirtualhostMap()
-                    .setMessageBus(messageBus)
-                    .setLogger(log)
-                    .setVertx(vertx)
-                    .setFarm(farm)
-                    .setVerticleId(verticleId);
-            case "backend":
-                return new BackendMap()
-                    .setMessageBus(messageBus)
-                    .setLogger(log)
-                    .setVertx(vertx)
-                    .setFarm(farm)
-                    .setVerticleId(verticleId);
-            case "backendpool":
-                return new BackendPoolMap()
-                    .setMessageBus(messageBus)
-                    .setLogger(log)
-                    .setVertx(vertx)
-                    .setFarm(farm)
-                    .setVerticleId(verticleId);
-            case "rule":
-                return new RuleMap()
-                    .setMessageBus(messageBus)
-                    .setLogger(log)
-                    .setVertx(vertx)
-                    .setFarm(farm)
-                    .setVerticleId(verticleId);
-            default:
-                break;
+        if (messageToMap!=null && farm!=null) {
+            return messageToMap.setMessageBus(messageBus).setFarm(farm);
+        } else {
+            return new NullMap();
         }
-        return new NullMap().setLogger(log).setVerticleId(verticleId);
+    }
+
+    /**
+     * Sets the farm.
+     *
+     * @param farm the farm
+     * @return this
+     */
+    public MessageToMapBuilder setFarm(final Farm farm) {
+        this.farm = farm;
+        return this;
     }
 
 }

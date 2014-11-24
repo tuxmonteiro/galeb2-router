@@ -14,7 +14,7 @@
  */
 package com.globo.galeb.test.unit;
 
-import static org.junit.Assert.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -30,7 +30,10 @@ import com.globo.galeb.bus.BackendMap;
 import com.globo.galeb.bus.BackendPoolMap;
 import com.globo.galeb.bus.MessageBus;
 import com.globo.galeb.entity.Entity;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.IJsonable.StatusType;
 import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class BackendMapTest {
@@ -58,52 +61,141 @@ public class BackendMapTest {
 
         messageBus = new MessageBus();
         messageBus.setUri("/backend")
-                  .setParentId("test.localdomain")
+                  .setParentId("pool0")
                   .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.1:8080").encode());
 
         backendMap = new BackendMap();
-        backendMap.setMessageBus(messageBus).setLogger(logger).setFarm(farm);
+        backendMap.setMessageBus(messageBus).setFarm(farm);
 
         messageBusParent = new MessageBus();
-        messageBusParent.setUri("/virtualhost")
-                  .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "test.localdomain").encode());
+        messageBusParent.setUri("/backendpool")
+                  .setEntity(new JsonObject().putString(Entity.ID_FIELDNAME, "pool0").encode());
 
         backendPoolMap = new BackendPoolMap();
-        backendPoolMap.setMessageBus(messageBusParent).setLogger(logger).setFarm(farm);
+        backendPoolMap.setMessageBus(messageBusParent).setFarm(farm);
 
     }
 
     @Test
     public void addReturnFalseIfParentIdNotExist() {
-        assertFalse(backendMap.add());
+        assertThat(backendMap.add()).isFalse();
     }
 
     @Test
     public void addReturnTrueIfParentIdExist() {
         backendPoolMap.add();
-        assertTrue(backendMap.add());
+        assertThat(backendMap.add()).isTrue();
     }
 
     @Test
     public void delAllReturnTrue() {
-        assertTrue(backendMap.del());
+        assertThat(backendMap.del()).isTrue();
     }
 
     @Test
     public void delReturnTrueIfExist() {
         backendPoolMap.add();
         backendMap.add();
-        assertTrue(backendMap.del());
+        assertThat(backendMap.del()).isTrue();
     }
 
     @Test
     public void resetReturnFalse() {
-        assertFalse(backendMap.reset());
+        assertThat(backendMap.reset()).isFalse();
     }
 
     @Test
     public void changeReturnFalse() {
-        assertFalse(backendMap.change());
+        assertThat(backendMap.change()).isFalse();
+    }
+
+    @Test
+    public void backendAddedInBadBackendPoolIfAddedWithStatusFailed() {
+        JsonObject entity = new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.2:8080")
+                                            .putString(IJsonable.STATUS_FIELDNAME, StatusType.FAILED_STATUS.toString());
+
+        MessageBus messageBusFailed = new MessageBus();
+        messageBusFailed.setUri("/backend")
+                  .setParentId("pool0")
+                  .setEntity(entity.encode());
+
+        backendPoolMap.add();
+        backendMap.setMessageBus(messageBusFailed).add();
+
+        IBackend backend = farm.getBackendPools()
+                               .getEntityById("pool0")
+                               .getBadBackendById(entity.getString(IJsonable.ID_FIELDNAME));
+
+        assertThat(backend).isNotNull();
+    }
+
+    public void backendNotAddedInBackendPoolIfAddedWithStatusFailed() {
+        JsonObject entity = new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.2:8080")
+                .putString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString());
+
+        MessageBus messageBusFailed = new MessageBus();
+        messageBusFailed.setUri("/backend")
+                        .setParentId("pool0")
+                        .setEntity(entity.encode());
+
+        backendPoolMap.add();
+        backendMap.setMessageBus(messageBusFailed).add();
+
+        IBackend backend = farm.getBackendPools()
+           .getEntityById("pool0")
+           .getBadBackendById(entity.getString(IJsonable.ID_FIELDNAME));
+
+        assertThat(backend).isNull();
+    }
+
+    @Test
+    public void backendWithStatusFailedRemovedInBadBackendPool() {
+        JsonObject entity = new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.2:8080")
+                                            .putString(IJsonable.STATUS_FIELDNAME, StatusType.FAILED_STATUS.toString());
+
+        MessageBus messageBusFailedToAdded = new MessageBus();
+        messageBusFailedToAdded.setUri("/backend")
+                               .setParentId("pool0")
+                               .setEntity(entity.encode());
+        boolean isOk = backendPoolMap.add();
+        backendMap.setMessageBus(messageBusFailedToAdded).add();
+
+        MessageBus messageBusFailedToRemove = new MessageBus();
+        messageBusFailedToRemove.setUri("/backend/"+entity.getString(IJsonable.ID_FIELDNAME))
+                                .setParentId("pool0")
+                                .setEntity(entity.encode());
+        backendMap.setMessageBus(messageBusFailedToRemove).del();
+        IBackend backend = farm.getBackendPools()
+                               .getEntityById("pool0")
+                               .getBadBackendById(entity.getString(IJsonable.ID_FIELDNAME));
+
+        assertThat(isOk).isTrue();
+        assertThat(backend).isNull();
+    }
+
+    public void backendWithStatusFailedNotRemovedInBackendPool() {
+        JsonObject entity = new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.1:8080")
+                                    .putString(IJsonable.STATUS_FIELDNAME, StatusType.FAILED_STATUS.toString());
+
+        MessageBus messageBusFailedToAdded = new MessageBus();
+        messageBusFailedToAdded.setUri("/backend")
+                               .setParentId("pool0")
+                               .setEntity(entity.encode());
+
+        backendPoolMap.add();
+        backendMap.setMessageBus(messageBusFailedToAdded).add();
+
+        JsonObject entityWithOtherStatus = new JsonObject().putString(Entity.ID_FIELDNAME, "127.0.0.1:8080")
+                                                .putString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString());
+
+        MessageBus messageBusFailedToRemove = new MessageBus();
+        messageBusFailedToRemove.setUri("/backend/"+entityWithOtherStatus.getString(IJsonable.ID_FIELDNAME))
+                                .setParentId("pool0")
+                                .setEntity(entity.encode());
+
+        boolean isOk = backendMap.setMessageBus(messageBusFailedToRemove).del();
+
+        assertThat(isOk).isFalse();
     }
 
 }

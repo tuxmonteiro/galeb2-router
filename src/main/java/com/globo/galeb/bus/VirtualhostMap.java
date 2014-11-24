@@ -30,6 +30,7 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
      */
     public VirtualhostMap() {
         super();
+        super.uriBase = "virtualhost";
     }
 
     /* (non-Javadoc)

@@ -15,6 +15,8 @@
  */
 package com.globo.galeb.bus;
 
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.IJsonable.StatusType;
 import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
 
@@ -31,6 +33,7 @@ public class BackendMap extends MessageToMap<BackendPool> {
      */
     public BackendMap() {
         super();
+        super.uriBase = "backend";
     }
 
     /* (non-Javadoc)
@@ -50,14 +53,16 @@ public class BackendMap extends MessageToMap<BackendPool> {
             return false;
         } else {
 
-            boolean status = entity.getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
+            boolean running = entity.getString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString())
+                                        .equals(StatusType.RUNNING_STATUS.toString());
 
             final BackendPool backendPool = farm.getBackendPoolById(parentId);
-            isOk  = status ? backendPool.addEntity(new Backend(entity)) :
-                             backendPool.addBadBackend(new Backend(entity));
+            isOk  = running ? backendPool.addEntity(new Backend(entity)) :
+                              backendPool.addBadBackend(new Backend(entity));
 
             if (isOk) {
-                log.info(String.format("[%s] Backend %s (%s) added", verticleId, entityId, parentId));
+                StatusType status = running ? StatusType.RUNNING_STATUS : StatusType.FAILED_STATUS;
+                log.info(String.format("[%s] Backend %s (%s) added, status %s", verticleId, entityId, parentId, status.toString()));
             } else {
                 log.warn(String.format("[%s] Backend %s (%s) already exist", verticleId, entityId, parentId));
             }
@@ -80,7 +85,8 @@ public class BackendMap extends MessageToMap<BackendPool> {
                 log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
                 return false;
             }
-            boolean status = entity.getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
+            boolean running = entity.getString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString())
+                                        .equals(StatusType.RUNNING_STATUS.toString());
 
             if ("".equals(entityId)) {
                 log.warn(String.format("[%s] Backend UNDEF", verticleId));
@@ -93,9 +99,10 @@ public class BackendMap extends MessageToMap<BackendPool> {
             isOk = backendPool!=null;
 
             if (isOk) {
-                isOk = status ? backendPool.removeEntity(entity) :
-                                backendPool.removeBadBackend(entity);
-                log.info(String.format("[%s] Backend %s (%s) removed", verticleId, entityId, parentId));
+                isOk = running ? backendPool.removeEntity(entity) :
+                                 backendPool.removeBadBackend(entity);
+                StatusType status = running ? StatusType.RUNNING_STATUS : StatusType.FAILED_STATUS;
+                log.info(String.format("[%s] Backend %s (%s) removed, status %s", verticleId, entityId, parentId, status.toString()));
             } else {
                 log.warn(String.format("[%s] Backend not removed. Backend %s (%s) not exist", verticleId, entityId, parentId));
             }

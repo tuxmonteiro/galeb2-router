@@ -167,7 +167,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     @Override
     public boolean addToMap(String message) {
         @SuppressWarnings("rawtypes")
-        MessageToMap messageToMap = messageToMapBuilder.getMessageToMap(message, this);
+        MessageToMap messageToMap = messageToMapBuilder.setFarm(this).getMessageToMap(message);
         if (properties.containsField(CONF_STARTER_CONF)) {
             JsonObject starterConf = properties.getObject(CONF_STARTER_CONF);
             if (starterConf.containsField(CONF_ROOT_ROUTER)) {
@@ -183,7 +183,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     @Override
     public boolean delFromMap(String message) {
-        return messageToMapBuilder.getMessageToMap(message, this).del();
+        return messageToMapBuilder.setFarm(this).getMessageToMap(message).del();
     }
 
     /**

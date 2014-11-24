@@ -37,6 +37,7 @@ public class FarmMap extends MessageToMap<Farm> {
      */
     public FarmMap() {
         super();
+        super.uriBase = "farm";
     }
 
     /* (non-Javadoc)
@@ -62,13 +63,7 @@ public class FarmMap extends MessageToMap<Farm> {
                                                 .setUri("/backendpool")
                                                 .make();
 
-            backendPoolMap.setMessageBus(backendPoolMessageBus)
-                          .setLogger(log)
-                          .setVertx(vertx)
-                                              .setFarm(farm)
-
-//                          .setMap(farm.getBackendPools().getEntities())
-                          .setVerticleId(verticleId);
+            backendPoolMap.setMessageBus(backendPoolMessageBus).setFarm(farm);
 
             backendPoolMap.add();
 
@@ -92,13 +87,8 @@ public class FarmMap extends MessageToMap<Farm> {
                                                     .setUri("/backend")
                                                     .make();
 
-                backendMap.setMessageBus(backendMessageBus)
-                          .setLogger(log)
-                          .setVertx(vertx)
-                                              .setFarm(farm)
+                backendMap.setMessageBus(backendMessageBus).setFarm(farm);
 
-//                          .setMap(farm.getBackendPools().getEntities())
-                          .setVerticleId(verticleId);
                 backendMap.add();
             }
             isOk = true;
@@ -119,13 +109,7 @@ public class FarmMap extends MessageToMap<Farm> {
                                                 .setUri("/virtualhost")
                                                 .make();
 
-            virtualhostMap.setMessageBus(virtualhostMessageBus)
-                          .setLogger(log)
-                          .setVertx(vertx)
-                                              .setFarm(farm)
-
-//                          .setMap(farm.getEntities())
-                          .setVerticleId(verticleId);
+            virtualhostMap.setMessageBus(virtualhostMessageBus).setFarm(farm);
 
             virtualhostMap.add();
 
@@ -149,13 +133,8 @@ public class FarmMap extends MessageToMap<Farm> {
                                                     .setUri("/rule")
                                                     .make();
 
-                ruleMap.setMessageBus(ruleMessageBus)
-                          .setLogger(log)
-                          .setVertx(vertx)
-                                              .setFarm(farm)
+                ruleMap.setMessageBus(ruleMessageBus).setFarm(farm);
 
-//                          .setMap(farm.getEntities())
-                          .setVerticleId(verticleId);
                 ruleMap.add();
             }
             isOk = true;

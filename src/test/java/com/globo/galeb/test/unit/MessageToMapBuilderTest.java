@@ -36,6 +36,7 @@ public class MessageToMapBuilderTest {
 
     private Farm farm;
     private String message;
+    private MessageToMapBuilder messageToMapBuilder = new MessageToMapBuilder();
 
     @Before
     public void setUp() throws Exception {
@@ -49,7 +50,7 @@ public class MessageToMapBuilderTest {
         message = new JsonObject()
                         .putString(MessageBus.URI_FIELDNAME, "/virtualhost")
                         .encode();
-        assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
+        assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
             .as("instanceIsVirtualhostMap").isEqualTo(VirtualhostMap.class);
     }
 
@@ -58,14 +59,14 @@ public class MessageToMapBuilderTest {
         message = new JsonObject()
                         .putString(MessageBus.URI_FIELDNAME, "/backend")
                         .encode();
-        assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
+        assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
             .as("instanceIsBackendMap").isEqualTo(BackendMap.class);
     }
 
     @Test
     public void messageWithoutUri() {
         message = new JsonObject().encode();
-        assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
+        assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
             .as("messageWithoutUri").isEqualTo(NullMap.class);
 
     }
@@ -75,7 +76,7 @@ public class MessageToMapBuilderTest {
         message = new JsonObject()
             .putString(MessageBus.URI_FIELDNAME, "/invalid")
             .encode();
-        assertThat(MessageToMapBuilder.getInstance(message, farm).getClass())
+        assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
             .as("messageWithUriInvalid").isEqualTo(NullMap.class);
     }
 
@@ -84,7 +85,7 @@ public class MessageToMapBuilderTest {
         message = new JsonObject()
             .putString(MessageBus.URI_FIELDNAME, "/virtualhost")
             .encode();
-        assertThat(MessageToMapBuilder.getInstance(message, null).getClass())
+        assertThat(messageToMapBuilder.getMessageToMap(message).getClass())
         .as("farmIsNull").isEqualTo(NullMap.class);
 
     }

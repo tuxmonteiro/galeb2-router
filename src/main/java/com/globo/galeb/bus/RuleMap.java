@@ -1,11 +1,43 @@
+/*
+ * Copyright (c) 2014 Globo.com - ATeam
+ * All rights reserved.
+ *
+ * This source is subject to the Apache License, Version 2.0.
+ * Please see the LICENSE file for more information.
+ *
+ * Authors: See AUTHORS file
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.globo.galeb.bus;
 
 import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.RuleFactory;
 import com.globo.galeb.entity.impl.frontend.Virtualhost;
 
+/**
+ * Class RuleMap.
+ *
+ * @author See AUTHORS file.
+ * @version 1.0.0, Nov 23, 2014.
+ */
 public class RuleMap extends MessageToMap<Virtualhost> {
 
+    /**
+     * Instantiates a new rule map.
+     */
+    public RuleMap() {
+        super();
+        super.uriBase = "rule";
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.bus.MessageToMap#add()
+     */
     @Override
     public boolean add() {
         boolean isOk = false;
@@ -21,7 +53,7 @@ public class RuleMap extends MessageToMap<Virtualhost> {
             final Virtualhost virtualhost = farm.getEntityById(parentId);
 
             if (virtualhost!=null) {
-                Rule rule = new RuleFactory().setLogger(log).createRule(entity);
+                Rule rule = new RuleFactory().setLogger(log.getLogger()).createRule(entity);
                 rule.setFarm(farm).start();
                 isOk  = virtualhost.addEntity(rule);
                 log.info(String.format("[%s] Rule %s (%s) added", verticleId, entityId, parentId));
@@ -33,6 +65,9 @@ public class RuleMap extends MessageToMap<Virtualhost> {
         return isOk;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.bus.MessageToMap#del()
+     */
     @Override
     public boolean del() {
         boolean isOk = false;
@@ -74,15 +109,21 @@ public class RuleMap extends MessageToMap<Virtualhost> {
         }
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.bus.MessageToMap#reset()
+     */
     @Override
     public boolean reset() {
-        // TODO Auto-generated method stub
+        // TODO
         return false;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.bus.MessageToMap#change()
+     */
     @Override
     public boolean change() {
-        // TODO Auto-generated method stub
+        // TODO
         return false;
     }
 

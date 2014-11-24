@@ -30,6 +30,7 @@ public class BackendPoolMap extends MessageToMap<BackendPool> {
      */
     public BackendPoolMap() {
         super();
+        super.uriBase = "backendpool";
     }
 
     /* (non-Javadoc)
@@ -91,7 +92,7 @@ public class BackendPoolMap extends MessageToMap<BackendPool> {
      */
     @Override
     public boolean reset() {
-        // TODO Auto-generated method stub
+        // TODO
         return false;
     }
 
@@ -100,7 +101,7 @@ public class BackendPoolMap extends MessageToMap<BackendPool> {
      */
     @Override
     public boolean change() {
-        // TODO Auto-generated method stub
+        // TODO
         return false;
     }
 

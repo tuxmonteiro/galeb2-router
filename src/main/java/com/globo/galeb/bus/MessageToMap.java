@@ -17,10 +17,10 @@ package com.globo.galeb.bus;
 
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.entity.Entity;
 import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.logger.SafeLogger;
 
 /**
  * Class MessageToMap.
@@ -32,10 +32,10 @@ import com.globo.galeb.entity.impl.Farm;
 public abstract class MessageToMap<T extends Entity> {
 
     /** The uri base. */
-    protected String uriBase        = "";
+    protected String uriBase        = Entity.UNDEF;
 
     /** The entity. */
-    protected JsonObject entity = new JsonObject();
+    protected JsonObject entity     = new JsonObject();
 
     /** The entity id. */
     protected String entityId       = "";
@@ -50,7 +50,7 @@ public abstract class MessageToMap<T extends Entity> {
     protected MessageBus messageBus = new MessageBus().setUri("/null");
 
     /** The logger. */
-    protected Logger log            = null;
+    protected SafeLogger log        = new SafeLogger();
 
     /** The verticle id. */
     protected String verticleId     = "";
@@ -62,28 +62,6 @@ public abstract class MessageToMap<T extends Entity> {
     protected String staticConf     = "";
 
     /**
-     * Sets the verticle id.
-     *
-     * @param id the id
-     * @return this
-     */
-    public MessageToMap<T> setVerticleId(String id) {
-        this.verticleId = id;
-        return this;
-    }
-
-    /**
-     * Sets the logger.
-     *
-     * @param log the logger
-     * @return this
-     */
-    public MessageToMap<T> setLogger(final Logger log) {
-        this.log = log;
-        return this;
-    }
-
-    /**
      * Sets the message bus.
      *
      * @param messageBus the message bus
@@ -93,7 +71,6 @@ public abstract class MessageToMap<T extends Entity> {
         this.messageBus = messageBus;
 
         if (messageBus!=null) {
-            this.uriBase  = messageBus.getUriBase();
             this.entity   = messageBus.getEntity();
             this.entityId = messageBus.getEntityId();
             this.parentId = messageBus.getParentId();
@@ -110,18 +87,20 @@ public abstract class MessageToMap<T extends Entity> {
      */
     public MessageToMap<T> setFarm(Farm farm) {
         this.farm = farm;
+        this.log.setLogger(farm.getLogger());
+        Object plataform = farm.getPlataform();
+        this.vertx = (plataform instanceof Vertx) ? (Vertx) plataform : null;
+        this.verticleId = farm.getVerticleId();
         return this;
     }
 
     /**
-     * Sets the vertx.
+     * Gets the uri base.
      *
-     * @param vertx the vertx
-     * @return this
+     * @return the uri base
      */
-    public MessageToMap<T> setVertx(final Vertx vertx) {
-        this.vertx = vertx;
-        return this;
+    public String getUriBase() {
+        return uriBase;
     }
 
     /**

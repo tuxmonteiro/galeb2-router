@@ -47,7 +47,7 @@ public class VirtualhostMapTest {
         Farm farm = new Farm(null);
         farm.start();
         virtualhostMap = new VirtualhostMap();
-        virtualhostMap.setFarm(farm).setMessageBus(messageBus).setLogger(logger);
+        virtualhostMap.setFarm(farm).setMessageBus(messageBus);
     }
 
     @Test
