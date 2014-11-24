@@ -273,7 +273,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      * @return the backend pool json
      */
     public JsonArray getBackendPoolJson() {
-        return new JsonArray(getBackendPoolJson(""));
+        return getBackendPools().getEntitiesJson();
     }
 
     /**
@@ -284,7 +284,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     public String getBackendPoolJson(String id) {
         if ("".equals(id)||id==null) {
-            return getBackendPools().getEntitiesJson().encodePrettily();
+            return new JsonObject().putArray(FARM_BACKENDPOOLS_FIELDNAME, getBackendPools().getEntitiesJson()).encodePrettily();
         }
         BackendPool backendPool = getBackendPoolById(id);
         if (backendPool!=null) {
@@ -310,7 +310,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     public String getVirtualhostJson(String id) {
         if ("".equals(id)||id==null) {
-            return getEntitiesJson().encodePrettily();
+            return new JsonObject().putArray(FARM_VIRTUALHOSTS_FIELDNAME, getEntitiesJson()).encodePrettily();
         }
         Virtualhost virtualhost = getEntityById(id);
         if (virtualhost!=null) {
@@ -349,7 +349,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     public String getRuleJson(String id) {
         if ("".equals(id)||id==null) {
-            return collectionToJson(Rule.class.getName(), getRules());
+            return collectionToJson(Rule.class.getSimpleName(), getRules());
         }
         for (Virtualhost virtualhost : getEntities().values()) {
             Rule rule = virtualhost.getEntityById(id);
@@ -390,7 +390,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     public String getBackendJson(String id) {
         if ("".equals(id)||id==null) {
-            return collectionToJson(Backend.class.getName(), getBackends());
+            return collectionToJson(Backend.class.getSimpleName(), getBackends());
         }
         for (BackendPool backendPool : getBackendPools().getEntities().values()) {
             IBackend backend = backendPool.getEntityById(id);

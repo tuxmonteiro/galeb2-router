@@ -201,7 +201,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
         properties.putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
         properties.putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
         properties.putNumber(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
-        if (properties.containsField(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME)) {
+        if (!properties.containsField(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME)) {
             properties.putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME, LoadBalanceCriterion.LOADBALANCE_POLICY_DEFAULT);
         }
         prepareJson();

@@ -42,9 +42,11 @@ public class LeastConnCriterionTest extends TestVerticle {
         JsonObject backendPoolProperties = new JsonObject()
             .putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME,
                     LeastConnCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
+
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "pool0")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
+
         backendPool = (BackendPool) new BackendPool(backendPoolJson).setPlataform(vertx);
 
         for (int x=0; x<numBackends; x++) {

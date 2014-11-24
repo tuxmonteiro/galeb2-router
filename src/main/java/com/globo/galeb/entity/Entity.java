@@ -114,6 +114,15 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
+     * Gets the parent id.
+     *
+     * @return the parent id
+     */
+    public String getParentId() {
+        return parentId;
+    }
+
+    /**
      * Gets the properties.
      *
      * @return the properties

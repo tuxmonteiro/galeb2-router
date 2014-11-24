@@ -15,14 +15,22 @@
  */
 package com.globo.galeb.bus;
 
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
+import java.net.URLDecoder;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.entity.Entity;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.entity.impl.frontend.Rule;
+import com.globo.galeb.entity.impl.frontend.Virtualhost;
 
 /**
  * Class FarmMap.
@@ -150,8 +158,83 @@ public class FarmMap extends MessageToMap<Farm> {
      */
     @Override
     public boolean del() {
-        boolean isOk = false;
-        farm.clearEntities();
+
+        boolean isOk = true;
+
+        VirtualhostMap virtualhostMap = new VirtualhostMap();
+        RuleMap ruleMap = new RuleMap();
+        BackendPoolMap backendPoolMap = new BackendPoolMap();
+        BackendMap backendMap = new BackendMap();
+
+        List<Virtualhost> virtualhosts = new ArrayList<>();
+        virtualhosts.addAll(farm.getEntities().values());
+
+        for (Virtualhost virtualhost: virtualhosts) {
+
+            List<Rule> rules = new ArrayList<>();
+            rules.addAll(virtualhost.getEntities().values());
+
+            for (Rule rule: rules) {
+                MessageBus ruleMessageBus = null;
+                try {
+                    ruleMessageBus = new MessageBus()
+                                        .setEntity(rule.toJson())
+                                        .setParentId(rule.getParentId())
+                                        .setUri("/rule/"+URLDecoder.decode(rule.getId(), "UTF-8"))
+                                        .make();
+                } catch (UnsupportedEncodingException e) {
+                    log.error(e.getMessage());
+                }
+                isOk = isOk && ruleMap.setMessageBus(ruleMessageBus).setFarm(farm).del();
+            }
+
+            MessageBus virtualhostMessageBus = null;
+            try {
+                virtualhostMessageBus = new MessageBus()
+                                            .setEntity(virtualhost.toJson())
+                                            .setUri("/virtualhost/"+URLDecoder.decode(virtualhost.getId(), "UTF-8"))
+                                            .make();
+            } catch (UnsupportedEncodingException e) {
+                log.error(e.getMessage());
+            }
+
+            isOk = isOk && virtualhostMap.setMessageBus(virtualhostMessageBus).setFarm(farm).del();
+        }
+
+        List<BackendPool> backendPools = new ArrayList<>();
+        backendPools.addAll(farm.getBackendPools().getEntities().values());
+
+        for (BackendPool backendPool: backendPools) {
+
+            List<IBackend> backends = new ArrayList<>();
+            backends.addAll(backendPool.getEntities().values());
+
+            for (IBackend backend: backends) {
+                MessageBus backendMessageBus = null;
+                try {
+                    backendMessageBus = new MessageBus()
+                                            .setEntity(backend.toJson())
+                                            .setParentId(((Entity) backend).getParentId())
+                                            .setUri("/backend/"+URLDecoder.decode(((Entity) backend).getId(), "UTF-8"))
+                                            .make();
+                } catch (UnsupportedEncodingException e) {
+                    log.error(e.getMessage());
+                }
+                isOk = isOk && backendMap.setMessageBus(backendMessageBus).setFarm(farm).del();
+            }
+
+            MessageBus backendPoolMessageBus = null;
+            try {
+                backendPoolMessageBus = new MessageBus()
+                                            .setEntity(backendPool.toJson())
+                                            .setUri("/backendpool/"+URLDecoder.decode(backendPool.getId(), "UTF-8"))
+                                            .make();
+            } catch (UnsupportedEncodingException e) {
+                log.error(e.getMessage());
+            }
+
+            isOk = isOk && backendPoolMap.setMessageBus(backendPoolMessageBus).setFarm(farm).del();
+        }
 
         return isOk;
     }
