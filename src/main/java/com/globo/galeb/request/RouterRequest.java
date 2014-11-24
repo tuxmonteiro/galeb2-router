@@ -249,7 +249,7 @@ public class RouterRequest {
             return;
         }
 
-        schedulerTimeOut = startSchedulerTimeout(conf.getLong(Farm.REQUEST_TIMEOUT_FIELDNAME, 5000L));
+        startSchedulerTimeout(conf.getLong(Farm.REQUEST_TIMEOUT_FIELDNAME, 5000L));
 
         final RouterResponseHandler handlerHttpClientResponse = new RouterResponseHandler();
         handlerHttpClientResponse.setScheduler(schedulerTimeOut)
@@ -336,9 +336,9 @@ public class RouterRequest {
      * @param requestTimeout the request timeout
      * @return the i scheduler
      */
-    private IScheduler startSchedulerTimeout(Long requestTimeout) {
+    private void startSchedulerTimeout(Long requestTimeout) {
 
-        IScheduler schedulerTimeOut = new VertxDelayScheduler((Vertx) plataform);
+        schedulerTimeOut = new VertxDelayScheduler((Vertx) plataform);
         schedulerTimeOut.setPeriod(requestTimeout)
                         .setHandler(new GatewayTimeoutTaskHandler(serverResponse,
                                                                   httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST),
@@ -358,8 +358,6 @@ public class RouterRequest {
                         .start();
 
         log.debug("Scheduler started");
-
-        return schedulerTimeOut;
     }
 
     /**
