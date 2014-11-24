@@ -94,4 +94,12 @@ public class RulesCriterion implements ICriterion<Rule> {
         }
         return new NullRule();
     }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<Rule> action(ICriterion.CriterionAction criterionAction) {
+        return this;
+    }
 }

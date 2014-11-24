@@ -15,6 +15,9 @@
  */
 package com.globo.galeb.criteria;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.globo.galeb.criteria.impl.RandomCriterion;
 import com.globo.galeb.entity.impl.backend.IBackend;
 
@@ -32,6 +35,8 @@ public class LoadBalanceCriterionFactory {
     /** The Constant DEFAULT_LOADBALANCE. */
     public static final String DEFAULT_LOADBALANCE = RandomCriterion.class.getSimpleName().replaceFirst(CLASS_SUFFIX, "");
 
+    private static Map<String, ICriterion<IBackend>> mapOfLoadBalanceClasses = new HashMap<>();
+
     /**
      * Creates the load balance by name
      *
@@ -47,15 +52,24 @@ public class LoadBalanceCriterionFactory {
         ClassLoader loader = Thread.currentThread().getContextClassLoader();
         String loadBalanceFullName = CLASS_PACKAGE+loadBalanceName+CLASS_SUFFIX;
 
+        if (mapOfLoadBalanceClasses.containsKey(loadBalanceFullName)) {
+            return mapOfLoadBalanceClasses.get(loadBalanceFullName);
+        }
+
         try {
             Class<ICriterion<IBackend>> clazz = (Class<ICriterion<IBackend>>) loader.loadClass(loadBalanceFullName);
             ICriterion<IBackend> instance = clazz.newInstance();
-            return (ICriterion<IBackend>) instance;
+            mapOfLoadBalanceClasses.put(loadBalanceFullName, instance);
+            return instance;
 
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
             // Load default
             return create(DEFAULT_LOADBALANCE);
         }
+    }
+
+    public static void reset(String loadBalanceName) {
+        mapOfLoadBalanceClasses.remove(loadBalanceName);
     }
 
 }

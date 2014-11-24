@@ -7,10 +7,11 @@
  *
  * Authors: See AUTHORS file
  *
- * THIS CODE AND INFORMATION ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY
- * KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
- * PARTICULAR PURPOSE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.globo.galeb.test.unit;
 
@@ -24,6 +25,7 @@ import java.util.Set;
 import com.globo.galeb.consistenthash.HashAlgorithm;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.criteria.impl.IPHashCriterion;
+import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
@@ -37,9 +39,18 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
 
+/**
+ * Class IPHashCriterionTest.
+ *
+ * @author See AUTHORS file.
+ * @version 1.0.0, Nov 22, 2014.
+ */
 public class IPHashCriterionTest {
 
+    /** The backend pool. */
     BackendPool backendPool;
+
+    /** The num backends. */
     int numBackends = 10;
 
     @Before
@@ -49,7 +60,7 @@ public class IPHashCriterionTest {
         when(vertx.createHttpClient()).thenReturn(httpClient);
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+            .putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME,
                     IPHashCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
@@ -74,14 +85,14 @@ public class IPHashCriterionTest {
             RequestData requestData3 = new RequestData().setRemoteAddress(counter.toString());
             IBackend backend3 = backendPool.getChoice(requestData3);
 
-            assertThat(backend1).as("backend1 = backend2").isEqualTo(backend2);
-            assertThat(backend1).as("backend1 = backend3").isEqualTo(backend3);
+            assertThat(backend1).as("backend1 persistent choice with backend2").isEqualTo(backend2);
+            assertThat(backend1).as("backend1 persistent choice with backend3").isEqualTo(backend3);
         }
     }
 
     @Test
     public void checkUniformDistribution() {
-        long samples = 100000L;
+        long samples = 10000L;
         int rounds = 5;
         double percentMarginOfError = 0.5;
         Set<HashType> hashs = EnumSet.allOf(HashAlgorithm.HashType.class);
@@ -91,11 +102,13 @@ public class IPHashCriterionTest {
 
             for (HashType hash: hashs) {
 
+                backendPool.getProperties().mergeIn(new JsonObject().putString(IPHashCriterion.HASH_ALGORITHM_FIELDNAME, hash.toString()));
+                backendPool.resetLoadBalance();
+
                 long sum = 0L;
                 long initialTime = System.currentTimeMillis();
                 for (Integer counter=0; counter<samples; counter++) {
                     RequestData requestData = new RequestData().setRemoteAddress(counter.toString());
-                    backendPool.getProperties().putString(IPHashCriterion.HASH_ALGORITHM_FIELDNAME, hash.toString());
                     sum += backendPool.getChoice(requestData).getPort();
                 }
                 long finishTime = System.currentTimeMillis();

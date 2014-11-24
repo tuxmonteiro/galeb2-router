@@ -15,7 +15,6 @@
  */
 package com.globo.galeb.criteria.impl;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +37,7 @@ public class RoundRobinCriterion<T> implements ICriterion<T> {
     private final SafeLogger log            = new SafeLogger();
 
     /** The collection. */
-    private List<T>          collection     = Collections.synchronizedList(new LinkedList<T>());
+    private List<T>          collection     = new LinkedList<T>();
 
     /** The originals. */
     private List<T>          originals      = new LinkedList<T>();
@@ -58,11 +57,10 @@ public class RoundRobinCriterion<T> implements ICriterion<T> {
     @Override
     public ICriterion<T> given(final Map<String, T> map) {
         if (map!=null) {
-            if (!collection.isEmpty()) {
-                this.collection.clear();
+            if (collection.isEmpty()) {
+                collection.addAll(new LinkedList<T>(map.values()));
             }
-            this.originals = (List<T>) map.values();
-            this.collection.addAll(originals);
+            originals.addAll(map.values());
         } else {
             log.error(String.format("%s: map is null", this.getClass().getName()));
         }
@@ -82,15 +80,37 @@ public class RoundRobinCriterion<T> implements ICriterion<T> {
      */
     @Override
     public T thenGetResult() {
+        T result = null;
+
         if (originals.isEmpty()) {
-            return null;
+            return result;
+        }
+
+        if (!collection.isEmpty()) {
+            result = ((LinkedList<T>) collection).poll();
         }
 
         if (collection.isEmpty()) {
-            collection.addAll(originals);
+            collection.addAll(new LinkedList<T>(originals));
         }
 
-        return ((LinkedList<T>) collection).poll();
+        return result;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        switch (criterionAction) {
+            case RESET_REQUIRED:
+                this.collection.clear();
+                break;
+
+            default:
+                break;
+        }
+        return this;
     }
 
 }

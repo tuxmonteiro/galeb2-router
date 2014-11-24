@@ -17,15 +17,19 @@ package com.globo.galeb.test.unit;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.LinkedList;
+
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
 import com.globo.galeb.criteria.impl.RoundRobinCriterion;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.entity.impl.backend.NullBackend;
 import com.globo.galeb.request.RequestData;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.Vertx;
@@ -34,12 +38,11 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.impl.DefaultVertx;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.shareddata.SharedData;
 
 public class RoundRobinCriterionTest {
 
     private BackendPool backendPool;
-    private int numBackends = 10;
+    private int numBackends = 100;
     private Vertx vertx;
     private RequestData requestData;
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
@@ -50,15 +53,14 @@ public class RoundRobinCriterionTest {
         HttpClient httpClient = mock(HttpClient.class);
         when(vertx.createHttpClient()).thenReturn(httpClient);
 
-        SharedData sharedData = new SharedData();
-        when(vertx.sharedData()).thenReturn(sharedData);
-
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+            .putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME,
                     RoundRobinCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
+
         JsonObject backendPoolJson = new JsonObject()
-            .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
-            .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
+                                            .putString(IJsonable.ID_FIELDNAME, "pool0")
+                                            .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
+
         backendPool = (BackendPool) new BackendPool(backendPoolJson).setPlataform(vertx);
 
         for (int x=0; x<numBackends; x++) {
@@ -71,18 +73,23 @@ public class RoundRobinCriterionTest {
         requestData = new RequestData().setHeaders(headers);
     }
 
-    @Ignore
     @Test
     public void backendsChosenInSequence() {
-        int lastBackendChosenPort = numBackends-1;
-        for (int counter=0; counter<100000; counter++) {
-             int backendChosenPort = backendPool.getChoice(requestData).getPort();
-             if (backendChosenPort==0) {
-                 assertThat(lastBackendChosenPort).isEqualTo(numBackends-1);
-             } else {
-                 assertThat(backendChosenPort).isEqualTo(lastBackendChosenPort+1);
-             }
-             lastBackendChosenPort = backendChosenPort;
+
+        LinkedList<IBackend> controlList = new LinkedList<>();
+        for (int counter=0; counter<numBackends*99; counter++) {
+            controlList.add(backendPool.getChoice(requestData));
+        }
+
+        backendPool.resetLoadBalance();
+        IBackend lastBackend = new NullBackend();
+        IBackend currentBackend = new NullBackend();
+
+        for (int counter=0; counter<numBackends*99; counter++) {
+            currentBackend = controlList.poll();
+            assertThat(currentBackend).isNotEqualTo(lastBackend);
+            assertThat(backendPool.getChoice(requestData)).isEqualTo(currentBackend);
+            lastBackend = currentBackend;
         }
     }
 

@@ -92,4 +92,12 @@ public class HostHeaderCriterion<T> implements ICriterion<T> {
 
         return map.get(hostWithoutPort);
     }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        return this;
+    }
 }

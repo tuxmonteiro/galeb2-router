@@ -46,6 +46,7 @@ public class IPHashCriterion<T> implements ICriterion<T> {
     /** The Constant HASH_ALGORITHM_FIELDNAME. */
     public static final String HASH_ALGORITHM_FIELDNAME   = "hashAlgorithm";
 
+
     /** The log. */
     private final SafeLogger  log            = new SafeLogger();
 
@@ -57,6 +58,12 @@ public class IPHashCriterion<T> implements ICriterion<T> {
 
     /** The consistent hash. */
     private ConsistentHash<T> consistentHash = null;
+
+    /** The hash type. */
+    private String            hashType       = "";
+
+    /** The source ip. */
+    private String            sourceIp       = "";
 
     /* (non-Javadoc)
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
@@ -73,8 +80,11 @@ public class IPHashCriterion<T> implements ICriterion<T> {
     @Override
     public ICriterion<T> given(final Map<String, T> map) {
         if (map!=null) {
-            this.consistentHash = null;
+            int lastCollectionSize = collection.size();
             this.collection     = new ArrayList<T>(map.values());
+            if (collection.size()!=lastCollectionSize) {
+                consistentHash = null;
+            }
         }
         return this;
     }
@@ -86,16 +96,13 @@ public class IPHashCriterion<T> implements ICriterion<T> {
     public ICriterion<T> when(final Object param) {
         if (param instanceof RequestData) {
             requestData = (RequestData) param;
-        } else if (param instanceof CriterionAction) {
-            CriterionAction command = (CriterionAction)param;
-            switch (command) {
-                case RESET_REQUIRED:
-                    consistentHash = null;
-                    break;
-
-                default:
-                    break;
+            JsonObject requestDataProperties = ((RequestData) param).getProperties();
+            String lastHashType = hashType;
+            this.hashType = requestDataProperties.getString(HASH_ALGORITHM_FIELDNAME, DEFAULT_HASH_ALGORITHM);
+            if (!hashType.equals(lastHashType)) {
+                consistentHash = null;
             }
+            this.sourceIp = requestData.getRemoteAddress();
         }
         return this;
     }
@@ -106,17 +113,9 @@ public class IPHashCriterion<T> implements ICriterion<T> {
     @Override
     public T thenGetResult() {
 
-        if (collection.isEmpty()) {
+        if (collection.isEmpty() || "".equals(sourceIp)) {
             return null;
         }
-
-        String sourceIp = requestData.getRemoteAddress();
-        JsonObject properties = requestData.getProperties();
-        if ("".equals(sourceIp)||properties==null) {
-            return null;
-        }
-        String hashType = properties.getString(HASH_ALGORITHM_FIELDNAME,
-                                               DEFAULT_HASH_ALGORITHM);
 
         int numberOfReplicas = 1;
 
@@ -126,6 +125,14 @@ public class IPHashCriterion<T> implements ICriterion<T> {
         }
 
         return consistentHash.get(sourceIp);
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        return this;
     }
 
 }

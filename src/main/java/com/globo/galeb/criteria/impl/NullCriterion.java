@@ -69,4 +69,12 @@ public class NullCriterion<T> implements ICriterion<T> {
         log.debug(this.getClass().getName());
         return null;
     }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        return this;
+    }
 }

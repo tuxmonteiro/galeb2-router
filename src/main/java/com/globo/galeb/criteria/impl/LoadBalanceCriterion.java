@@ -22,8 +22,8 @@ import org.vertx.java.core.logging.Logger;
 import com.globo.galeb.collection.IndexedMap;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
-import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.logger.SafeLogger;
+import com.globo.galeb.request.RequestData;
 
 /**
  * Class LoadBalanceCriterion.
@@ -31,28 +31,39 @@ import com.globo.galeb.logger.SafeLogger;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 20, 2014.
  */
-public class LoadBalanceCriterion implements ICriterion<IBackend> {
+public class LoadBalanceCriterion<T> implements ICriterion<T> {
+
+    /** The Constant LOADBALANCE_POLICY_DEFAULT. */
+    public static final String LOADBALANCE_POLICY_DEFAULT    = RandomCriterion.class.getSimpleName()
+                                                                .replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, "");
+
+    /** The Constant LOADBALANCE_POLICY_FIELDNAME. */
+    public static final String LOADBALANCE_POLICY_FIELDNAME  = "loadBalancePolicy";
+
 
     /** The log. */
     private SafeLogger             log                  = new SafeLogger();
 
     /** The map. */
-    private Map<String, IBackend>  map                  = null;
+    private Map<String, T>         map                  = null;
 
     /** The load balance name. */
     private String                 loadBalanceName      = "";
 
     /** The load balance criterion. */
-    private ICriterion<IBackend>   loadBalanceCriterion = null;
+    private ICriterion<T>          loadBalanceCriterion = null;
 
     /** The param. */
     private Object                 param                = null;
+
+    /** The reset. */
+    private boolean reset = false;
 
     /* (non-Javadoc)
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<IBackend> setLog(Logger log) {
+    public ICriterion<T> setLog(Logger log) {
         this.log.setLogger(log);
         return this;
     }
@@ -61,7 +72,7 @@ public class LoadBalanceCriterion implements ICriterion<IBackend> {
      * @see com.globo.galeb.criteria.ICriterion#given(java.util.Map)
      */
     @Override
-    public ICriterion<IBackend> given(Map<String, IBackend> map) {
+    public ICriterion<T> given(Map<String, T> map) {
         if (map!=null) {
             this.map = map;
         } else {
@@ -74,39 +85,48 @@ public class LoadBalanceCriterion implements ICriterion<IBackend> {
      * @see com.globo.galeb.criteria.ICriterion#when(java.lang.Object)
      */
     @Override
-    public ICriterion<IBackend> when(Object aParam) {
+    public ICriterion<T> when(Object aParam) {
 
-        if (aParam instanceof String) {
-            this.loadBalanceName = aParam.toString();
-            return this;
+        if (aParam instanceof RequestData) {
+            this.loadBalanceName = ((RequestData) aParam).getProperties()
+                                                         .getString(LOADBALANCE_POLICY_FIELDNAME,LOADBALANCE_POLICY_DEFAULT);
+            this.param = aParam;
         }
 
-        if (aParam instanceof CriterionAction) {
-            CriterionAction command = (CriterionAction)param;
-            switch (command) {
-                case RESET_REQUIRED:
-                    loadBalanceCriterion = null;
-                    break;
-
-                default:
-                    break;
-            }
-            return this;
-        }
-
-        this.param = aParam;
         return this;
     }
 
     /* (non-Javadoc)
      * @see com.globo.galeb.criteria.ICriterion#thenGetResult()
      */
+    @SuppressWarnings("unchecked")
     @Override
-    public IBackend thenGetResult() {
+    public T thenGetResult() {
         if (loadBalanceCriterion==null) {
-            loadBalanceCriterion = LoadBalanceCriterionFactory.create(loadBalanceName);
+            if (reset) {
+                LoadBalanceCriterionFactory.reset(loadBalanceName);
+                reset = false;
+            }
+            loadBalanceCriterion = (ICriterion<T>) LoadBalanceCriterionFactory.create(loadBalanceName);
         }
-        return loadBalanceCriterion.given(map).when(param).thenGetResult();
+        return (T) loadBalanceCriterion.given(map).when(param).thenGetResult();
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        switch (criterionAction) {
+            case RESET_REQUIRED:
+                loadBalanceCriterion = null;
+                reset = true;
+                break;
+
+            default:
+                break;
+        }
+        return this;
     }
 
 }

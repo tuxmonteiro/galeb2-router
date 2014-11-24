@@ -59,7 +59,7 @@ public class LeastConnCriterion<T extends Comparable<T>> implements ICriterion<T
     public ICriterion<T> given(final Map<String, T> map) {
         this.map = map;
         if (map!=null) {
-            this.backends = (List<T>) map.values();
+            this.backends.addAll(map.values());
         }
         return this;
     }
@@ -83,6 +83,15 @@ public class LeastConnCriterion<T extends Comparable<T>> implements ICriterion<T
         }
 
         return Collections.min(map.values());
+    }
+
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        return this;
     }
 
 }

@@ -90,4 +90,12 @@ public class RandomCriterion<T> implements ICriterion<T> {
         }
         return (int) (Math.random() * (map.size() - Float.MIN_VALUE));
     }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.criteria.ICriterion#action(com.globo.galeb.criteria.ICriterion.CriterionAction)
+     */
+    @Override
+    public ICriterion<T> action(ICriterion.CriterionAction criterionAction) {
+        return this;
+    }
 }

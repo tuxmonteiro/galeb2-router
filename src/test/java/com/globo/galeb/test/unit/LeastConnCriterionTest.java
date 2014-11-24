@@ -19,6 +19,7 @@ import static org.vertx.testtools.VertxAssert.testComplete;
 
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
 import com.globo.galeb.criteria.impl.LeastConnCriterion;
+import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
@@ -26,7 +27,6 @@ import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.request.RemoteUser;
 import com.globo.galeb.request.RequestData;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
@@ -36,15 +36,14 @@ public class LeastConnCriterionTest extends TestVerticle {
     private BackendPool backendPool;
     private int numBackends = 10;
 
-    @Ignore
     @Test
     public void leastConnection() {
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+            .putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME,
                     LeastConnCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
-            .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
+            .putString(IJsonable.ID_FIELDNAME, "pool0")
             .putObject(IJsonable.PROPERTIES_FIELDNAME, backendPoolProperties);
         backendPool = (BackendPool) new BackendPool(backendPoolJson).setPlataform(vertx);
 

@@ -19,6 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
+import com.globo.galeb.criteria.impl.LoadBalanceCriterion;
 import com.globo.galeb.criteria.impl.RandomCriterion;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.backend.Backend;
@@ -45,7 +46,7 @@ public class RandomCriterionTest {
         when(vertx.createHttpClient()).thenReturn(httpClient);
 
         JsonObject backendPoolProperties = new JsonObject()
-            .putString(BackendPool.LOADBALANCE_POLICY_FIELDNAME,
+            .putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME,
                     RandomCriterion.class.getSimpleName().replaceAll(LoadBalanceCriterionFactory.CLASS_SUFFIX, ""));
         JsonObject backendPoolJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")

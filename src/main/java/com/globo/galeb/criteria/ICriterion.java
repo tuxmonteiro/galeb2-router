@@ -71,4 +71,12 @@ public interface ICriterion<T> {
      */
     public T thenGetResult();
 
+    /**
+     * Send action.
+     *
+     * @param criterionAction the criterion action
+     * @return this
+     */
+    public ICriterion<T> action(CriterionAction criterionAction);
+
 }
