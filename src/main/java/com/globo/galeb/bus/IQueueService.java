@@ -185,18 +185,4 @@ public interface IQueueService {
     public void registerQueueVersion(Object starter,
             ICallbackQueueAction callbackQueueAction);
 
-    /**
-     * Register update shared data.
-     *
-     * @param starter the starter
-     * @param callbackSharedData the callback shared data
-     */
-    public void registerUpdateSharedData(Object starter,
-            ICallbackSharedData callbackSharedData);
-
-    /**
-     * Update shared data.
-     */
-    public void updateSharedData();
-
 }

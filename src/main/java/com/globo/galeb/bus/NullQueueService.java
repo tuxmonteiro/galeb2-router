@@ -138,21 +138,4 @@ public class NullQueueService implements IQueueService {
         //
     }
 
-    /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#registerUpdateSharedData(java.lang.Object, com.globo.galeb.core.bus.ICallbackSharedData)
-     */
-    @Override
-    public void registerUpdateSharedData(Object starter,
-            ICallbackSharedData callbackSharedData) {
-        //
-    }
-
-    /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#updateSharedData()
-     */
-    @Override
-    public void updateSharedData() {
-        //
-    }
-
 }

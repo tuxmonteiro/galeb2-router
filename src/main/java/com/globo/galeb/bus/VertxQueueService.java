@@ -375,36 +375,4 @@ public class VertxQueueService implements IQueueService {
         }
     }
 
-    /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#registerUpdateSharedData(java.lang.Object, com.globo.galeb.core.bus.ICallbackSharedData)
-     */
-    @Override
-    public void registerUpdateSharedData(final Object starter,
-            final ICallbackSharedData callbackSharedData) {
-        Handler<Message<String>> queueUpdateSharedData = new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> ignore) {
-                callbackSharedData.updateSharedData();
-            }
-        };
-        if (eb!=null) {
-            eb.registerLocalHandler(SHARED_DATA.toString(), queueUpdateSharedData);
-            logQueueRegistered(starter.toString(), SHARED_DATA.toString());
-        } else {
-            logEventBusNull();
-        }
-    }
-
-    /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#updateSharedData()
-     */
-    @Override
-    public void updateSharedData() {
-        if (eb!=null) {
-            eb.publish(SHARED_DATA.toString(), "update");
-        } else {
-            logEventBusNull();
-        }
-    }
-
 }
