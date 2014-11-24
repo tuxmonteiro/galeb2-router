@@ -104,13 +104,19 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
                 message = new JsonObject().putNumber("version", farm.getVersion()).encodePrettily();
                 break;
             case "farm":
-                message = farm.getFarmJson();
+                message = farm.toJson().encodePrettily();
                 break;
             case "virtualhost":
                 message = farm.getVirtualhostJson(id);
                 break;
             case "backend":
                 message = farm.getBackendJson(id);
+                break;
+            case "backendpool":
+                message = farm.getBackendPoolJson(id);
+                break;
+            case "rule":
+                message = farm.getRuleJson(id);
                 break;
             default:
                 message = "";

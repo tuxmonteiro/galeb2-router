@@ -29,8 +29,9 @@ import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.MessageBus;
 import com.globo.galeb.bus.VertxQueueService;
 import com.globo.galeb.entity.Entity;
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.IJsonable.StatusType;
 import com.globo.galeb.entity.impl.Farm;
-import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
 import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.rulereturn.HttpCode;
@@ -170,10 +171,12 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
 
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
+            boolean running = messageBus.getEntity().getString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString())
+                                                        .equals(StatusType.RUNNING_STATUS.toString());
+
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
-            final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+            final Map <String, Set<String>> tempMap = running ? backendsMap : badBackendsMap;
 
             if (!tempMap.containsKey(backendId)) {
                 tempMap.put(backendId, new HashSet<String>());
@@ -191,10 +194,12 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         MessageBus messageBus = new MessageBus(message);
         if ("backend".equals(messageBus.getUriBase())) {
 
-            boolean backendStatus = messageBus.getEntity().getBoolean(Backend.ELEGIBLE_FIELDNAME, true);
+            boolean running = messageBus.getEntity().getString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString())
+                    .equals(StatusType.RUNNING_STATUS.toString());
+
             String backendId = messageBus.getEntityId();
             String virtualhostId = messageBus.getParentId();
-            final Map <String, Set<String>> tempMap = backendStatus ? backendsMap : badBackendsMap;
+            final Map <String, Set<String>> tempMap = running ? backendsMap : badBackendsMap;
 
             if (tempMap.containsKey(backendId)) {
                 Set<String> virtualhosts = tempMap.get(backendId);
@@ -210,37 +215,29 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
      * @see com.globo.galeb.core.bus.ICallbackHealthcheck#moveBackend(java.lang.String, boolean)
      */
     @Override
-    public void moveBackend(String backend, boolean elegible) throws UnsupportedEncodingException {
+    public void moveBackend(String backendId, boolean status) throws UnsupportedEncodingException {
 
-        Set<String> backendpools = elegible ? badBackendsMap.get(backend) : backendsMap.get(backend);
+        Set<String> backendpools = status ? badBackendsMap.get(backendId) : backendsMap.get(backendId);
 
         if (backendpools!=null) {
             Iterator<String> it = backendpools.iterator();
             while (it.hasNext()) {
                 BackendPool backendPool = farm.getBackendPoolById(it.next());
+                IBackend backend = !status ? backendPool.getEntityById(backendId) : backendPool.getBadBackendById(backendId);
 
-                JsonObject backendJson = null;
-                if (backendPool!=null) {
+                if (backend!=null) {
+                    String uriDel = String.format("/backend/%s", URLEncoder.encode(backendId,"UTF-8"));
+                    String uriAdd = "/backend";
 
-                    IBackend backendSearched = elegible ? backendPool.getEntityById(backend) : backendPool.getBadBackendById(backend);
-                    if (backendSearched!=null) {
-                        backendJson = ((Entity) backendSearched).toJson();
-                    }
+                    ((Entity) backend).setStatus(status ? StatusType.FAILED_STATUS : StatusType.RUNNING_STATUS);
+                    queueService.queueToDel(backend.toJson(), uriDel);
 
-                    if (backendJson!=null) {
-                        String uriDel = String.format("/backend/%s", URLEncoder.encode(backend,"UTF-8"));
-                        String uriAdd = "/backend";
-
-                        backendJson.putBoolean(Backend.ELEGIBLE_FIELDNAME, !elegible);
-                        queueService.queueToDel(backendJson, uriDel);
-
-                        backendJson.putBoolean(Backend.ELEGIBLE_FIELDNAME, elegible);
-                        queueService.queueToAdd(backendJson, uriAdd);
-                    }
-
+                    ((Entity) backend).setStatus(!status ? StatusType.FAILED_STATUS : StatusType.RUNNING_STATUS);
+                    queueService.queueToAdd(backend.toJson(), uriAdd);
                 }
             }
         }
+
     }
 
 }

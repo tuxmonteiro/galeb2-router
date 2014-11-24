@@ -314,6 +314,8 @@ public class RouterRequest {
         pump.start();
 
         httpClientRequest.exceptionHandler(new ClientRequestExceptionHandler()
+                                        .setQueueService(queueService)
+                                        .setLog(log.getLogger())
                                         .setsResponse(serverResponse)
                                         .setHeaderHost(httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST))
                                         .setBackendId(backend.toString())

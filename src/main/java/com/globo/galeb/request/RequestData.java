@@ -90,7 +90,7 @@ public class RequestData {
             this.remotePort = Integer.toString(localRemoteAddress.getPort());
             this.keepAlive = headers.contains(httpHeaderConnection) ?
                     !"close".equalsIgnoreCase(headers.get(httpHeaderConnection)) :
-                        request.version().equals(HTTP_VERSION_DEFAULT);
+                        request.version().toString().equals(HTTP_VERSION_DEFAULT);
         }
     }
 
