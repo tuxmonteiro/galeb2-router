@@ -40,8 +40,8 @@ public class RouteManagerTest extends UtilTestVerticle {
     @Test
     public void testWhenEmptyGetVHost() {
         // Test GET /virtualhost
-        // Expected: { "status_message" : "Not Found" }
-        newGet().onPort(9000).atUri("/virtualhost").expectCode(HttpCode.NOT_FOUND).expectBodyJson("{\"status_message\": \"Not Found\"}").run();
+        // Expected: { "virtualhosts" : [] }
+        newGet().onPort(9000).atUri("/virtualhost").expectCode(HttpCode.OK).expectBodyJson("{\"virtualhosts\": []}").run();
     }
 
     @Test
