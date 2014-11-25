@@ -22,7 +22,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.globo.galeb.criteria.impl.RequestMatch;
 
 /**
- * Class UriPathRule.
+ * Class UriPath.
  *
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 10, 2014.
@@ -30,10 +30,18 @@ import com.globo.galeb.criteria.impl.RequestMatch;
 public class UriPath extends Rule {
 
 
+    /**
+     * Instantiates a new uri path.
+     */
     public UriPath() {
         this(new JsonObject().putString(ID_FIELDNAME, UUID.randomUUID().toString()));
     }
 
+    /**
+     * Instantiates a new uri path.
+     *
+     * @param json the json
+     */
     public UriPath(JsonObject json) {
         super(json);
     }
