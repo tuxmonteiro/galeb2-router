@@ -15,6 +15,9 @@
  */
 package com.globo.galeb.criteria.impl;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import com.globo.galeb.criteria.ICriterion;
@@ -38,7 +41,7 @@ public class RulesCriterion implements ICriterion<Rule> {
     private final SafeLogger log = new SafeLogger();
 
     /** The map. */
-    private Map<String, Rule> map = null;
+    private List<Rule> ruleList = new ArrayList<>();
 
     /** The request match. */
     private RequestMatch requestMatch;
@@ -57,7 +60,7 @@ public class RulesCriterion implements ICriterion<Rule> {
      */
     @Override
     public ICriterion<Rule> given(final Map<String, Rule> map) {
-        this.map = map;
+        ruleList.addAll(map.values());
         return this;
     }
 
@@ -81,7 +84,12 @@ public class RulesCriterion implements ICriterion<Rule> {
     @Override
     public Rule thenGetResult() {
         Rule ruleDefault = null;
-        for (Rule rule: Rule.sortRules(map.values())) {
+        Collections.sort(ruleList);
+
+        for (Rule rule: ruleList) {
+            if (rule==null) {
+                continue;
+            }
             if (ruleDefault==null && rule.isRuleDefault()) {
                 ruleDefault = rule;
             }
