@@ -22,8 +22,6 @@ import java.util.Map;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;
 
-import org.vertx.java.core.logging.Logger;
-
 /**
  * Class RoundRobinCriterion.
  *
@@ -34,7 +32,7 @@ import org.vertx.java.core.logging.Logger;
 public class RoundRobinCriterion<T> implements ICriterion<T> {
 
     /** The log. */
-    private final SafeLogger log            = new SafeLogger();
+    private SafeLogger       log            = null;
 
     /** The collection. */
     private List<T>          collection     = new LinkedList<T>();
@@ -46,8 +44,8 @@ public class RoundRobinCriterion<T> implements ICriterion<T> {
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<T> setLog(final Logger logger) {
-        log.setLogger(logger);
+    public ICriterion<T> setLog(final SafeLogger logger) {
+        log = logger;
         return this;
     }
 
@@ -62,6 +60,9 @@ public class RoundRobinCriterion<T> implements ICriterion<T> {
             }
             originals.addAll(map.values());
         } else {
+            if (log==null) {
+                log = new SafeLogger();
+            }
             log.error(String.format("%s: map is null", this.getClass().getName()));
         }
         return this;

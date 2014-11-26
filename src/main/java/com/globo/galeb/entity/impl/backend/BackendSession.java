@@ -151,8 +151,8 @@ public class BackendSession extends Entity {
      */
     public HttpClient connect() {
 
-        if (client!=null) {
-            if (isKeepAliveLimit() && !isClosed()) {
+        if (client!=null && !isClosed()) {
+            if (isKeepAliveLimit()) {
                 close();
             } else {
                 return client;

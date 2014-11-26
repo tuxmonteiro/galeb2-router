@@ -85,7 +85,7 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     public static final String UUID_INFO_ID                    = "uuid";
 
     /** The Constant CLEANUP_SESSION_TIME. */
-    public static final long   CLEANUP_SESSION_TIME            = 10000L;
+    public static final long   CLEANUP_SESSION_TIME            = 1000L;
 
     /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
     public static final boolean TCP_NODELAY                    = true;
@@ -406,7 +406,7 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
 
         String remoteUserId = remoteUser.toString();
 
-        if (getPlataform() instanceof Vertx) {
+        if (cleanupSessionScheduler instanceof NullScheduler && getPlataform() instanceof Vertx) {
             cleanupSessionScheduler = new VertxPeriodicScheduler((Vertx) getPlataform())
                                             .setPeriod(CLEANUP_SESSION_TIME)
                                             .setHandler(new CleanUpSessionHandler(this))
@@ -448,6 +448,10 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
      */
     @Override
     public void close(String remoteUser) {
+        if (remoteUser==null || "".equals(remoteUser) || UNDEF.equals(remoteUser)) {
+            return;
+        }
+
         BackendSession backendSession = getEntityById(remoteUser);
 
         if (remoteUser!=null && backendSession!=null) {

@@ -2,7 +2,7 @@
   "router":{
     "instances"             : 4,
     "port"                  : 8080,
-    "requestTimeOut"        : 5000,
+    "requestTimeOut"        : 20000,
     "maxPoolSize"           : 10,
     "minSessionPoolSize"    : 10,
     "keepaliveMaxRequest"   : 1000,

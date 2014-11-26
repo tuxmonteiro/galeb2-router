@@ -40,6 +40,8 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
     public boolean add() {
         boolean isOk = false;
 
+        defineLoggerIfNecessary();
+
         if ("".equals(entityId)) {
             log.error(String.format("[%s] Inaccessible Entity Id: %s", verticleId, entity.encode()));
             return false;
@@ -69,6 +71,8 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
         boolean isOk = false;
         boolean hasUriBaseOnly = ("/"+messageBus.getUriBase()).equals(messageBus.getUri()) ||
                 messageBus.getUri().endsWith("/");
+
+        defineLoggerIfNecessary();
 
         if (!hasUriBaseOnly) {
 

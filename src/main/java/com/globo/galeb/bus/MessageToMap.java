@@ -50,7 +50,7 @@ public abstract class MessageToMap<T extends Entity> {
     protected MessageBus messageBus = new MessageBus().setUri("/null");
 
     /** The logger. */
-    protected SafeLogger log        = new SafeLogger();
+    protected SafeLogger log        = null;
 
     /** The verticle id. */
     protected String verticleId     = "";
@@ -87,7 +87,7 @@ public abstract class MessageToMap<T extends Entity> {
      */
     public MessageToMap<T> setFarm(Farm farm) {
         this.farm = farm;
-        this.log.setLogger(farm.getLogger());
+        this.log = farm.getLogger();
         Object plataform = farm.getPlataform();
         this.vertx = (plataform instanceof Vertx) ? (Vertx) plataform : null;
         this.verticleId = farm.getVerticleId();
@@ -140,6 +140,15 @@ public abstract class MessageToMap<T extends Entity> {
     public MessageToMap<T> staticConf(String jsonConf) {
         this.staticConf = jsonConf;
         return this;
+    }
+
+    /**
+     * Define logger if necessary.
+     */
+    protected void defineLoggerIfNecessary() {
+        if (log==null) {
+            log = new SafeLogger();
+        }
     }
 
 }

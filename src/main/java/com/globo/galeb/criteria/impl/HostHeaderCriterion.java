@@ -23,7 +23,6 @@ import com.globo.galeb.logger.SafeLogger;
 
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.logging.Logger;
 
 /**
  * Class HostHeaderCriterion.
@@ -35,7 +34,7 @@ import org.vertx.java.core.logging.Logger;
 public class HostHeaderCriterion<T> implements ICriterion<T> {
 
     /** The log. */
-    private final SafeLogger log = new SafeLogger();
+    private SafeLogger log = null;
 
     /** The host. */
     private String host = "";
@@ -47,8 +46,8 @@ public class HostHeaderCriterion<T> implements ICriterion<T> {
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<T> setLog(final Logger logger) {
-        log.setLogger(logger);
+    public ICriterion<T> setLog(final SafeLogger logger) {
+        log = logger;
         return this;
     }
 
@@ -69,8 +68,10 @@ public class HostHeaderCriterion<T> implements ICriterion<T> {
         if (param instanceof HttpServerRequest) {
             host = new RequestMatch((HttpServerRequest)param).getHeader(HttpHeaders.HOST.toString());
         } else {
-            log.warn(String.format("Param is instance of %s.class. Expected %s.class",
-                    param.getClass().getSimpleName(), HttpServerRequest.class.getSimpleName()));
+            if (log!=null){
+                log.warn(String.format("Param is instance of %s.class. Expected %s.class",
+                        param.getClass().getSimpleName(), HttpServerRequest.class.getSimpleName()));
+            }
         }
         return this;
     }

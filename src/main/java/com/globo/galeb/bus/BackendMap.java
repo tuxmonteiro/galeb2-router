@@ -43,6 +43,8 @@ public class BackendMap extends MessageToMap<BackendPool> {
     public boolean add() {
         boolean isOk = false;
 
+        defineLoggerIfNecessary();
+
         if ("".equals(parentId)) {
             log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
             return false;
@@ -78,6 +80,8 @@ public class BackendMap extends MessageToMap<BackendPool> {
         boolean isOk = false;
         boolean hasUriBaseOnly = ("/"+messageBus.getUriBase()).equals(messageBus.getUri()) ||
                 messageBus.getUri().endsWith("/");
+
+        defineLoggerIfNecessary();
 
         if (!hasUriBaseOnly) {
 

@@ -42,6 +42,8 @@ public class RuleMap extends MessageToMap<Virtualhost> {
     public boolean add() {
         boolean isOk = false;
 
+        defineLoggerIfNecessary();
+
         if ("".equals(parentId)) {
             log.error(String.format("[%s] Inaccessible ParentId: %s", verticleId, entity.encode()));
             return false;
@@ -53,7 +55,7 @@ public class RuleMap extends MessageToMap<Virtualhost> {
             final Virtualhost virtualhost = farm.getEntityById(parentId);
 
             if (virtualhost!=null) {
-                Rule rule = new RuleFactory().setLogger(log.getLogger()).createRule(entity);
+                Rule rule = new RuleFactory().setLogger(log).createRule(entity);
                 rule.setFarm(farm).start();
                 isOk  = virtualhost.addEntity(rule);
                 log.info(String.format("[%s] Rule %s (%s) added", verticleId, entityId, parentId));
@@ -73,6 +75,8 @@ public class RuleMap extends MessageToMap<Virtualhost> {
         boolean isOk = false;
         boolean hasUriBaseOnly = ("/"+messageBus.getUriBase()).equals(messageBus.getUri()) ||
                 messageBus.getUri().endsWith("/");
+
+        defineLoggerIfNecessary();
 
         if (!hasUriBaseOnly) {
 

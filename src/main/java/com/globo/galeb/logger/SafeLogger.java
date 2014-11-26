@@ -58,7 +58,7 @@ public class SafeLogger {
     }
 
     /** The logger. */
-    private Logger log = null;
+    private static Logger log = null;
 
     /** The default log level. */
     private LogLevel level = LogLevel.UNDEF;
@@ -69,9 +69,9 @@ public class SafeLogger {
      * @param log the log
      * @return the safe logger
      */
-    public SafeLogger setLogger(final Object log) {
-        if (log instanceof Logger) {
-            this.log=(Logger)log;
+    public SafeLogger setLogger(final Object alog) {
+        if (alog instanceof Logger && log == null) {
+            log=(Logger)alog;
         }
         return this;
     }
@@ -280,7 +280,7 @@ public class SafeLogger {
      * @return the last log level
      */
     public LogLevel getLastLogLevel() {
-        return this.level;
+        return level;
     }
 
 }

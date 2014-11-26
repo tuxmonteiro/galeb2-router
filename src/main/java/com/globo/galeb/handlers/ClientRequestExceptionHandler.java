@@ -16,8 +16,6 @@
 package com.globo.galeb.handlers;
 
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.NullQueueService;
 import com.globo.galeb.logger.SafeLogger;
@@ -50,7 +48,7 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
     private IQueueService queueService = new NullQueueService();
 
     /** The log. */
-    private SafeLogger log = new SafeLogger();
+    private SafeLogger log = null;
 
     /* (non-Javadoc)
      * @see org.vertx.java.core.Handler#handle(java.lang.Object)
@@ -59,6 +57,9 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
     public void handle(Throwable event) {
         scheduler.cancel();
         queueService.publishBackendFail(backendId);
+        if (log==null) {
+            log = new SafeLogger();
+        }
         log.error(String.format("ClientRequestExceptionHandler: %s", event.getMessage()));
         sResponse.setHeaderHost(headerHost).setBackendId(backendId)
             .showErrorAndClose(event);
@@ -89,12 +90,10 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
         return this;
     }
 
-    public ClientRequestExceptionHandler setLog(final Logger log) {
-        this.log.setLogger(log);
+    public ClientRequestExceptionHandler setLog(final SafeLogger log) {
+        this.log = log;
         return this;
     }
-
-
 
 }
 

@@ -24,8 +24,9 @@ import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
+
+import com.globo.galeb.logger.SafeLogger;
 
 /**
  * Class VertxQueueService.
@@ -39,7 +40,7 @@ public class VertxQueueService implements IQueueService {
     private final EventBus eb;
 
     /** The logger. */
-    private final Logger log;
+    private final SafeLogger log;
 
     /**
      * Instantiates a new vertxQueueService.
@@ -47,7 +48,7 @@ public class VertxQueueService implements IQueueService {
      * @param eb the eb
      * @param log the log
      */
-    public VertxQueueService(final EventBus eb, final Logger log) {
+    public VertxQueueService(final EventBus eb, final SafeLogger log) {
         this.eb=eb;
         this.log=log;
     }

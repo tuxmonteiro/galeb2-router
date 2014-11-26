@@ -220,10 +220,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.Entity#setStaticConf(java.lang.String)
+     * @see com.globo.galeb.entity.Entity#setStaticConf(org.vertx.java.core.json.JsonObject)
      */
     @Override
-    public BackendPool setStaticConf(String staticConf) {
+    public BackendPool setStaticConf(JsonObject staticConf) {
         super.setStaticConf(staticConf);
         requestTimeOut = this.staticConf.getLong(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
         maxPoolSize = this.staticConf.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);

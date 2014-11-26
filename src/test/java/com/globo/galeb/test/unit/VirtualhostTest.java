@@ -7,13 +7,12 @@ import static org.mockito.Matchers.*;
 
 import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.Virtualhost;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.ICounter;
 
 public class VirtualhostTest {
@@ -70,12 +69,11 @@ public class VirtualhostTest {
     private boolean createRule(String ruleId, final Virtualhost virtualserver) {
         Rule rule = mock(Rule.class);
 
-        when(rule.setLogger((Logger) anyObject())).thenReturn(rule);
+        when(rule.setLogger((SafeLogger) anyObject())).thenReturn(rule);
         when(rule.setCounter((ICounter) anyObject())).thenReturn(rule);
         when(rule.setQueueService((IQueueService) anyObject())).thenReturn(rule);
         when(rule.setFarm((Farm) anyObject())).thenReturn(rule);
         when(rule.setPlataform(anyObject())).thenReturn(rule);
-        when(rule.setStaticConf((String) anyObject())).thenReturn(rule);
         when(rule.setStaticConf((JsonObject) anyObject())).thenReturn(rule);
 
         return virtualserver.addEntity(rule);
@@ -103,12 +101,11 @@ public class VirtualhostTest {
     private boolean removeRule(String ruleId, final Virtualhost virtualserver) {
         Rule rule = mock(Rule.class);
 
-        when(rule.setLogger((Logger) anyObject())).thenReturn(rule);
+        when(rule.setLogger((SafeLogger) anyObject())).thenReturn(rule);
         when(rule.setCounter((ICounter) anyObject())).thenReturn(rule);
         when(rule.setQueueService((IQueueService) anyObject())).thenReturn(rule);
         when(rule.setFarm((Farm) anyObject())).thenReturn(rule);
         when(rule.setPlataform(anyObject())).thenReturn(rule);
-        when(rule.setStaticConf((String) anyObject())).thenReturn(rule);
         when(rule.setStaticConf((JsonObject) anyObject())).thenReturn(rule);
 
         return virtualserver.removeEntity(rule);

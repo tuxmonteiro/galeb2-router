@@ -21,9 +21,9 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 
 import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.server.ManagerService;
 import com.globo.galeb.server.Server;
@@ -38,7 +38,7 @@ import com.globo.galeb.server.ServerResponse;
 public class GetMatcherHandler implements Handler<HttpServerRequest> {
 
     /** The log. */
-    private final Logger log;
+    private final SafeLogger log;
 
     /** The http server name. */
     private String httpServerName = null;
@@ -56,7 +56,7 @@ public class GetMatcherHandler implements Handler<HttpServerRequest> {
      * @param log the logger
      * @param farm the farm
      */
-    public GetMatcherHandler(String id, final Logger log, final Farm farm) {
+    public GetMatcherHandler(String id, final SafeLogger log, final Farm farm) {
         this.log = log;
         this.classId = id;
         this.farm = farm;

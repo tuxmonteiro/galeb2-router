@@ -35,7 +35,6 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.VoidHandler;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.HttpServerResponse;
-import org.vertx.java.core.logging.Logger;
 
 /**
  * Class RouterResponseHandler.
@@ -58,7 +57,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     private ICounter counter = new CounterConsoleOut();
 
     /** The safelog. */
-    private SafeLogger log = new SafeLogger();
+    private SafeLogger log   = null;
 
     /** The queue service. */
     private IQueueService queueService = new NullQueueService();
@@ -78,11 +77,21 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
     /** The server response instance. */
     private ServerResponse sResponse = null;
 
+    /**
+     * Define logger if necessary.
+     */
+    private void defineLoggerIfNecessary() {
+        if (log==null) {
+            log = new SafeLogger();
+        }
+    }
+
     /* (non-Javadoc)
      * @see org.vertx.java.core.Handler#handle(java.lang.Object)
      */
     @Override
     public void handle(final HttpClientResponse cResponse) throws RuntimeException {
+        defineLoggerIfNecessary();
         if (sResponse==null||httpServerResponse==null) {
             log.error("Response is NULL");
             return;
@@ -125,6 +134,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         pump.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable throwable) {
+                defineLoggerIfNecessary();
                 scheduler.cancel();
                 log.error(String.format("FAIL: RouterResponse.pump with %s", throwable.getMessage()));
                 sResponse.showErrorAndClose(new ServiceUnavailableException());
@@ -157,6 +167,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     sResponse.closeResponse();
                     backend.close(remoteUser.toString());
                 }
+                defineLoggerIfNecessary();
                 log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }
         });
@@ -167,6 +178,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
             public void handle(Throwable event) {
                 String backendId = backend.toString();
 
+                defineLoggerIfNecessary();
                 log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
                 queueService.publishBackendFail(backendId);
                 sResponse.setHeaderHost(headerHost).setBackendId(backendId)
@@ -271,8 +283,8 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
      * @param log the log
      * @return this
      */
-    public RouterResponseHandler setLog(final Logger log) {
-        this.log.setLogger(log);
+    public RouterResponseHandler setLog(final SafeLogger alog) {
+        this.log = alog;
         return this;
     }
 

@@ -20,9 +20,8 @@ import java.util.EnumSet;
 
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.rulereturn.HttpCode;
 
 /**
@@ -64,7 +63,7 @@ public class ManagerService {
     private final String id;
 
     /** The logger. */
-    private final Logger log;
+    private final SafeLogger log;
 
     /** The httpServerRequest. */
     private HttpServerRequest req = null;
@@ -78,7 +77,7 @@ public class ManagerService {
      * @param id the id
      * @param log the log
      */
-    public ManagerService(String id, final Logger log) {
+    public ManagerService(String id, final SafeLogger log) {
         this.id = id;
         this.log = log;
     }

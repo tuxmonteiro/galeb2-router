@@ -28,7 +28,6 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.MultiMap;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpServerResponse;
-import org.vertx.java.core.logging.Logger;
 
 /**
  * Class ServerResponse.
@@ -42,7 +41,7 @@ public class ServerResponse {
     private final HttpServerRequest req;
 
     /** The logger. */
-    private final SafeLogger log = new SafeLogger();
+    private SafeLogger log = null;
 
     /** The counter. */
     private ICounter counter = null;
@@ -64,6 +63,15 @@ public class ServerResponse {
 
     /** The backend id. */
     private String backendId = "";
+
+    /**
+     * Define logger if necessary.
+     */
+    private void defineLoggerIfNecessary() {
+        if (log==null) {
+            log = new SafeLogger();
+        }
+    }
 
     /**
      * Convert Exception to HttpCode.
@@ -177,6 +185,7 @@ public class ServerResponse {
                 !"".equals(headerHost) ? String.format(" (virtualhost: %s)", headerHost) : "",
                 HttpCode.getMessage(statusCode, false));
 
+        defineLoggerIfNecessary();
         if (statusCode>=HttpCode.INTERNAL_SERVER_ERROR) {
             log.error(logMessage);
             log.debug(getStackTrace(event));
@@ -225,6 +234,7 @@ public class ServerResponse {
         try {
             realEnd();
         } catch (RuntimeException e) {
+            defineLoggerIfNecessary();
             log.debug(e);
         }
     }
@@ -241,6 +251,7 @@ public class ServerResponse {
                                         .setRequestData(req)
                                         .getFormatedLog();
 
+            defineLoggerIfNecessary();
             if (HttpCode.isServerError(code.intValue())) {
                 log.error(httpLogMessage);
             } else {
@@ -307,8 +318,8 @@ public class ServerResponse {
      * @param log the log
      * @return the server response
      */
-    public ServerResponse setLog(final Logger log) {
-        this.log.setLogger(log);
+    public ServerResponse setLog(final SafeLogger alog) {
+        this.log = alog;
         return this;
     }
 

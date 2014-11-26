@@ -55,6 +55,8 @@ public class FarmMap extends MessageToMap<Farm> {
     public boolean add() {
         boolean isOk = false;
 
+        defineLoggerIfNecessary();
+
         JsonArray backendPools = entity.getArray("backendpools", new JsonArray());
 
         Iterator<Object> backendPoolsIterator = backendPools.iterator();
@@ -158,6 +160,8 @@ public class FarmMap extends MessageToMap<Farm> {
      */
     @Override
     public boolean del() {
+
+        defineLoggerIfNecessary();
 
         boolean isOk = true;
 

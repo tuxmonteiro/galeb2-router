@@ -17,7 +17,7 @@ package com.globo.galeb.criteria;
 
 import java.util.Map;
 
-import org.vertx.java.core.logging.Logger;
+import com.globo.galeb.logger.SafeLogger;
 
 /**
  * Interface ICriterion.
@@ -46,7 +46,7 @@ public interface ICriterion<T> {
      * @param log the log
      * @return this
      */
-    public ICriterion<T> setLog(Logger log);
+    public ICriterion<T> setLog(final SafeLogger log);
 
     /**
      * Given.

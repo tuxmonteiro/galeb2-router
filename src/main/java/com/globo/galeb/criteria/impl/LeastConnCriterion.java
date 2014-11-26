@@ -23,8 +23,6 @@ import java.util.Map;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;
 
-import org.vertx.java.core.logging.Logger;
-
 
 /**
  * Class LeastConnCriterion.
@@ -36,10 +34,11 @@ import org.vertx.java.core.logging.Logger;
 public class LeastConnCriterion<T extends Comparable<T>> implements ICriterion<T> {
 
     /** The log. */
-    private final SafeLogger log            = new SafeLogger();
+    @SuppressWarnings("unused")
+    private SafeLogger     log            = null;
 
     /** The backends. */
-    private List<T>          backends       = new ArrayList<T>();
+    private List<T>        backends       = new ArrayList<T>();
 
     private Map<String, T> map;
 
@@ -47,8 +46,8 @@ public class LeastConnCriterion<T extends Comparable<T>> implements ICriterion<T
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<T> setLog(final Logger logger) {
-        log.setLogger(logger);
+    public ICriterion<T> setLog(final SafeLogger logger) {
+        log = logger;
         return this;
     }
 

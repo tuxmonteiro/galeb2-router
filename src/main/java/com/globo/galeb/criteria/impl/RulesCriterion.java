@@ -26,7 +26,6 @@ import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.logger.SafeLogger;
 
 import org.vertx.java.core.http.HttpServerRequest;
-import org.vertx.java.core.logging.Logger;
 
 /**
  * Class RulesCriterion.
@@ -38,7 +37,7 @@ import org.vertx.java.core.logging.Logger;
 public class RulesCriterion implements ICriterion<Rule> {
 
     /** The log. */
-    private final SafeLogger log = new SafeLogger();
+    private SafeLogger        log = null;
 
     /** The map. */
     private Map<String, Rule> map = null;
@@ -53,8 +52,8 @@ public class RulesCriterion implements ICriterion<Rule> {
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<Rule> setLog(final Logger logger) {
-        log.setLogger(logger);
+    public ICriterion<Rule> setLog(final SafeLogger logger) {
+        log = logger;
         return this;
     }
 
@@ -64,6 +63,8 @@ public class RulesCriterion implements ICriterion<Rule> {
     @Override
     public ICriterion<Rule> given(final Map<String, Rule> map) {
         this.map = map;
+        ruleList.addAll(map.values());
+        Collections.sort(ruleList);
         return this;
     }
 
@@ -75,6 +76,9 @@ public class RulesCriterion implements ICriterion<Rule> {
         if (param instanceof HttpServerRequest) {
             requestMatch = new RequestMatch((HttpServerRequest)param);
         } else {
+            if (log==null) {
+                log = new SafeLogger();
+            }
             log.warn(String.format("Param is instance of %s.class. Expected %s.class",
                     param.getClass().getSimpleName(), HttpServerRequest.class.getSimpleName()));
         }
@@ -87,8 +91,10 @@ public class RulesCriterion implements ICriterion<Rule> {
     @Override
     public Rule thenGetResult() {
         Rule ruleDefault = null;
-        ruleList.addAll(map.values());
-        Collections.sort(ruleList);
+        if (ruleList.isEmpty()) {
+            ruleList.addAll(map.values());
+            Collections.sort(ruleList);
+        }
 
         for (Rule rule: ruleList) {
             if (rule==null) {
@@ -112,6 +118,14 @@ public class RulesCriterion implements ICriterion<Rule> {
      */
     @Override
     public ICriterion<Rule> action(ICriterion.CriterionAction criterionAction) {
+        switch (criterionAction) {
+            case RESET_REQUIRED:
+                ruleList.clear();
+                break;
+
+            default:
+                break;
+        }
         return this;
     }
 }

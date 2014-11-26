@@ -23,6 +23,7 @@ import com.globo.galeb.handlers.DeleteMatcherHandler;
 import com.globo.galeb.handlers.GetMatcherHandler;
 import com.globo.galeb.handlers.PostMatcherHandler;
 import com.globo.galeb.handlers.PutMatcherHandler;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.CounterWithEventBus;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.rulereturn.HttpCode;
@@ -34,7 +35,6 @@ import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.RouteMatcher;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
 /**
@@ -49,7 +49,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     private static String routeManagerId = "route_manager";
 
     /** The logger. */
-    private Logger log;
+    private SafeLogger log;
 
     /** The server instance. */
     private Server server;
@@ -71,7 +71,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
      */
     @Override
     public void start() {
-        log = container.logger();
+        log = new SafeLogger().setLogger(container.logger());
         final JsonObject conf = container.config();
         final JsonObject starterConf = conf.getObject(ConfVerticleDictionary.CONF_STARTER_CONF, new JsonObject());
         final ICounter counter = new CounterWithEventBus(vertx.eventBus());

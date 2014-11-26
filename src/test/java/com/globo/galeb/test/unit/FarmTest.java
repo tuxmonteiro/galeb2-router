@@ -32,6 +32,7 @@ import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.RuleFactory;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
 public class FarmTest extends TestVerticle {
@@ -61,7 +62,7 @@ public class FarmTest extends TestVerticle {
         }
         if (farm==null) {
             farm = new Farm(this);
-            farm.setQueueService(queueService).setLogger(logger).start();
+            farm.setQueueService(queueService).setLogger(new SafeLogger().setLogger(logger)).start();
         } else {
             farm.clearBackendPools();
             farm.clearEntities();

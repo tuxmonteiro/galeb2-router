@@ -21,8 +21,6 @@ import com.globo.galeb.collection.IndexedMap;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.logger.SafeLogger;
 
-import org.vertx.java.core.logging.Logger;
-
 /**
  * Class RandomCriterion.
  *
@@ -33,7 +31,8 @@ import org.vertx.java.core.logging.Logger;
 public class RandomCriterion<T> implements ICriterion<T> {
 
     /** The log. */
-    private final SafeLogger log  = new SafeLogger();
+    @SuppressWarnings("unused")
+    private SafeLogger       log  = null;
 
     /** The collection. */
     private Map<String, T>   map;
@@ -42,8 +41,8 @@ public class RandomCriterion<T> implements ICriterion<T> {
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<T> setLog(final Logger logger) {
-        log.setLogger(logger);
+    public ICriterion<T> setLog(final SafeLogger logger) {
+        log = logger;
         return this;
     }
 

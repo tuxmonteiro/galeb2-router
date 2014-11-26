@@ -26,8 +26,6 @@ import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.http.HttpVersion;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.NullQueueService;
 import com.globo.galeb.entity.impl.Farm;
@@ -93,7 +91,7 @@ public class RouterRequest {
     private ICounter counter = new CounterConsoleOut();
 
     /** The log. */
-    private SafeLogger log = new SafeLogger();
+    private SafeLogger log = null;
 
     /** The plataform. */
     private Object plataform = null;
@@ -181,8 +179,8 @@ public class RouterRequest {
      * @param log the log
      * @return this
      */
-    public RouterRequest setLog(final Logger log) {
-        this.log.setLogger(log);
+    public RouterRequest setLog(final SafeLogger log) {
+        this.log = log;
         return this;
     }
 
@@ -207,6 +205,8 @@ public class RouterRequest {
         remoteUser = new RemoteUser(httpServerRequest.remoteAddress());
         connectionKeepalive = isHttpKeepAlive();
 
+        defineLoggerIfNecessary();
+
         httpServerRequest.exceptionHandler(new Handler<Throwable>() {
             @Override
             public void handle(Throwable event) {
@@ -220,7 +220,7 @@ public class RouterRequest {
                                                                         httpServerRequest.absoluteURI().toString()));
 
         virtualhost = farm.getCriterion().when(httpServerRequest).thenGetResult();
-        serverResponse = new ServerResponse(httpServerRequest).setLog(log.getLogger());
+        serverResponse = new ServerResponse(httpServerRequest).setLog(log);
 
         if (virtualhost==null) {
             serverResponse.showErrorAndClose(new NotFoundException());
@@ -230,7 +230,7 @@ public class RouterRequest {
         enableChuncked = virtualhost.getProperties().getBoolean(Virtualhost.ENABLE_CHUNKED_FIELDNAME, true);
         enableAccessLog = virtualhost.getProperties().getBoolean(Virtualhost.ENABLE_ACCESSLOG_FIELDNAME, false);
 
-        serverResponse.setLog(log.getLogger())
+        serverResponse.setLog(log)
                       .setEnableAccessLog(enableAccessLog)
                       .setChunked(enableChuncked);
 
@@ -255,7 +255,7 @@ public class RouterRequest {
         final RouterResponseHandler handlerHttpClientResponse = new RouterResponseHandler();
         handlerHttpClientResponse.setScheduler(schedulerTimeOut)
                                  .setQueueService(queueService)
-                                 .setLog(log.getLogger())
+                                 .setLog(log)
                                  .setHttpServerResponse(httpServerRequest.response())
                                  .setsResponse(serverResponse)
                                  .setBackend(backend)
@@ -282,6 +282,12 @@ public class RouterRequest {
 
     }
 
+    private void defineLoggerIfNecessary() {
+        if (log==null) {
+            log = new SafeLogger();
+        }
+    }
+
     public RouterRequest setUpHeadersAndVersion() {
         headers = httpServerRequest.headers();
         httpVersion = httpServerRequest.version();
@@ -294,6 +300,8 @@ public class RouterRequest {
     private void pumpStream() {
 
         final Pump pump = new Pump(httpServerRequest, httpClientRequest);
+
+        defineLoggerIfNecessary();
 
         pump.exceptionHandler(new Handler<Throwable>() {
             @Override
@@ -316,7 +324,7 @@ public class RouterRequest {
 
         httpClientRequest.exceptionHandler(new ClientRequestExceptionHandler()
                                         .setQueueService(queueService)
-                                        .setLog(log.getLogger())
+                                        .setLog(log)
                                         .setsResponse(serverResponse)
                                         .setHeaderHost(httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST))
                                         .setBackendId(backend.toString())
@@ -338,6 +346,8 @@ public class RouterRequest {
      * @return the i scheduler
      */
     private void startSchedulerTimeout(Long requestTimeout) {
+
+        defineLoggerIfNecessary();
 
         schedulerTimeOut = new VertxDelayScheduler((Vertx) plataform);
         ISchedulerHandler handler = new GatewayTimeoutTaskHandler(serverResponse,
@@ -391,6 +401,8 @@ public class RouterRequest {
             serverResponse.showErrorAndClose(new ServiceUnavailableException());
             return;
         }
+
+        defineLoggerIfNecessary();
 
         if (backendPool.getEntities().isEmpty()) {
             log.warn(String.format("Pool '%s' without backends", backendPool));

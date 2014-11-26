@@ -34,6 +34,7 @@ import com.globo.galeb.entity.IJsonable.StatusType;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.backend.BackendPool;
 import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
@@ -44,7 +45,6 @@ import org.vertx.java.core.http.HttpClientRequest;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
 /**
@@ -74,7 +74,7 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     private JsonObject conf;
 
     /** The logger. */
-    private Logger log;
+    private SafeLogger log;
 
     /** The uri health check. */
     private String uriHealthCheck;
@@ -137,12 +137,12 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
      */
     @Override
     public void start() {
-        log = container.logger();
+        log = new SafeLogger().setLogger(container.logger());
         conf = container.config();
         uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
         Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
 
-        queueService = new VertxQueueService(vertx.eventBus(),container.logger());
+        queueService = new VertxQueueService(vertx.eventBus(), log);
         queueService.registerHealthcheck(this);
         farm = new Farm(this);
         farm.setLogger(log)

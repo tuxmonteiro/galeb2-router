@@ -19,10 +19,9 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.request.RouterRequest;
 
@@ -44,7 +43,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     private final ICounter counter;
 
     /** The log. */
-    private final Logger log;
+    private final SafeLogger log;
 
     /** The queueService instance. */
     private final IQueueService queueService;
@@ -82,7 +81,7 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
             final Farm farm,
             final ICounter counter,
             final IQueueService queueService,
-            final Logger log) {
+            final SafeLogger log) {
         this.vertx = vertx;
         this.farm = farm;
         this.counter = counter;

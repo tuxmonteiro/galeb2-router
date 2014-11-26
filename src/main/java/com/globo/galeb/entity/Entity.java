@@ -15,13 +15,11 @@
  */
 package com.globo.galeb.entity;
 
-import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.NullQueueService;
 import com.globo.galeb.entity.impl.Farm;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.CounterConsoleOut;
 import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.server.Server;
@@ -65,7 +63,7 @@ public abstract class Entity implements IJsonable {
     protected IQueueService        queueService  = new NullQueueService();
 
     /** The Logger */
-    protected Logger               logger        = null;
+    protected SafeLogger           logger        = null;
 
     /** The static conf. */
     protected JsonObject           staticConf    = new JsonObject();
@@ -187,11 +185,11 @@ public abstract class Entity implements IJsonable {
     /**
      * Sets the logger instance.
      *
-     * @param logger the logger instance
+     * @param logger2 the logger instance
      * @return this
      */
-    public Entity setLogger(final Logger logger) {
-        this.logger = logger;
+    public Entity setLogger(final SafeLogger aLogger) {
+        this.logger = aLogger;
         return this;
     }
 
@@ -200,7 +198,7 @@ public abstract class Entity implements IJsonable {
      *
      * @return the logger
      */
-    public Logger getLogger() {
+    public SafeLogger getLogger() {
         return logger;
     }
 
@@ -232,24 +230,8 @@ public abstract class Entity implements IJsonable {
      * @param staticConf the static conf
      * @return this
      */
-    public Entity setStaticConf(String staticConf) {
-        if (!"".equals(staticConf)) {
-            try {
-                this.staticConf = new JsonObject(staticConf);
-            } catch (DecodeException ignore) {}
-        }
-        updateModifiedTimestamp();
-        return this;
-    }
-
-    /**
-     * Sets the static conf.
-     *
-     * @param staticConf the static conf
-     * @return this
-     */
     public Entity setStaticConf(JsonObject staticConf) {
-        setStaticConf(staticConf.encode());
+        this.staticConf = staticConf.copy();
         return this;
     }
 
@@ -259,7 +241,7 @@ public abstract class Entity implements IJsonable {
      * @param counter the counter
      * @return this
      */
-    public Entity setCounter(ICounter counter) {
+    public Entity setCounter(final ICounter counter) {
         this.counter = counter;
         return this;
     }

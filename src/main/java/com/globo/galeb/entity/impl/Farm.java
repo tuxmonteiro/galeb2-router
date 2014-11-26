@@ -97,7 +97,8 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
                     .setLogger(logger)
                     .setPlataform(plataform)
                     .setQueueService(queueService)
-                    .setStaticConf(staticConf);
+                    .setStaticConf(staticConf)
+                    .setCounter(counter);
         return this;
     }
 

@@ -28,7 +28,6 @@ import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.request.RequestData;
 
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 
 
 /**
@@ -48,7 +47,8 @@ public class IPHashCriterion<T> implements ICriterion<T> {
 
 
     /** The log. */
-    private final SafeLogger  log            = new SafeLogger();
+    @SuppressWarnings("unused")
+    private SafeLogger        log            = null;
 
     /** The collection. */
     private List<T>           collection     = new ArrayList<T>();
@@ -69,8 +69,8 @@ public class IPHashCriterion<T> implements ICriterion<T> {
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<T> setLog(final Logger logger) {
-        log.setLogger(logger);
+    public ICriterion<T> setLog(final SafeLogger logger) {
+        log = logger;
         return this;
     }
 

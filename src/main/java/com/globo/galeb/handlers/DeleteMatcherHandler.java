@@ -19,9 +19,8 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.bus.IQueueService;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.server.ManagerService;
 import com.globo.galeb.server.ServerResponse;
@@ -35,7 +34,7 @@ import com.globo.galeb.server.ServerResponse;
 public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
 
     /** The log. */
-    private final Logger log;
+    private final SafeLogger log;
 
     /** The class id. */
     private final String classId;
@@ -50,7 +49,7 @@ public class DeleteMatcherHandler implements Handler<HttpServerRequest> {
      * @param log the logger
      * @param queueService the queue service
      */
-    public DeleteMatcherHandler(String id, final Logger log, final IQueueService queueService) {
+    public DeleteMatcherHandler(String id, final SafeLogger log, final IQueueService queueService) {
         this.log = log;
         this.classId = id;
         this.queueService = queueService;

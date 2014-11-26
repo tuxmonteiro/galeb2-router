@@ -17,8 +17,6 @@ package com.globo.galeb.criteria.impl;
 
 import java.util.Map;
 
-import org.vertx.java.core.logging.Logger;
-
 import com.globo.galeb.collection.IndexedMap;
 import com.globo.galeb.criteria.ICriterion;
 import com.globo.galeb.criteria.LoadBalanceCriterionFactory;
@@ -42,7 +40,8 @@ public class LoadBalanceCriterion<T> implements ICriterion<T> {
 
 
     /** The log. */
-    private SafeLogger             log                  = new SafeLogger();
+    @SuppressWarnings("unused")
+    private SafeLogger             log                  = null;
 
     /** The map. */
     private Map<String, T>         map                  = null;
@@ -63,8 +62,8 @@ public class LoadBalanceCriterion<T> implements ICriterion<T> {
      * @see com.globo.galeb.criteria.ICriterion#setLog(org.vertx.java.core.logging.Logger)
      */
     @Override
-    public ICriterion<T> setLog(Logger log) {
-        this.log.setLogger(log);
+    public ICriterion<T> setLog(final SafeLogger alog) {
+        this.log = alog;
         return this;
     }
 

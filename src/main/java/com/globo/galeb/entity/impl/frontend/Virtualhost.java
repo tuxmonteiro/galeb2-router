@@ -18,6 +18,7 @@ package com.globo.galeb.entity.impl.frontend;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import com.globo.galeb.criteria.ICriterion.CriterionAction;
 import com.globo.galeb.criteria.impl.RulesCriterion;
 import com.globo.galeb.entity.EntitiesMap;
 
@@ -86,6 +87,33 @@ public class Virtualhost extends EntitiesMap<Rule> {
         idObj.putArray(RULES_FIELDNAME, rulesArray);
 
         return super.toJson();
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.EntitiesMap#addEntity(java.lang.Object)
+     */
+    @Override
+    public boolean addEntity(Rule entity) {
+        getCriterion().action(CriterionAction.RESET_REQUIRED);
+        return super.addEntity(entity);
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.EntitiesMap#removeEntity(java.lang.Object)
+     */
+    @Override
+    public boolean removeEntity(Rule entity) {
+        getCriterion().action(CriterionAction.RESET_REQUIRED);
+        return super.removeEntity(entity);
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.EntitiesMap#removeEntity(java.lang.String)
+     */
+    @Override
+    public boolean removeEntity(String entityId) {
+        getCriterion().action(CriterionAction.RESET_REQUIRED);
+        return super.removeEntity(entityId);
     }
 
 }

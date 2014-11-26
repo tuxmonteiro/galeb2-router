@@ -25,9 +25,6 @@ import com.globo.galeb.entity.Entity;
  */
 public class NullMap extends MessageToMap<Entity> {
 
-    /** The log message on err. */
-    private String logMessageOnErr = "Farm is NULL or uriBase not supported";
-
     /** The log message on ok. */
     private String logMessageOk    = String.format("[%s] uriBase %s not supported", verticleId, uriBase);
 
@@ -43,11 +40,8 @@ public class NullMap extends MessageToMap<Entity> {
      */
     @Override
     public boolean add() {
-        if (log!=null) {
-            log.warn(logMessageOk);
-        } else {
-            System.err.println(logMessageOnErr);
-        }
+        defineLoggerIfNecessary();
+        log.warn(logMessageOk);
         return false;
     }
 
@@ -56,11 +50,8 @@ public class NullMap extends MessageToMap<Entity> {
      */
     @Override
     public boolean del() {
-        if (log!=null) {
-            log.warn(logMessageOk);
-        } else {
-            System.err.println(logMessageOnErr);
-        }
+        defineLoggerIfNecessary();
+        log.warn(logMessageOk);
         return false;
     }
 
@@ -69,11 +60,8 @@ public class NullMap extends MessageToMap<Entity> {
      */
     @Override
     public boolean reset() {
-        if (log!=null) {
-            log.warn(logMessageOk);
-        } else {
-            System.err.println(logMessageOnErr);
-        }
+        defineLoggerIfNecessary();
+        log.warn(logMessageOk);
         return false;
     }
 
@@ -82,11 +70,8 @@ public class NullMap extends MessageToMap<Entity> {
      */
     @Override
     public boolean change() {
-        if (log!=null) {
-            log.warn(logMessageOk);
-        } else {
-            System.err.println(logMessageOnErr);
-        }
+        defineLoggerIfNecessary();
+        log.warn(logMessageOk);
         return false;
     }
 
