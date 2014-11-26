@@ -151,6 +151,14 @@ public class BackendSession extends Entity {
      */
     public HttpClient connect() {
 
+        if (client!=null) {
+            if (isKeepAliveLimit() && !isClosed()) {
+                close();
+            } else {
+                return client;
+            }
+        }
+
         if (keepAlive && keepAliveLimitScheduler instanceof NullScheduler && plataform instanceof Vertx) {
             keepAliveLimitScheduler = new VertxPeriodicScheduler((Vertx)plataform)
                                                 .setHandler(new KeepAliveCheckLimitHandler(this))
@@ -174,10 +182,6 @@ public class BackendSession extends Entity {
         }
         host = host != null ? host : HOST_DEFAULT;
         port = port >= 0 ? port : PORT_DEFAULT;
-
-        if (isKeepAliveLimit() && !isClosed()) {
-            close();
-        }
 
         if (client==null && plataform instanceof Vertx) {
             final Vertx vertx = (Vertx) plataform;
