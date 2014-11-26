@@ -15,12 +15,6 @@
  */
 package com.globo.galeb.entity.impl.frontend;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.criteria.impl.RequestMatch;
@@ -35,7 +29,7 @@ import com.globo.galeb.rulereturn.RuleReturnFactory;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 6, 2014.
  */
-public abstract class Rule extends Entity {
+public abstract class Rule extends Entity implements Comparable<Rule> {
 
     /** The Constant RULETYPE_FIELDNAME. */
     public static final String RULETYPE_FIELDNAME   = "ruleType";
@@ -66,24 +60,6 @@ public abstract class Rule extends Entity {
 
     /** The rule is the default. */
     protected boolean     ruleDefault     = false;
-
-    /**
-     * Sort rules.
-     *
-     * @param collection the rules collection
-     * @return the list ordered
-     */
-    public static List<Rule> sortRules(Collection<? extends Rule> collection) {
-        List<Rule> sortedList = new ArrayList<Rule>();
-        sortedList.addAll(collection);
-        Collections.sort(sortedList, new Comparator<Rule>() {
-            @Override
-            public int compare(Rule rule1, Rule rule2) {
-                return rule1.getPriorityOrder()-rule2.getPriorityOrder();
-            }
-        });
-        return sortedList;
-    }
 
     /**
      * Instantiates a new rule.
@@ -201,6 +177,11 @@ public abstract class Rule extends Entity {
     public void start() {
         super.start();
         ruleReturn = new RuleReturnFactory(farm).getRuleReturn(idObj);
+    }
+
+    @Override
+    public int compareTo(Rule otherRule) {
+        return this.getPriorityOrder()-otherRule.getPriorityOrder();
     }
 
     /**
