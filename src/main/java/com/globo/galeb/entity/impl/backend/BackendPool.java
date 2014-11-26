@@ -197,10 +197,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     @Override
     public JsonObject toJson() {
         properties.putNumber(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
-        properties.putNumber(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
-        properties.putNumber(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
-        properties.putNumber(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
-        properties.putNumber(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
+        properties.putNumber(IBackend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+        properties.putNumber(IBackend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
+        properties.putNumber(IBackend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
+        properties.putNumber(IBackend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
         if (!properties.containsField(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME)) {
             properties.putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME, LoadBalanceCriterion.LOADBALANCE_POLICY_DEFAULT);
         }
@@ -226,10 +226,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public BackendPool setStaticConf(JsonObject staticConf) {
         super.setStaticConf(staticConf);
         requestTimeOut = this.staticConf.getLong(REQUEST_TIMEOUT_FIELDNAME, requestTimeOut);
-        maxPoolSize = this.staticConf.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
-        minSessionPoolSize = this.staticConf.getInteger(Backend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
-        keepAliveMaxRequest = this.staticConf.getLong(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
-        keepAliveTimeOut = this.staticConf.getLong(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
+        maxPoolSize = this.staticConf.getInteger(IBackend.MAXPOOL_SIZE_FIELDNAME, maxPoolSize);
+        minSessionPoolSize = this.staticConf.getInteger(IBackend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
+        keepAliveMaxRequest = this.staticConf.getLong(IBackend.KEEPALIVE_MAXREQUEST_FIELDNAME, keepAliveMaxRequest);
+        keepAliveTimeOut = this.staticConf.getLong(IBackend.KEEPALIVE_TIMEOUT_FIELDNAME, keepAliveTimeOut);
         enableChunked = this.staticConf.getBoolean(ENABLE_CHUNCKED_FIELDNAME, enableChunked);
         enableAccessLog = this.staticConf.getBoolean(ENABLE_ACCESSLOG_FIELDNAME, enableAccessLog);
 

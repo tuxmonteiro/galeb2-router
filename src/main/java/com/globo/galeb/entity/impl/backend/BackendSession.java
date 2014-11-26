@@ -118,10 +118,10 @@ public class BackendSession extends Entity {
      */
     public BackendSession(final JsonObject json) {
         super(json);
-        keepAlive = properties.getBoolean(Backend.KEEPALIVE_FIELDNAME, true);
-        keepAliveMaxRequest = properties.getLong(Backend.KEEPALIVE_MAXREQUEST_FIELDNAME, Backend.DEFAULT_KEEPALIVE_MAXREQUEST);
-        keepAliveTimeOut = properties.getLong(Backend.KEEPALIVE_TIMEOUT_FIELDNAME, Backend.DEFAULT_KEEPALIVE_TIMEOUT);
-        maxPoolSize = properties.getInteger(Backend.MAXPOOL_SIZE_FIELDNAME, Backend.DEFAULT_MAX_POOL_SIZE);
+        keepAlive = properties.getBoolean(IBackend.KEEPALIVE_FIELDNAME, true);
+        keepAliveMaxRequest = properties.getLong(IBackend.KEEPALIVE_MAXREQUEST_FIELDNAME, IBackend.DEFAULT_KEEPALIVE_MAXREQUEST);
+        keepAliveTimeOut = properties.getLong(IBackend.KEEPALIVE_TIMEOUT_FIELDNAME, IBackend.DEFAULT_KEEPALIVE_TIMEOUT);
+        maxPoolSize = properties.getInteger(IBackend.MAXPOOL_SIZE_FIELDNAME, IBackend.DEFAULT_MAX_POOL_SIZE);
     }
 
     /**
