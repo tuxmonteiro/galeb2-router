@@ -17,8 +17,8 @@ package com.globo.galeb.bus;
 
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.IJsonable.StatusType;
-import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.entity.impl.backend.BackendWithoutSessionPool;
 
 /**
  * Class BackendMap.
@@ -59,8 +59,8 @@ public class BackendMap extends MessageToMap<BackendPool> {
                                         .equals(StatusType.RUNNING_STATUS.toString());
 
             final BackendPool backendPool = farm.getBackendPoolById(parentId);
-            isOk  = running ? backendPool.addEntity(new Backend(entity)) :
-                              backendPool.addBadBackend(new Backend(entity));
+            isOk  = running ? backendPool.addEntity(new BackendWithoutSessionPool(entity)) :
+                              backendPool.addBadBackend(new BackendWithoutSessionPool(entity));
 
             if (isOk) {
                 StatusType status = running ? StatusType.RUNNING_STATUS : StatusType.FAILED_STATUS;

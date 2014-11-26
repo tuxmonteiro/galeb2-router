@@ -39,7 +39,7 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public class BackendWithoutPool extends EntitiesMap<BackendSession> implements ICallbackConnectionCounter, IBackend {
+public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> implements ICallbackConnectionCounter, IBackend {
 
     /** The Constant KEEPALIVE_FIELDNAME. */
     public static final String KEEPALIVE_FIELDNAME             = "keepalive";
@@ -113,10 +113,10 @@ public class BackendWithoutPool extends EntitiesMap<BackendSession> implements I
     public static final boolean DEFAULT_USE_POOLED_BUFFERS    = false;
 
     /** The Constant DEFAULT_SEND_BUFFER_SIZE. */
-    public static final int     DEFAULT_SEND_BUFFER_SIZE      = BackendWithoutPool.TCP_SEND_BUFFER_SIZE;
+    public static final int     DEFAULT_SEND_BUFFER_SIZE      = BackendWithoutSessionPool.TCP_SEND_BUFFER_SIZE;
 
     /** The Constant DEFAULT_RECEIVE_BUFFER_SIZE. */
-    public static final int     DEFAULT_RECEIVE_BUFFER_SIZE   = BackendWithoutPool.TCP_RECEIVED_BUFFER_SIZE;
+    public static final int     DEFAULT_RECEIVE_BUFFER_SIZE   = BackendWithoutSessionPool.TCP_RECEIVED_BUFFER_SIZE;
 
     /** The Constant DEFAULT_PIPELINING. */
     public static final boolean DEFAULT_PIPELINING            = false;
@@ -158,14 +158,14 @@ public class BackendWithoutPool extends EntitiesMap<BackendSession> implements I
     class CleanUpSessionHandler implements ISchedulerHandler {
 
         /** The backend. */
-        private final BackendWithoutPool backend;
+        private final BackendWithoutSessionPool backend;
 
         /**
          * Instantiates a new clean up session handler.
          *
          * @param backend the backend
          */
-        public CleanUpSessionHandler(BackendWithoutPool backend) {
+        public CleanUpSessionHandler(BackendWithoutSessionPool backend) {
             this.backend = backend;
         }
 
@@ -197,7 +197,7 @@ public class BackendWithoutPool extends EntitiesMap<BackendSession> implements I
      *
      * @param json the json
      */
-    public BackendWithoutPool(JsonObject json) {
+    public BackendWithoutSessionPool(JsonObject json) {
         super(json);
 
         String[] hostWithPortArray = id!=null ? id.split(":") : null;
@@ -380,7 +380,7 @@ public class BackendWithoutPool extends EntitiesMap<BackendSession> implements I
      * @see com.globo.galeb.core.IBackend#setMinSessionPoolSize(int)
      */
     @Override
-    public BackendWithoutPool setMinSessionPoolSize(int minPoolSize) {
+    public BackendWithoutSessionPool setMinSessionPoolSize(int minPoolSize) {
         return this;
     }
 

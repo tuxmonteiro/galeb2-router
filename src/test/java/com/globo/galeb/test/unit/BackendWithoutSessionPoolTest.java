@@ -20,7 +20,7 @@ import static org.mockito.Mockito.mock;
 
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.entity.IJsonable;
-import com.globo.galeb.entity.impl.backend.BackendWithoutPool;
+import com.globo.galeb.entity.impl.backend.BackendWithoutSessionPool;
 import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.request.RemoteUser;
 
@@ -29,7 +29,7 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
-public class BackendWithoutPoolTest extends TestVerticle {
+public class BackendWithoutSessionPoolTest extends TestVerticle {
 
     private IQueueService queueService = mock(IQueueService.class);
 
@@ -39,8 +39,8 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void equalsObject() {
-        BackendWithoutPool backend1 = (BackendWithoutPool) new BackendWithoutPool(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
-        IBackend backend2 = (IBackend) new BackendWithoutPool(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
+        BackendWithoutSessionPool backend1 = (BackendWithoutSessionPool) new BackendWithoutSessionPool(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
+        IBackend backend2 = (IBackend) new BackendWithoutSessionPool(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
 
         assertThat(backend1).isEqualTo(backend2);
 
@@ -49,8 +49,8 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void notEqualsObject() {
-        BackendWithoutPool backend1 = (BackendWithoutPool) new BackendWithoutPool(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
-        IBackend backend2 = (IBackend) new BackendWithoutPool(buildJsonEntity("127.0.0.2:0")).setPlataform(vertx);
+        BackendWithoutSessionPool backend1 = (BackendWithoutSessionPool) new BackendWithoutSessionPool(buildJsonEntity("127.0.0.1:0")).setPlataform(vertx);
+        IBackend backend2 = (IBackend) new BackendWithoutSessionPool(buildJsonEntity("127.0.0.2:0")).setPlataform(vertx);
 
         assertThat(backend1).isNotEqualTo(backend2);
 
@@ -59,7 +59,7 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void connectReturnNotNull() {
-        BackendWithoutPool backendTested = (BackendWithoutPool) new BackendWithoutPool(new JsonObject()).setPlataform(vertx);
+        BackendWithoutSessionPool backendTested = (BackendWithoutSessionPool) new BackendWithoutSessionPool(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         HttpClient httpClient = backendTested.connect(new RemoteUser("127.0.0.1", 0));
@@ -70,7 +70,7 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void connectSuccessful() {
-        BackendWithoutPool backendTested = (BackendWithoutPool) new BackendWithoutPool(new JsonObject()).setPlataform(vertx);
+        BackendWithoutSessionPool backendTested = (BackendWithoutSessionPool) new BackendWithoutSessionPool(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
@@ -83,7 +83,7 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void closeSuccessful() {
-        BackendWithoutPool backendTested = (BackendWithoutPool) new BackendWithoutPool(new JsonObject()).setPlataform(vertx);
+        BackendWithoutSessionPool backendTested = (BackendWithoutSessionPool) new BackendWithoutSessionPool(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
@@ -97,7 +97,7 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void multiplesActiveConnections() {
-        BackendWithoutPool backendTested = (BackendWithoutPool) new BackendWithoutPool(new JsonObject()).setPlataform(vertx);
+        BackendWithoutSessionPool backendTested = (BackendWithoutSessionPool) new BackendWithoutSessionPool(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
@@ -111,7 +111,7 @@ public class BackendWithoutPoolTest extends TestVerticle {
 
     @Test
     public void multiplesRequestsButOneActiveConnection() {
-        BackendWithoutPool backendTested = (BackendWithoutPool) new BackendWithoutPool(new JsonObject()).setPlataform(vertx);
+        BackendWithoutSessionPool backendTested = (BackendWithoutSessionPool) new BackendWithoutSessionPool(new JsonObject()).setPlataform(vertx);
         backendTested.setQueueService(queueService);
 
         for (int counter=0;counter < 1000; counter++) {
