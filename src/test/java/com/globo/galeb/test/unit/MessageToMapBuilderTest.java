@@ -24,9 +24,11 @@ import org.junit.Test;
 import org.vertx.java.core.json.JsonObject;
 
 import com.globo.galeb.bus.BackendMap;
+import com.globo.galeb.bus.BackendPoolMap;
 import com.globo.galeb.bus.MessageBus;
 import com.globo.galeb.bus.MessageToMapBuilder;
 import com.globo.galeb.bus.NullMap;
+import com.globo.galeb.bus.RuleMap;
 import com.globo.galeb.bus.VirtualhostMap;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.backend.BackendPools;
@@ -52,6 +54,24 @@ public class MessageToMapBuilderTest {
                         .encode();
         assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
             .as("instanceIsVirtualhostMap").isEqualTo(VirtualhostMap.class);
+    }
+
+    @Test
+    public void instanceIsBackendPoolMap() {
+        message = new JsonObject()
+                        .putString(MessageBus.URI_FIELDNAME, "/backendpool")
+                        .encode();
+        assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
+            .as("instanceIsBackendPoolMap").isEqualTo(BackendPoolMap.class);
+    }
+
+    @Test
+    public void instanceIsRuleMap() {
+        message = new JsonObject()
+                        .putString(MessageBus.URI_FIELDNAME, "/rule")
+                        .encode();
+        assertThat(messageToMapBuilder.setFarm(farm).getMessageToMap(message).getClass())
+            .as("instanceIsRuleMap").isEqualTo(RuleMap.class);
     }
 
     @Test
