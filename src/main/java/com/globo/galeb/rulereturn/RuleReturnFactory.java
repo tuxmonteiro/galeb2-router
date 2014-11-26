@@ -21,6 +21,9 @@ public class RuleReturnFactory {
 
         switch (ruleReturnStr) {
             case "HttpCode":
+                if (IJsonable.UNDEF.equals(ruleReturnIdStr)) {
+                    ruleReturnIdStr = "200";
+                }
                 return new HttpCode(Integer.parseInt(ruleReturnIdStr));
             case "BackendPool":
                 return farm.getBackendPoolById(ruleReturnIdStr);
