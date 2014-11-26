@@ -33,6 +33,7 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.testtools.TestVerticle;
 
 import com.globo.galeb.entity.impl.backend.BackendPool;
+import com.globo.galeb.verticles.ConfVerticleDictionary;
 import com.globo.galeb.verticles.RouteManagerVerticle;
 import com.globo.galeb.verticles.RouterVerticle;
 
@@ -65,7 +66,7 @@ public abstract class UtilTestVerticle extends TestVerticle {
                 );
 
         initialize();
-        JsonObject config = new JsonObject().putObject("router",
+        JsonObject config = new JsonObject().putObject(ConfVerticleDictionary.CONF_ROOT_ROUTER,
                 new JsonObject().putNumber(CONF_INSTANCES, 1).putNumber(BackendPool.REQUEST_TIMEOUT_FIELDNAME, 1000));
         container.deployModule(System.getProperty("vertx.modulename"), config, new AsyncResultHandler<String>() {
             @Override
