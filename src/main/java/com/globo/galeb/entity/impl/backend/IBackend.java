@@ -275,4 +275,13 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      */
     public void closeAll();
 
+    /**
+     * Sets the metric prefix.
+     *
+     * @param prefix the prefix
+     * @return this
+     */
+    public IBackend setMetricPrefix(String prefix);
+
+
 }

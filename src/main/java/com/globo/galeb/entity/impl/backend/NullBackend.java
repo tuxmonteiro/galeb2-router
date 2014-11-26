@@ -267,4 +267,12 @@ public class NullBackend implements IBackend {
         return new JsonObject().putString(ID_FIELDNAME, UNDEF);
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setMetricPrefix(java.lang.String)
+     */
+    @Override
+    public IBackend setMetricPrefix(String prefix) {
+        return this;
+    }
+
 }

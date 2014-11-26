@@ -412,6 +412,10 @@ public class RouterRequest {
 
         backend = backendPool.getChoice(new RequestData(httpServerRequest));
 
+        if (virtualhost!=null) {
+            backend.setMetricPrefix(virtualhost.getId());
+        }
+
         log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
     }
 

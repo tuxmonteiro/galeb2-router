@@ -149,6 +149,9 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     /** The num external sessions. */
     private int numExternalSessions = 0;
 
+    /** The prefix. */
+    private String prefix = UNDEF;
+
     /**
      * Class CleanUpSessionHandler.
      *
@@ -415,7 +418,7 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
             String backendId = this.toString();
             if (!"".equals(parentId) && !"UNDEF".equals(parentId) &&
                     !"".equals(backendId) && !"UNDEF".equals(backendId)) {
-                counter.sendActiveSessions(parentId, backendId, 1L);
+                counter.sendActiveSessions(prefix, backendId, 1L);
             }
 
         }
@@ -585,6 +588,15 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
             return 0;
         }
         return this.getActiveConnections()-otherBackend.getActiveConnections();
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setMetricPrefix(java.lang.String)
+     */
+    @Override
+    public IBackend setMetricPrefix(String prefix) {
+        this.prefix = prefix;
+        return this;
     }
 
 }
