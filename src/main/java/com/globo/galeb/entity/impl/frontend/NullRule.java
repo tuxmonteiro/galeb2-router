@@ -50,7 +50,7 @@ public class NullRule extends Rule {
      */
     @Override
     public boolean isMatchWith(RequestMatch requestMatch) {
-        return true;
+        return false;
     }
 
 }
