@@ -34,13 +34,16 @@ public class Starter extends Verticle{
     @Override
     public void start() {
         final JsonObject conf = container.config();
-        final JsonObject confRouter = conf.getObject(CONF_ROOT_ROUTER, new JsonObject("{}"));
-        final JsonObject confRouteManager = conf.getObject(CONF_ROOT_ROUTEMANAGER, new JsonObject("{}"));
-        confRouter.putObject(CONF_STARTER_CONF, new JsonObject(conf.encode()));
-        final JsonObject confHealthManager = conf.getObject(CONF_ROOT_HEALTHMANAGER, new JsonObject("{}"));
+        final JsonObject confRouter = conf.getObject(CONF_ROOT_ROUTER, new JsonObject());
+        final JsonObject confRouteManager = conf.getObject(CONF_ROOT_ROUTEMANAGER, new JsonObject());
+        final JsonObject confHealthManager = conf.getObject(CONF_ROOT_HEALTHMANAGER, new JsonObject());
+
+        confRouter.putObject(CONF_STARTER_CONF, conf.copy());
+        confRouteManager.putObject(CONF_STARTER_CONF, conf.copy());
+
         final JsonObject confStatsd;
         if (conf.containsField(CONF_ROOT_STATSD)) {
-            confStatsd = conf.getObject(CONF_ROOT_STATSD, new JsonObject("{}"));
+            confStatsd = conf.getObject(CONF_ROOT_STATSD, new JsonObject());
             container.deployVerticle(StatsdVerticle.class.getName(), confStatsd, confStatsd.getInteger(CONF_INSTANCES, 1));
             confRouter.putBoolean(CONF_STATSD_ENABLE, true);
             confRouter.putString(CONF_STATSD_HOST, confStatsd.getString(CONF_HOST, "localhost"));
