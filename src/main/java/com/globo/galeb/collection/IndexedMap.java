@@ -127,7 +127,7 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
      *
      * @return the next index
      */
-    private Integer getNextIndex() {
+    private synchronized Integer getNextIndex() {
         return indexedKeys.isEmpty() ? 0 : Collections.max(indexedKeys.keySet()) + 1;
     }
 
