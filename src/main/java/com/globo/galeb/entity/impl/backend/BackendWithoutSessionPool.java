@@ -41,40 +41,6 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  */
 public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> implements ICallbackConnectionCounter, IBackend {
 
-    /** The Constant KEEPALIVE_FIELDNAME. */
-    public static final String KEEPALIVE_FIELDNAME             = "keepalive";
-
-    /** The Constant CONNECTION_TIMEOUT_FIELDNAME. */
-    public static final String CONNECTION_TIMEOUT_FIELDNAME    = "connectionTimeout";
-
-    /** The Constant KEEPALIVE_MAXREQUEST_FIELDNAME. */
-    public static final String KEEPALIVE_MAXREQUEST_FIELDNAME  = "keepaliveMaxRequest";
-
-    /** The Constant KEEPALIVE_TIMEOUT_FIELDNAME. */
-    public static final String KEEPALIVE_TIMEOUT_FIELDNAME     = "keepAliveTimeOut";
-
-    /** The Constant MAXPOOL_SIZE_FIELDNAME. */
-    public static final String MAXPOOL_SIZE_FIELDNAME          = "maxPoolSize";
-
-    /** The Constant PIPELINING_FIELDNAME. */
-    public static final String PIPELINING_FIELDNAME            = "pipelining";
-
-    /** The Constant RECEIVED_BUFFER_SIZE_FIELDNAME. */
-    public static final String RECEIVED_BUFFER_SIZE_FIELDNAME  = "receiveBufferSize";
-
-    /** The Constant SEND_BUFFER_SIZE_FIELDNAME. */
-    public static final String SEND_BUFFER_SIZE_FIELDNAME      = "sendBufferSize";
-
-    /** The Constant USE_POOLED_BUFFERS_FIELDNAME. */
-    public static final String USE_POOLED_BUFFERS_FIELDNAME    = "usePooledBuffers";
-
-    /** The Constant MIN_SESSION_POOL_SIZE_FIELDNAME. */
-    public static final String MIN_SESSION_POOL_SIZE_FIELDNAME = "minSessionPoolSize";
-
-    /** The Constant ACTIVE_CONNECTIONS_FIELDNAME. */
-    public static final String ACTIVE_CONNECTIONS_FIELDNAME    = "_activeConnections";
-
-
     /** The Constant NUM_CONNECTIONS_INFO. */
     public static final String NUM_CONNECTIONS_INFO            = "numConnections";
 
@@ -83,47 +49,6 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
 
     /** The Constant CLEANUP_SESSION_TIME. */
     public static final long   CLEANUP_SESSION_TIME            = 1000L;
-
-    /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final boolean TCP_NODELAY                    = true;
-
-    /** The Constant TCP_SEND_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final int     TCP_SEND_BUFFER_SIZE           = 8 * 1024;
-
-    /** The Constant TCP_RECEIVED_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final int     TCP_RECEIVED_BUFFER_SIZE       = 32 * 1024;
-
-
-    /** The Constant DEFAULT_KEEPALIVE. */
-    public static final boolean DEFAULT_KEEPALIVE             = true;
-
-    /** The Constant DEFAULT_CONNECTION_TIMEOUT. */
-    public static final int     DEFAULT_CONNECTION_TIMEOUT    = 60000; // 10 minutes
-
-    /** The Constant DEFAULT_KEEPALIVE_MAXREQUEST. */
-    public static final long    DEFAULT_KEEPALIVE_MAXREQUEST  = Long.MAX_VALUE-1;
-
-    /** The Constant DEFAULT_KEEPALIVE_TIMEOUT. */
-    public static final long    DEFAULT_KEEPALIVE_TIMEOUT     = 86400000L; // One day
-
-    /** The Constant DEFAULT_MAX_POOL_SIZE. */
-    public static final int     DEFAULT_MAX_POOL_SIZE         = 1;
-
-    /** The Constant DEFAULT_USE_POOLED_BUFFERS. */
-    public static final boolean DEFAULT_USE_POOLED_BUFFERS    = false;
-
-    /** The Constant DEFAULT_SEND_BUFFER_SIZE. */
-    public static final int     DEFAULT_SEND_BUFFER_SIZE      = BackendWithoutSessionPool.TCP_SEND_BUFFER_SIZE;
-
-    /** The Constant DEFAULT_RECEIVE_BUFFER_SIZE. */
-    public static final int     DEFAULT_RECEIVE_BUFFER_SIZE   = BackendWithoutSessionPool.TCP_RECEIVED_BUFFER_SIZE;
-
-    /** The Constant DEFAULT_PIPELINING. */
-    public static final boolean DEFAULT_PIPELINING            = false;
-
-    /** The Constant DEFAULT_PIPELINING. */
-    public static final int     DEFAULT_MIN_SESSION_POOL_SIZE = 1;
-
 
     /** The host name or IP. */
     private final String host;
@@ -190,7 +115,7 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
             }
 
             publishConnection(getEntities().size());
-            numExternalSessions = 0;
+            setNumExternalSessions(0);
 
         }
     }
@@ -597,6 +522,15 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     public IBackend setMetricPrefix(String prefix) {
         this.prefix = prefix;
         return this;
+    }
+
+    /**
+     * Sets the num external sessions.
+     *
+     * @param numExternalSessions the new num external sessions
+     */
+    private void setNumExternalSessions(int numExternalSessions) {
+        this.numExternalSessions = numExternalSessions;
     }
 
 }
