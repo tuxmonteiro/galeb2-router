@@ -24,10 +24,10 @@ public class RuleFactory {
         String ruleType = properties.getString(Rule.RULETYPE_FIELDNAME, "");
 
         if ("".equals(ruleType)) {
-            return null;
+            return new NullRule();
         }
 
-        ClassLoader loader = Thread.currentThread().getContextClassLoader();
+        ClassLoader loader = getClass().getClassLoader();
         String ruleFullName = CLASS_PACKAGE+"."+ruleType;
 
         try {
@@ -49,7 +49,7 @@ public class RuleFactory {
 
             log.debug(getStackTrace(e));
 
-            return null;
+            return new NullRule();
         }
     }
 
