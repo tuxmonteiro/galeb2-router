@@ -33,6 +33,7 @@ import com.globo.galeb.entity.EntitiesMap;
 import com.globo.galeb.request.RemoteUser;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.NullScheduler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
 /**
@@ -83,33 +84,48 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     /** The Constant UUID_INFO_ID. */
     public static final String UUID_INFO_ID                    = "uuid";
 
+    /** The Constant CLEANUP_SESSION_TIME. */
+    public static final long   CLEANUP_SESSION_TIME            = 10000L;
+
+    /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
+    public static final boolean TCP_NODELAY                    = true;
+
+    /** The Constant TCP_SEND_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
+    public static final int     TCP_SEND_BUFFER_SIZE           = 8 * 1024;
+
+    /** The Constant TCP_RECEIVED_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
+    public static final int     TCP_RECEIVED_BUFFER_SIZE       = 32 * 1024;
+
 
     /** The Constant DEFAULT_KEEPALIVE. */
-    public static final Boolean DEFAULT_KEEPALIVE             = true;
+    public static final boolean DEFAULT_KEEPALIVE             = true;
 
     /** The Constant DEFAULT_CONNECTION_TIMEOUT. */
-    public static final Integer DEFAULT_CONNECTION_TIMEOUT    = 60000; // 10 minutes
+    public static final int     DEFAULT_CONNECTION_TIMEOUT    = 60000; // 10 minutes
 
     /** The Constant DEFAULT_KEEPALIVE_MAXREQUEST. */
-    public static final Long    DEFAULT_KEEPALIVE_MAXREQUEST  = Long.MAX_VALUE-1;
+    public static final long    DEFAULT_KEEPALIVE_MAXREQUEST  = Long.MAX_VALUE-1;
 
     /** The Constant DEFAULT_KEEPALIVE_TIMEOUT. */
-    public static final Long    DEFAULT_KEEPALIVE_TIMEOUT     = 86400000L; // One day
+    public static final long    DEFAULT_KEEPALIVE_TIMEOUT     = 86400000L; // One day
 
     /** The Constant DEFAULT_MAX_POOL_SIZE. */
-    public static final Integer DEFAULT_MAX_POOL_SIZE         = 1;
+    public static final int     DEFAULT_MAX_POOL_SIZE         = 1;
 
     /** The Constant DEFAULT_USE_POOLED_BUFFERS. */
-    public static final Boolean DEFAULT_USE_POOLED_BUFFERS    = false;
+    public static final boolean DEFAULT_USE_POOLED_BUFFERS    = false;
 
     /** The Constant DEFAULT_SEND_BUFFER_SIZE. */
-    public static final Integer DEFAULT_SEND_BUFFER_SIZE      = Backend.TCP_SEND_BUFFER_SIZE;
+    public static final int     DEFAULT_SEND_BUFFER_SIZE      = Backend.TCP_SEND_BUFFER_SIZE;
 
     /** The Constant DEFAULT_RECEIVE_BUFFER_SIZE. */
-    public static final Integer DEFAULT_RECEIVE_BUFFER_SIZE   = Backend.TCP_RECEIVED_BUFFER_SIZE;
+    public static final int     DEFAULT_RECEIVE_BUFFER_SIZE   = Backend.TCP_RECEIVED_BUFFER_SIZE;
 
     /** The Constant DEFAULT_PIPELINING. */
-    public static final Boolean DEFAULT_PIPELINING            = false;
+    public static final boolean DEFAULT_PIPELINING            = false;
+
+    /** The Constant DEFAULT_PIPELINING. */
+    public static final int     DEFAULT_MIN_SESSION_POOL_SIZE = 1;
 
 
     /** The host name or IP. */
@@ -131,25 +147,16 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     private final Set<BackendSession> poolAvaliable = new HashSet<>();
 
     /** The cleanup session scheduler. */
-    private IScheduler cleanupSessionScheduler    = null;
+    private IScheduler cleanupSessionScheduler    = new NullScheduler();
 
     /** The is locked. */
-    private java.util.concurrent.atomic.AtomicBoolean isLocked = new AtomicBoolean(false);
+    private AtomicBoolean isLocked = new AtomicBoolean(false);
 
     /** The registered. */
     private boolean registered = false;
 
     /** The num external sessions. */
     private int numExternalSessions = 0;
-
-    /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final boolean TCP_NODELAY              = true;
-
-    /** The Constant TCP_SEND_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final int     TCP_SEND_BUFFER_SIZE     = 8 * 1024;
-
-    /** The Constant TCP_RECEIVED_BUFFER_SIZE - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
-    public static final int     TCP_RECEIVED_BUFFER_SIZE = 32 * 1024;
 
     /**
      * Class CleanUpSessionHandler.
@@ -375,7 +382,7 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
      */
     @Override
     public int getMinSessionPoolSize() {
-        return minSessionPoolSize;
+        return (Integer) getOrCreateProperty(MIN_SESSION_POOL_SIZE_FIELDNAME, DEFAULT_MIN_SESSION_POOL_SIZE);
     }
 
     /* (non-Javadoc)
@@ -383,6 +390,7 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
      */
     @Override
     public Backend setMinSessionPoolSize(int minPoolSize) {
+        properties.putNumber(MIN_SESSION_POOL_SIZE_FIELDNAME, minPoolSize);
         this.minSessionPoolSize = minPoolSize;
         return this;
     }
@@ -398,40 +406,31 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
 
         String remoteUserId = remoteUser.toString();
 
-        final BackendSession backendSession;
-
-        if (cleanupSessionScheduler==null && (Vertx) getPlataform()!=null) {
+        if (getPlataform() instanceof Vertx) {
             cleanupSessionScheduler = new VertxPeriodicScheduler((Vertx) getPlataform())
-                                            .setPeriod(10000L)
+                                            .setPeriod(CLEANUP_SESSION_TIME)
                                             .setHandler(new CleanUpSessionHandler(this))
                                             .start();
         }
 
-        if (getEntityById(remoteUserId)!=null) {
-            backendSession = getEntityById(remoteUserId);
-        } else {
+        BackendSession backendSession = getEntityById(remoteUserId);
+
+        if (backendSession==null) {
 
             if (!poolAvaliable.isEmpty()) {
 
                 backendSession = poolAvaliable.iterator().next();
                 backendSession.setRemoteUser(remoteUserId);
                 poolAvaliable.remove(backendSession);
-                addEntity(backendSession);
 
             } else {
 
-                backendSession = new BackendSession(
-                        new JsonObject().putString(ID_FIELDNAME, remoteUserId)
-                                        .putString(PARENT_ID_FIELDNAME, id)
-                                        .putObject(PROPERTIES_FIELDNAME, properties));
-
-                backendSession.setPlataform(plataform)
-                              .setQueueService(queueService)
-                              .start();
-
-                addEntity(backendSession);
+                backendSession = new BackendSession(new JsonObject().putString(ID_FIELDNAME, remoteUserId)
+                                                    .putString(PARENT_ID_FIELDNAME, id)
+                                                    .putObject(PROPERTIES_FIELDNAME, properties));
             }
 
+            addEntity(backendSession);
 
             String backendId = this.toString();
             if (!"".equals(parentId) && !"UNDEF".equals(parentId) &&
@@ -449,8 +448,10 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
      */
     @Override
     public void close(String remoteUser) {
-        if (!(remoteUser==null) && getEntityById(remoteUser)!=null) {
-            BackendSession backendSession = getEntityById(remoteUser);
+        BackendSession backendSession = getEntityById(remoteUser);
+
+        if (remoteUser!=null && backendSession!=null) {
+
             removeEntity(remoteUser);
 
             if (poolAvaliable.size()>=minSessionPoolSize) {
@@ -609,9 +610,7 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
         }
         poolAvaliable.clear();
         clearEntities();
-        if (cleanupSessionScheduler!=null) {
-            cleanupSessionScheduler.cancel();
-        }
+        cleanupSessionScheduler.cancel();
     }
 
     /* (non-Javadoc)

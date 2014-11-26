@@ -27,6 +27,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.globo.galeb.entity.Entity;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.ISchedulerHandler;
+import com.globo.galeb.scheduler.impl.NullScheduler;
 import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
 
 /**
@@ -36,6 +37,13 @@ import com.globo.galeb.scheduler.impl.VertxPeriodicScheduler;
  * @version: 1.0.0, Oct 23, 2014.
  */
 public class BackendSession extends Entity {
+
+    /** The Constant HOST_DEFAULT. */
+    public static final String HOST_DEFAULT = "127.0.0.1";
+
+    /** The Constant PORT_DEFAULT. */
+    public static final int    PORT_DEFAULT = 80;
+
 
     /** The http client instance. */
     private HttpClient client                  = null;
@@ -47,7 +55,10 @@ public class BackendSession extends Entity {
     private int        maxPoolSize             = 1;
 
     /** The keep alive limit scheduler. */
-    private IScheduler keepAliveLimitScheduler = null;
+    private IScheduler keepAliveLimitScheduler = new NullScheduler();
+
+    /** The keep alive interval. */
+    private long keepAliveLimitInterval        = 1000L;
 
     /** The request count. */
     private long       requestCount            = 0L;
@@ -140,39 +151,43 @@ public class BackendSession extends Entity {
      */
     public HttpClient connect() {
 
-        if (keepAlive && keepAliveLimitScheduler==null && plataform!=null) {
+        if (keepAlive && keepAliveLimitScheduler instanceof NullScheduler && plataform instanceof Vertx) {
             keepAliveLimitScheduler = new VertxPeriodicScheduler((Vertx)plataform)
                                                 .setHandler(new KeepAliveCheckLimitHandler(this))
-                                                .setPeriod(1000L)
+                                                .setPeriod(keepAliveLimitInterval)
                                                 .start();
         }
 
         String[] hostWithPortArray = parentId!=null ? parentId.split(":") : null;
-        String host = "";
-        int port = 80;
+        String host = null;
+        int port = -1;
         if (hostWithPortArray != null && hostWithPortArray.length>1) {
             host = hostWithPortArray[0];
             try {
                 port = Integer.parseInt(hostWithPortArray[1]);
             } catch (NumberFormatException e) {
-                port = 80;
+                port = PORT_DEFAULT;
             }
         } else {
             host = parentId;
-            port = 80;
+            port = PORT_DEFAULT;
         }
+        host = host != null ? host : HOST_DEFAULT;
+        port = port >= 0 ? port : PORT_DEFAULT;
 
         if (isKeepAliveLimit() && !isClosed()) {
             close();
         }
 
-        if (client==null && plataform!=null) {
-            client = ((Vertx) plataform).createHttpClient();
-            client.setKeepAlive(keepAlive);
-            client.setTCPKeepAlive(keepAlive);
-            client.setMaxPoolSize(maxPoolSize);
+        if (client==null && plataform instanceof Vertx) {
+            final Vertx vertx = (Vertx) plataform;
 
-            if (!"".equals(host) && port!=-1 && !client.toString().startsWith("Mock")) {
+            client = vertx.createHttpClient()
+                          .setKeepAlive(keepAlive)
+                          .setTCPKeepAlive(keepAlive)
+                          .setMaxPoolSize(maxPoolSize);
+
+            if (!client.toString().startsWith("Mock")) {
                 client.setHost(host)
                       .setPort(port);
             }

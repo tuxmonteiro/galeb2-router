@@ -54,9 +54,9 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
      */
     @Override
     public void handle(final HttpServerRequest sRequest) throws RuntimeException {
-        JsonObject conf = new JsonObject();
         Long requestTimeout = farm.getProperties().getLong(Farm.REQUEST_TIMEOUT_FIELDNAME, 5000L);
 
+        JsonObject conf = new JsonObject();
         conf.putNumber(Farm.REQUEST_TIMEOUT_FIELDNAME, requestTimeout);
 
         new RouterRequest(sRequest).setFarm(farm)

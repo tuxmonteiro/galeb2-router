@@ -47,6 +47,7 @@ import com.globo.galeb.metrics.ICounter;
 import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.rulereturn.IRuleReturn;
 import com.globo.galeb.scheduler.IScheduler;
+import com.globo.galeb.scheduler.ISchedulerHandler;
 import com.globo.galeb.scheduler.impl.NullScheduler;
 import com.globo.galeb.scheduler.impl.VertxDelayScheduler;
 import com.globo.galeb.server.ServerResponse;
@@ -197,7 +198,7 @@ public class RouterRequest {
     }
 
     /**
-     * Start.
+     * Start RouterRequest.
      */
     public void start() {
 
@@ -339,10 +340,11 @@ public class RouterRequest {
     private void startSchedulerTimeout(Long requestTimeout) {
 
         schedulerTimeOut = new VertxDelayScheduler((Vertx) plataform);
+        ISchedulerHandler handler = new GatewayTimeoutTaskHandler(serverResponse,
+                                            httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST),
+                                            backend.toString());
         schedulerTimeOut.setPeriod(requestTimeout)
-                        .setHandler(new GatewayTimeoutTaskHandler(serverResponse,
-                                                                  httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST),
-                                                                  backend.toString()))
+                        .setHandler(handler)
                         .cancelHandler(new Handler<Void>() {
                             @Override
                             public void handle(Void event) {

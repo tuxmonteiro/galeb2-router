@@ -38,6 +38,7 @@ import com.globo.galeb.entity.impl.backend.BackendPools;
 import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.Virtualhost;
+import com.globo.galeb.verticles.ConfVerticleDictionary;
 
 /**
  * Class Farm.
@@ -56,9 +57,6 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     /** The Constant FARM_VIRTUALHOSTS_FIELDNAME. */
     public static final String FARM_VIRTUALHOSTS_FIELDNAME = "virtualhosts";
 
-    /** The Constant FARM_SHAREDDATA_ID. */
-    public static final String FARM_SHAREDDATA_ID          = "farm.sharedData";
-
     /** The Constant FARM_VERSION_FIELDNAME. */
     public static final String FARM_VERSION_FIELDNAME      = "version";
 
@@ -72,7 +70,7 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
     private Long version = 0L;
 
     /** The backend pools. */
-    private EntitiesMap<BackendPool> backendPools          = new BackendPools("backendpools");
+    private EntitiesMap<BackendPool> backendPools          = new BackendPools(BackendPools.class.getSimpleName());
 
     /** The messageToMapBuilder instance */
     private MessageToMapBuilder messageToMapBuilder        = new MessageToMapBuilder();
@@ -108,11 +106,9 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     @Override
     public void start() {
-        if (verticle!=null) {
-            properties.mergeIn(verticle.getContainer().config());
-        }
         prepareBackendPools();
         registerQueueAction();
+        properties.mergeIn(staticConf.getObject(ConfVerticleDictionary.CONF_STARTER_CONF, new JsonObject()));
         setCriterion(new HostHeaderCriterion<Virtualhost>().setLog(logger));
     }
 
