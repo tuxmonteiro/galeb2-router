@@ -73,6 +73,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
     public void start() {
         log = container.logger();
         final JsonObject conf = container.config();
+        final JsonObject starterConf = conf.getObject(ConfVerticleDictionary.CONF_STARTER_CONF, new JsonObject());
         final ICounter counter = new CounterWithEventBus(vertx.eventBus());
         server = new Server(vertx, container, counter);
         queueService = new VertxQueueService(vertx.eventBus(), log);
@@ -81,7 +82,7 @@ public class RouteManagerVerticle extends Verticle implements IEventObserver {
             .setPlataform(vertx)
             .setQueueService(queueService)
             .setCounter(counter)
-            .setStaticConf(conf)
+            .setStaticConf(starterConf.getObject(ConfVerticleDictionary.CONF_ROOT_ROUTER, new JsonObject()))
             .start();
 
         startHttpServer(conf);

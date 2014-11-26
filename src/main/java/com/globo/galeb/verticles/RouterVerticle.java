@@ -25,6 +25,7 @@ import com.globo.galeb.server.Server;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.http.HttpServerRequest;
+import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
@@ -43,14 +44,15 @@ public class RouterVerticle extends Verticle {
   public void start() {
 
       final Logger log = container.logger();
-      //final JsonObject conf = container.config();
+      final JsonObject conf = container.config();
       final ICounter counter = new CounterWithEventBus(vertx.eventBus());
       final IQueueService queueService = new VertxQueueService(vertx.eventBus(), log);
+      final JsonObject starterConf = conf.getObject(ConfVerticleDictionary.CONF_STARTER_CONF, new JsonObject());
       final Farm farm = new Farm(this);
       farm.setLogger(log)
           .setPlataform(vertx)
           .setQueueService(queueService)
-          .setStaticConf(container.config())
+          .setStaticConf(starterConf.getObject(ConfVerticleDictionary.CONF_ROOT_ROUTER, new JsonObject()))
           .setCounter(counter)
           .start();
 
