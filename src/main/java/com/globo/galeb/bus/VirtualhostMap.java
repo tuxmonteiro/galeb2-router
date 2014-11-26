@@ -53,7 +53,7 @@ public class VirtualhostMap extends MessageToMap<Virtualhost> {
         if (farm.getEntityById(entityId)==null) {
 
             farm.addEntity(new Virtualhost(entity));
-            log.info(String.format("[%s] %s added", verticleId, entityId));
+            log.info(String.format("[%s] Virtualhost %s added", verticleId, entityId));
             isOk = true;
         } else {
             isOk = false;
