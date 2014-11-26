@@ -41,6 +41,9 @@ public class RulesCriterion implements ICriterion<Rule> {
     private final SafeLogger log = new SafeLogger();
 
     /** The map. */
+    private Map<String, Rule> map = null;
+
+    /** The rule list */
     private List<Rule> ruleList = new ArrayList<>();
 
     /** The request match. */
@@ -60,7 +63,7 @@ public class RulesCriterion implements ICriterion<Rule> {
      */
     @Override
     public ICriterion<Rule> given(final Map<String, Rule> map) {
-        ruleList.addAll(map.values());
+        this.map = map;
         return this;
     }
 
@@ -84,6 +87,7 @@ public class RulesCriterion implements ICriterion<Rule> {
     @Override
     public Rule thenGetResult() {
         Rule ruleDefault = null;
+        ruleList.addAll(map.values());
         Collections.sort(ruleList);
 
         for (Rule rule: ruleList) {
