@@ -108,6 +108,10 @@ public class RulesCriterion implements ICriterion<Rule> {
             }
         }
         if (ruleDefault!=null) {
+            if (log==null) {
+                log = new SafeLogger();
+            }
+            log.debug(String.format("Calling default rule %s [%s]", ruleDefault.getId(), ruleDefault.getClass().getSimpleName()));
             return ruleDefault;
         }
         return new NullRule();

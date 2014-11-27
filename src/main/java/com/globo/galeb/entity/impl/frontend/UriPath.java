@@ -52,7 +52,9 @@ public class UriPath extends Rule {
     @Override
     public boolean isMatchWith(RequestMatch requestMatch) {
         String uriPath = requestMatch.getUriPath();
-        return uriPath.startsWith(match.toString());
+        boolean isMatch = uriPath.startsWith(match.toString());
+        getLogger().debug(String.format("[%s] %s %smatch with %s", this, match.toString(), isMatch ? "": "NOT ", uriPath));
+        return isMatch;
     }
 
 }

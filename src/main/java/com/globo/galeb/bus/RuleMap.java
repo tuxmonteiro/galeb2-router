@@ -15,6 +15,10 @@
  */
 package com.globo.galeb.bus;
 
+import org.vertx.java.core.json.JsonObject;
+
+import com.globo.galeb.entity.IJsonable;
+import com.globo.galeb.entity.impl.frontend.NullRule;
 import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.RuleFactory;
 import com.globo.galeb.entity.impl.frontend.Virtualhost;
@@ -55,10 +59,28 @@ public class RuleMap extends MessageToMap<Virtualhost> {
             final Virtualhost virtualhost = farm.getEntityById(parentId);
 
             if (virtualhost!=null) {
+                if (entity.containsField(IJsonable.PROPERTIES_FIELDNAME)) {
+                    JsonObject properties = entity.getObject(IJsonable.PROPERTIES_FIELDNAME);
+                    boolean hasOrderNum = properties.containsField(Rule.ORDERNUM_FIELDNAME);
+                    if (!hasOrderNum) {
+                        properties.putNumber(Rule.ORDERNUM_FIELDNAME, 99);
+                        entity.getObject(IJsonable.PROPERTIES_FIELDNAME).mergeIn(properties);
+                    }
+                    boolean hasMatch = properties.containsField(Rule.MATCH_FIELDNAME);
+                    if (!hasMatch) {
+                        properties.putString(Rule.MATCH_FIELDNAME, "-UNDEFINED-");
+                        entity.getObject(IJsonable.PROPERTIES_FIELDNAME).mergeIn(properties);
+                    }
+
+                }
                 Rule rule = new RuleFactory().setLogger(log).createRule(entity);
-                rule.setFarm(farm).start();
-                isOk  = virtualhost.addEntity(rule);
-                log.info(String.format("[%s] Rule %s (%s) added", verticleId, entityId, parentId));
+                if (!(rule instanceof NullRule)) {
+                    rule.setFarm(farm).start();
+                    isOk  = virtualhost.addEntity(rule);
+                    log.info(String.format("[%s] Rule %s (%s) added", verticleId, entityId, parentId));
+                } else {
+                    log.error(String.format("[%s] Rule %s (%s) wrong format", verticleId, entityId, parentId));
+                }
             } else {
                 log.warn(String.format("[%s] Rule %s (%s) already exist", verticleId, entityId, parentId));
             }

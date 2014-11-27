@@ -12,7 +12,7 @@ import com.globo.galeb.logger.SafeLogger;
 public class RuleFactory {
 
     public static final String CLASS_PACKAGE     = Rule.class.getPackage().getName();
-    public static final String DEFAULT_RULETYPE  = NullRule.class.getSimpleName();
+    public static final String DEFAULT_RULETYPE  = UriPath.class.getSimpleName();
 
     private SafeLogger log = null;
 
@@ -22,7 +22,11 @@ public class RuleFactory {
         String ruleType = properties.getString(Rule.RULETYPE_FIELDNAME, "");
 
         if ("".equals(ruleType)) {
-            return new NullRule();
+            if (properties.getBoolean(Rule.DEFAULT_FIELDNAME, false)) {
+                ruleType = DEFAULT_RULETYPE;
+            } else {
+                return new NullRule();
+            }
         }
 
         ClassLoader loader = Thread.currentThread().getContextClassLoader();

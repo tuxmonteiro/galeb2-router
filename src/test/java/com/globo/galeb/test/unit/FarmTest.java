@@ -31,7 +31,7 @@ import com.globo.galeb.bus.MessageBus;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.frontend.Rule;
-import com.globo.galeb.entity.impl.frontend.RuleFactory;
+import com.globo.galeb.entity.impl.frontend.UriPath;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.test.unit.util.FakeLogger;
 
@@ -158,7 +158,7 @@ public class FarmTest extends TestVerticle {
             JsonObject aRuleJson =
                     new JsonObject().putString(IJsonable.ID_FIELDNAME, UUID.randomUUID().toString())
                                     .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()
-                                            .putString(Rule.RULETYPE_FIELDNAME, RuleFactory.DEFAULT_RULETYPE)
+                                            .putString(Rule.RULETYPE_FIELDNAME, UriPath.class.getSimpleName())
                                             .putString(Rule.RETURNID_FIELDNAME, "0"));
 
             message = new MessageBus().setEntity(aRuleJson)

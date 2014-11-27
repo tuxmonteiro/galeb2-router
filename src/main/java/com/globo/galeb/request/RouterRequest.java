@@ -120,6 +120,9 @@ public class RouterRequest {
     /** The backend. */
     private IBackend backend = new NullBackend();
 
+    /** The request ended flag. */
+    private boolean requestEnded = false;
+
     /**
      * Instantiates a new router request.
      *
@@ -235,6 +238,9 @@ public class RouterRequest {
                       .setChunked(enableChuncked);
 
         choiceBackend();
+        if (requestEnded) {
+            return;
+        }
 
         if (backend==null || backend instanceof NullBackend) {
             log.error("Backend is null");
@@ -391,6 +397,7 @@ public class RouterRequest {
             serverResponse.setStatusCode(Integer.parseInt(ruleReturn.getReturnId()));
             serverResponse.setMessage(((HttpCode)ruleReturn).getMessage());
             serverResponse.endResponse();
+            this.requestEnded = true;
             return;
         }
 
