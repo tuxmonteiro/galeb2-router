@@ -38,9 +38,6 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
     /** the scheduler instance */
     private IScheduler scheduler = new NullScheduler();
 
-    /** The header host of request. */
-    private String headerHost;
-
     /** The backend id. */
     private String backendId;
 
@@ -61,8 +58,7 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
             log = new SafeLogger();
         }
         log.error(String.format("ClientRequestExceptionHandler: %s", event.getMessage()));
-        sResponse.setHeaderHost(headerHost).setBackendId(backendId)
-            .showErrorAndClose(event);
+        sResponse.setBackendId(backendId).showErrorAndClose(event);
     }
 
     public ClientRequestExceptionHandler setsResponse(final ServerResponse sResponse) {
@@ -72,11 +68,6 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
 
     public ClientRequestExceptionHandler setScheduler(final IScheduler scheduler) {
         this.scheduler = scheduler;
-        return this;
-    }
-
-    public ClientRequestExceptionHandler setHeaderHost(String headerHost) {
-        this.headerHost = headerHost;
         return this;
     }
 

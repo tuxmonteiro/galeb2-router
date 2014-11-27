@@ -159,9 +159,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     counter.requestTime(headerHost, backendId, initialRequestTime);
                 }
 
-                sResponse.setHeaderHost(headerHost)
-                    .setBackendId(backendId)
-                    .endResponse();
+                sResponse.setBackendId(backendId).endResponse();
 
                 defineLoggerIfNecessary();
 
@@ -186,8 +184,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                 defineLoggerIfNecessary();
                 log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
                 queueService.publishBackendFail(backendId);
-                sResponse.setHeaderHost(headerHost).setBackendId(backendId)
-                    .showErrorAndClose(event);
+                sResponse.setBackendId(backendId).showErrorAndClose(event);
 
                 ((EntitiesMap<BackendSession>) backend).removeEntity(remoteUser.toString());
             }

@@ -207,6 +207,9 @@ public class RouterRequest {
 
         remoteUser = new RemoteUser(httpServerRequest.remoteAddress());
         connectionKeepalive = isHttpKeepAlive();
+        serverResponse = new ServerResponse(httpServerRequest)
+                                .setCounter(counter)
+                                .setLog(log);
 
         defineLoggerIfNecessary();
 
@@ -223,7 +226,6 @@ public class RouterRequest {
                                                                         httpServerRequest.absoluteURI().toString()));
 
         virtualhost = farm.getCriterion().when(httpServerRequest).thenGetResult();
-        serverResponse = new ServerResponse(httpServerRequest).setLog(log);
 
         if (virtualhost==null) {
             serverResponse.showErrorAndClose(new NotFoundException());
@@ -233,8 +235,7 @@ public class RouterRequest {
         enableChuncked = virtualhost.getProperties().getBoolean(Virtualhost.ENABLE_CHUNKED_FIELDNAME, true);
         enableAccessLog = virtualhost.getProperties().getBoolean(Virtualhost.ENABLE_ACCESSLOG_FIELDNAME, false);
 
-        serverResponse.setLog(log)
-                      .setEnableAccessLog(enableAccessLog)
+        serverResponse.setEnableAccessLog(enableAccessLog)
                       .setChunked(enableChuncked);
 
         choiceBackend();
@@ -332,7 +333,6 @@ public class RouterRequest {
                                         .setQueueService(queueService)
                                         .setLog(log)
                                         .setsResponse(serverResponse)
-                                        .setHeaderHost(httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST))
                                         .setBackendId(backend.toString())
                                         .setScheduler(schedulerTimeOut));
 
@@ -355,27 +355,29 @@ public class RouterRequest {
 
         defineLoggerIfNecessary();
 
-        schedulerTimeOut = new VertxDelayScheduler((Vertx) plataform);
-        ISchedulerHandler handler = new GatewayTimeoutTaskHandler(serverResponse,
-                                            httpServerRequest.headers().get(RouterRequest.HTTP_HEADER_HOST),
-                                            backend.toString());
-        schedulerTimeOut.setPeriod(requestTimeout)
-                        .setHandler(handler)
-                        .cancelHandler(new Handler<Void>() {
-                            @Override
-                            public void handle(Void event) {
-                                log.debug("scheduler canceled");
-                            }
-                        })
-                        .cancelFailedHandler(new Handler<Void>() {
-                            @Override
-                            public void handle(Void event) {
-                                log.debug("FAIL: scheduler NOT canceled");
-                            }
-                        })
-                        .start();
+        if (plataform instanceof Vertx) {
 
-        log.debug("Scheduler started");
+            schedulerTimeOut = new VertxDelayScheduler((Vertx) plataform);
+
+            ISchedulerHandler handler = new GatewayTimeoutTaskHandler(serverResponse, backend.toString());
+            schedulerTimeOut.setPeriod(requestTimeout)
+                            .setHandler(handler)
+                            .cancelHandler(new Handler<Void>() {
+                                @Override
+                                public void handle(Void event) {
+                                    log.debug("scheduler canceled");
+                                }
+                            })
+                            .cancelFailedHandler(new Handler<Void>() {
+                                @Override
+                                public void handle(Void event) {
+                                    log.debug("FAIL: scheduler NOT canceled");
+                                }
+                            })
+                            .start();
+
+            log.debug("Scheduler started");
+        }
     }
 
     /**
@@ -419,11 +421,11 @@ public class RouterRequest {
 
         backend = backendPool.getChoice(new RequestData(httpServerRequest));
 
-        if (virtualhost!=null) {
+        if (backend!=null && virtualhost!=null) {
             backend.setMetricPrefix(virtualhost.getId());
+            serverResponse.setBackendId(backend.toString());
+            log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
         }
-
-        log.debug(String.format("GetChoice >> Virtualhost: %s, Backend: %s", virtualhost, backend));
     }
 
     /**

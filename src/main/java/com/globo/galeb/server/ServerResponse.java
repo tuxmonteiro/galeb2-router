@@ -22,6 +22,7 @@ import com.globo.galeb.exceptions.AbstractHttpException;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.logger.impl.NcsaLogExtendedFormatter;
 import com.globo.galeb.metrics.ICounter;
+import com.globo.galeb.request.RouterRequest;
 import com.globo.galeb.rulereturn.HttpCode;
 
 import org.vertx.java.core.Handler;
@@ -57,9 +58,6 @@ public class ServerResponse {
 
     /** The id. */
     private String id = "";
-
-    /** The header host. */
-    private String headerHost = "";
 
     /** The backend id. */
     private String backendId = "";
@@ -126,17 +124,6 @@ public class ServerResponse {
     }
 
     /**
-     * Sets the header host.
-     *
-     * @param headerHost the header host
-     * @return this
-     */
-    public ServerResponse setHeaderHost(String headerHost) {
-        this.headerHost = headerHost;
-        return this;
-    }
-
-    /**
      * Sets the message.
      *
      * @param message the message
@@ -179,6 +166,8 @@ public class ServerResponse {
 
         int statusCode = exceptionToHttpCode(event);
         setStatusCode(statusCode);
+
+        String headerHost = getHeaderHost();
 
         String logMessage = String.format("FAIL with HttpStatus %d%s: %s",
                 statusCode,
@@ -262,6 +251,19 @@ public class ServerResponse {
     }
 
     /**
+     * Gets the header host.
+     *
+     * @return the header host
+     */
+    private String getHeaderHost() {
+        if (req!=null) {
+            MultiMap headers = req.headers();
+            return headers.contains(RouterRequest.HTTP_HEADER_HOST) ? headers.get(RouterRequest.HTTP_HEADER_HOST): "";
+        }
+        return "";
+    }
+
+    /**
      * Send request count to counter.
      */
     public void sendRequestCount() {
@@ -269,6 +271,9 @@ public class ServerResponse {
         if (req!=null) {
             code = resp.getStatusCode();
         }
+
+        String headerHost = getHeaderHost();
+
         if (counter!=null) {
             if (!"".equals(headerHost) && !IJsonable.UNDEF.equals(headerHost) &&
                     !"".equals(backendId) && !IJsonable.UNDEF.equals(backendId)) {

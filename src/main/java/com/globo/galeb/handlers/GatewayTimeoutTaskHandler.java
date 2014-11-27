@@ -15,9 +15,6 @@ public class GatewayTimeoutTaskHandler implements ISchedulerHandler {
     /** The serverResponse. */
     private final ServerResponse sResponse;
 
-    /** The header host of request. */
-    private final String headerHost;
-
     /** The backend id. */
     private final String backendId;
 
@@ -28,9 +25,8 @@ public class GatewayTimeoutTaskHandler implements ISchedulerHandler {
      * @param headerHost the header host
      * @param backendId the backend id
      */
-    public GatewayTimeoutTaskHandler(final ServerResponse sResponse, String headerHost, String backendId) {
+    public GatewayTimeoutTaskHandler(final ServerResponse sResponse, String backendId) {
         this.sResponse = sResponse;
-        this.headerHost = headerHost;
         this.backendId = backendId;
     }
 
@@ -39,8 +35,7 @@ public class GatewayTimeoutTaskHandler implements ISchedulerHandler {
      */
     @Override
     public void handle() {
-        sResponse.setHeaderHost(headerHost).setBackendId(backendId)
-            .showErrorAndClose(new GatewayTimeoutException());
+        sResponse.setBackendId(backendId).showErrorAndClose(new GatewayTimeoutException());
     }
 
 }
