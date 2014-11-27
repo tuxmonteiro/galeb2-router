@@ -107,6 +107,9 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
                 backend.isLocked.set(true);
                 Map<String, BackendSession> tmpSessions = new HashMap<>(getEntities());
                 for (BackendSession backendSession : tmpSessions.values()) {
+                    if (backendSession.isDead()) {
+                        backendSession.close();
+                    }
                     if (backendSession.isClosed()) {
                         removeEntity(backendSession);
                     }
@@ -154,6 +157,12 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     public void start() {
         registerConnectionsCounter();
         publishConnection(0);
+        if (cleanupSessionScheduler instanceof NullScheduler && getPlataform() instanceof Vertx) {
+            cleanupSessionScheduler = new VertxPeriodicScheduler((Vertx) getPlataform())
+                                            .setPeriod(CLEANUP_SESSION_TIME)
+                                            .setHandler(new CleanUpSessionHandler(this))
+                                            .start();
+        }
     }
 
     /* (non-Javadoc)
@@ -323,13 +332,6 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
 
         String remoteUserId = remoteUser.toString();
 
-        if (cleanupSessionScheduler instanceof NullScheduler && getPlataform() instanceof Vertx) {
-            cleanupSessionScheduler = new VertxPeriodicScheduler((Vertx) getPlataform())
-                                            .setPeriod(CLEANUP_SESSION_TIME)
-                                            .setHandler(new CleanUpSessionHandler(this))
-                                            .start();
-        }
-
         BackendSession backendSession = getEntityById(remoteUserId);
 
         if (backendSession==null) {
@@ -352,14 +354,27 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.IBackend#close(java.lang.String)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#close(java.lang.String)
      */
     @Override
     public void close(String remoteUser) throws RuntimeException {
         if (remoteUser==null || "".equals(remoteUser) || UNDEF.equals(remoteUser)) {
             return;
         }
+        BackendSession backendSession = getEntityById(remoteUser);
+        if (backendSession!=null) {
+            backendSession.mustBeClosed();
+        }
+    }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.core.IBackend#realClose(java.lang.String)
+     */
+    @Override
+    public void realClose(String remoteUser) throws RuntimeException {
+        if (remoteUser==null || "".equals(remoteUser) || UNDEF.equals(remoteUser)) {
+            return;
+        }
         BackendSession backendSession = getEntityById(remoteUser);
 
         if (backendSession!=null) {
@@ -523,6 +538,7 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     @Override
     public IBackend setMetricPrefix(String prefix) {
         this.prefix = prefix;
+        updateModifiedTimestamp();
         return this;
     }
 
@@ -533,6 +549,46 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
      */
     private void setNumExternalSessions(int numExternalSessions) {
         this.numExternalSessions = numExternalSessions;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setUsePooledBuffers(boolean)
+     */
+    @Override
+    public IBackend setUsePooledBuffers(boolean usePooledBuffers) {
+        properties.putBoolean(USE_POOLED_BUFFERS_FIELDNAME, usePooledBuffers);
+        updateModifiedTimestamp();
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setSendBufferSize(int)
+     */
+    @Override
+    public IBackend setSendBufferSize(int sendBufferSize) {
+        properties.putNumber(SEND_BUFFER_SIZE_FIELDNAME, sendBufferSize);
+        updateModifiedTimestamp();
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setReceiveBufferSize(int)
+     */
+    @Override
+    public IBackend setReceiveBufferSize(int receiveBufferSize) {
+        properties.putNumber(RECEIVED_BUFFER_SIZE_FIELDNAME, receiveBufferSize);
+        updateModifiedTimestamp();
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setPipelining(boolean)
+     */
+    @Override
+    public IBackend setPipelining(boolean pipelining) {
+        properties.putBoolean(PIPELINING_FIELDNAME, pipelining);
+        updateModifiedTimestamp();
+        return this;
     }
 
 }

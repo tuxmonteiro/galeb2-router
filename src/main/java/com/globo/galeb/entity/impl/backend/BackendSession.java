@@ -75,6 +75,9 @@ public class BackendSession extends Entity {
     /** The is locked. */
     private AtomicBoolean isLocked             = new AtomicBoolean(false);
 
+    /** The session is dead. */
+    private boolean    sessionIsDead           = false;
+
     /**
      * Class KeepAliveCheckLimitHandler.
      *
@@ -204,6 +207,9 @@ public class BackendSession extends Entity {
                 }
             });
         }
+        if (client!=null) {
+            sessionIsDead = false;
+        }
 
         return client;
     }
@@ -256,6 +262,25 @@ public class BackendSession extends Entity {
      */
     public BackendSession setRemoteUser(String remoteUser) {
         this.id = remoteUser;
+        return this;
+    }
+
+    /**
+     * Checks if is dead.
+     *
+     * @return true, if is dead
+     */
+    public boolean isDead() {
+        return sessionIsDead;
+    }
+
+    /**
+     * Must be closed. Prepares session to be closed.
+     *
+     * @return the backend session
+     */
+    public BackendSession mustBeClosed() {
+        sessionIsDead = true;
         return this;
     }
 

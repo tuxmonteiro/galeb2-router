@@ -35,16 +35,16 @@ import com.globo.galeb.rulereturn.IRuleReturn;
 public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
 
     /** The Constant BACKENDS_FIELDNAME. */
-    public static final String BACKENDS_FIELDNAME            = "backends";
+    public static final String BACKENDS_FIELDNAME           = "backends";
 
     /** The Constant REQUEST_TIMEOUT_FIELDNAME. */
-    public static final String REQUEST_TIMEOUT_FIELDNAME     = "requestTimeOut";
+    public static final String REQUEST_TIMEOUT_FIELDNAME    = "requestTimeOut";
 
     /** The Constant ENABLE_CHUNCKED_FIELDNAME. */
-    public static final String ENABLE_CHUNCKED_FIELDNAME     = "enableChunked";
+    public static final String ENABLE_CHUNCKED_FIELDNAME    = "enableChunked";
 
     /** The Constant ENABLE_ACCESSLOG_FIELDNAME. */
-    public static final String ENABLE_ACCESSLOG_FIELDNAME    = "enableAccessLog";
+    public static final String ENABLE_ACCESSLOG_FIELDNAME   = "enableAccessLog";
 
     /** The rule return type. */
     private final String               returnType           = BackendPool.class.getSimpleName();
@@ -53,19 +53,19 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     private final EntitiesMap<IBackend> badBackends         = new BadBackendPool("badbackends");
 
     /** The load balance policy. */
-    private ICriterion<IBackend>        loadBalanceCriterion = new LoadBalanceCriterion<IBackend>();
+    private ICriterion<IBackend>       loadBalanceCriterion = new LoadBalanceCriterion<IBackend>();
 
     /** The request time out. */
     private Long                       requestTimeOut      = 60000L;
 
     /** The max pool size. */
-    private int                        maxPoolSize         = 1;
+    private int                        maxPoolSize         = IBackend.DEFAULT_MAX_POOL_SIZE;
 
     /** The keep alive max request. */
-    private long                       keepAliveMaxRequest = Long.MAX_VALUE;
+    private long                       keepAliveMaxRequest = IBackend.DEFAULT_KEEPALIVE_MAXREQUEST;
 
     /** The keep alive time out. */
-    private long                       keepAliveTimeOut    = 86400000L;
+    private long                       keepAliveTimeOut    = IBackend.DEFAULT_KEEPALIVE_TIMEOUT;
 
     /** The enable chunked. */
     private boolean                    enableChunked       = true;
@@ -74,10 +74,22 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     private boolean                    enableAccessLog     = false;
 
     /** The min session pool size. */
-    private int                        minSessionPoolSize  =  1;
+    private int                        minSessionPoolSize  = IBackend.DEFAULT_MIN_SESSION_POOL_SIZE;
 
     /** The keep alive. */
-    private boolean                    keepAlive           = true;
+    private boolean                    keepAlive           = IBackend.DEFAULT_KEEPALIVE;
+
+    /** The pipelining. */
+    private boolean                    pipelining          = IBackend.DEFAULT_PIPELINING;
+
+    /** The receive buffer size. */
+    private int                        receiveBufferSize   = IBackend.TCP_RECEIVED_BUFFER_SIZE;
+
+    /** The send buffer size. */
+    private int                        sendBufferSize      = IBackend.TCP_SEND_BUFFER_SIZE;
+
+    /** The use pooled buffers. */
+    private boolean                    usePooledBuffers    = IBackend.DEFAULT_USE_POOLED_BUFFERS;
 
     /**
      * Instantiates a new backend pool.
@@ -158,6 +170,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public boolean addEntity(IBackend backend) {
         ((IBackend) ((Entity) backend.setMaxPoolSize(maxPoolSize)
                                      .setKeepAlive(keepAlive)
+                                     .setPipelining(pipelining)
+                                     .setReceiveBufferSize(receiveBufferSize)
+                                     .setSendBufferSize(sendBufferSize)
+                                     .setUsePooledBuffers(usePooledBuffers)
                                      .setKeepAliveMaxRequest(keepAliveMaxRequest)
                                      .setKeepAliveTimeOut(keepAliveTimeOut)
                                      .setMinSessionPoolSize(minSessionPoolSize))

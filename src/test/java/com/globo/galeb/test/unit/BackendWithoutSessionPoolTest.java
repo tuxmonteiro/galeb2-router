@@ -88,7 +88,7 @@ public class BackendWithoutSessionPoolTest extends TestVerticle {
 
         RemoteUser remoteUser = new RemoteUser("127.0.0.1", 0);
         backendTested.connect(remoteUser);
-        backendTested.close(remoteUser.toString());
+        backendTested.realClose(remoteUser.toString());
 
         assertThat(backendTested.isClosed(remoteUser.toString())).isTrue();
 

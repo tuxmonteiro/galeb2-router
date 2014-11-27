@@ -73,6 +73,15 @@ public class RemoteUser {
     }
 
     /**
+     * Gets the inet address.
+     *
+     * @return the inet address
+     */
+    public InetAddress getInetAddress() {
+        return remoteIP;
+    }
+
+    /**
      * Gets the remote port.
      *
      * @return the remote port
@@ -87,7 +96,8 @@ public class RemoteUser {
      * @param ipAddress the ip address
      * @return the long
      */
-    private Long ipToLong(byte[] ipAddress) {
+    public Long ipToLong() {
+        byte[] ipAddress = remoteIP.getAddress();
         return
             ((ipAddress [0] & 0xFFl) << (3*8)) +
             ((ipAddress [1] & 0xFFl) << (2*8)) +
@@ -100,7 +110,7 @@ public class RemoteUser {
      */
     @Override
     public int hashCode() {
-        return (ipToLong(remoteIP.getAddress()).intValue()*100000)+remotePort;
+        return (ipToLong().intValue()*100000)+remotePort;
     }
 
     /* (non-Javadoc)
@@ -127,4 +137,5 @@ public class RemoteUser {
         }
         return true;
     }
+
 }

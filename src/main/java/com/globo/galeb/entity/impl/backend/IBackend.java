@@ -126,7 +126,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * Sets the connection timeout.
      *
      * @param timeout the timeout
-     * @return the backend
+     * @return this
      */
     public IBackend setConnectionTimeout(Integer timeout);
 
@@ -141,7 +141,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * Sets the keep alive.
      *
      * @param keepalive the keepalive
-     * @return the backend
+     * @return this
      */
     public IBackend setKeepAlive(boolean keepalive);
 
@@ -156,7 +156,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * Sets the keep alive max request.
      *
      * @param maxRequestCount the max request count
-     * @return the backend
+     * @return this
      */
     public IBackend setKeepAliveMaxRequest(Long maxRequestCount);
 
@@ -171,7 +171,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * Sets the keep alive time out.
      *
      * @param keepAliveTimeOut the keep alive time out
-     * @return the backend
+     * @return this
      */
     public IBackend setKeepAliveTimeOut(Long keepAliveTimeOut);
 
@@ -186,7 +186,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * Sets the max pool size.
      *
      * @param maxPoolSize the max pool size
-     * @return the backend
+     * @return this
      */
     public IBackend setMaxPoolSize(Integer maxPoolSize);
 
@@ -198,11 +198,27 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
     public Boolean isUsePooledBuffers();
 
     /**
+     * Sets the use pooled buffers.
+     *
+     * @param usePooledBuffers the use pooled buffers
+     * @return this
+     */
+    public IBackend setUsePooledBuffers(boolean usePooledBuffers);
+
+    /**
      * Gets the send buffer size.
      *
      * @return the send buffer size
      */
     public Integer getSendBufferSize();
+
+    /**
+     * Sets the send buffer size.
+     *
+     * @param sendBufferSize the send buffer size
+     * @return this
+     */
+    public IBackend setSendBufferSize(int sendBufferSize);
 
     /**
      * Gets the receive buffer size.
@@ -212,11 +228,27 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
     public Integer getReceiveBufferSize();
 
     /**
+     * Sets the receive buffer size.
+     *
+     * @param receiveBufferSize the receive buffer size
+     * @return this
+     */
+    public IBackend setReceiveBufferSize(int receiveBufferSize);
+
+    /**
      * Checks if is pipelining.
      *
      * @return the boolean
      */
     public Boolean isPipelining();
+
+    /**
+     * Sets the pipelining.
+     *
+     * @param pipelining the pipelining
+     * @return this
+     */
+    public IBackend setPipelining(boolean pipelining);
 
     /**
      * Gets the min session pool size.
@@ -241,6 +273,17 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
 
     /**
      * Close connection and destroy backendSession instance.
+     *
+     * @param remoteUser
+     * @throws RuntimeException
+     */
+    public void realClose(String remoteUser) throws RuntimeException;
+
+    /**
+     * Prepare session to be closed
+     *
+     * @param remoteUser
+     * @throws RuntimeException
      */
     public void close(String remoteUser) throws RuntimeException;
 
@@ -261,7 +304,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
     /**
      * Start session pool.
      *
-     * @return the backend
+     * @return this
      */
     public IBackend startSessionPool();
 
@@ -282,6 +325,5 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * @return this
      */
     public IBackend setMetricPrefix(String prefix);
-
 
 }

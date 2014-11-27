@@ -370,7 +370,7 @@ public class RouterRequest {
                         .cancelFailedHandler(new Handler<Void>() {
                             @Override
                             public void handle(Void event) {
-                                log.debug("FAIL: scheduler NOT canceled");
+                                log.error("FAIL: scheduler NOT canceled");
                             }
                         })
                         .start();

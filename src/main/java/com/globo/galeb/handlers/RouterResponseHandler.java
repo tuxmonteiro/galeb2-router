@@ -94,6 +94,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
         defineLoggerIfNecessary();
         if (sResponse==null||httpServerResponse==null) {
             log.error("Response is NULL");
+            scheduler.cancel();
             return;
         }
         log.debug(String.format("Received response from backend %d %s", cResponse.statusCode(), cResponse.statusMessage()));

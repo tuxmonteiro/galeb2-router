@@ -275,4 +275,45 @@ public class NullBackend implements IBackend {
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setUsePooledBuffers(boolean)
+     */
+    @Override
+    public IBackend setUsePooledBuffers(boolean usePooledBuffers) {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setSendBufferSize(int)
+     */
+    @Override
+    public IBackend setSendBufferSize(int sendBufferSize) {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setReceiveBufferSize(int)
+     */
+    @Override
+    public IBackend setReceiveBufferSize(int receiveBufferSize) {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setPipelining(boolean)
+     */
+    @Override
+    public IBackend setPipelining(boolean pipelining) {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#realClose(java.lang.String)
+     */
+    @Override
+    public void realClose(String remoteUser) throws RuntimeException {
+        return;
+    }
+
+
 }
