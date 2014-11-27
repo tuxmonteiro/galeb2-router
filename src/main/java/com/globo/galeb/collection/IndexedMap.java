@@ -15,6 +15,7 @@
  */
 package com.globo.galeb.collection;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Map;
@@ -127,7 +128,7 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
      * @return the next index
      */
     private synchronized Integer getNextIndex() {
-        return indexedKeys.size();
+        return indexedKeys.isEmpty() ? 0 : Collections.max(indexedKeys.keySet()) + 1;
     }
 
     /**
