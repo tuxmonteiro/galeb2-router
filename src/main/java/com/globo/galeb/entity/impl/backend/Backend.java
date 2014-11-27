@@ -375,19 +375,21 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
      * @see com.globo.galeb.core.IBackend#close(java.lang.String)
      */
     @Override
-    public void close(String remoteUser) {
+    public void close(String remoteUser) throws RuntimeException {
         if (remoteUser==null || "".equals(remoteUser) || UNDEF.equals(remoteUser)) {
             return;
         }
 
         BackendSession backendSession = getEntityById(remoteUser);
 
-        if (remoteUser!=null && backendSession!=null) {
+        if (backendSession!=null) {
 
             removeEntity(remoteUser);
 
             if (poolAvaliable.size()>=minSessionPoolSize) {
-                backendSession.close();
+                if (!backendSession.isClosed()) {
+                    backendSession.close();
+                }
             } else {
                 backendSession.setRemoteUser(UUID.randomUUID().toString());
                 poolAvaliable.add(backendSession);

@@ -355,16 +355,18 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
      * @see com.globo.galeb.core.IBackend#close(java.lang.String)
      */
     @Override
-    public void close(String remoteUser) {
+    public void close(String remoteUser) throws RuntimeException {
         if (remoteUser==null || "".equals(remoteUser) || UNDEF.equals(remoteUser)) {
             return;
         }
 
         BackendSession backendSession = getEntityById(remoteUser);
 
-        if (remoteUser!=null && backendSession!=null) {
+        if (backendSession!=null) {
             removeEntity(remoteUser);
-            backendSession.close();
+            if (!backendSession.isClosed()) {
+                backendSession.close();
+            }
             backendSession = null;
         }
     }

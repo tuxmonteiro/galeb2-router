@@ -242,7 +242,7 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
     /**
      * Close connection and destroy backendSession instance.
      */
-    public void close(String remoteUser);
+    public void close(String remoteUser) throws RuntimeException;
 
     /**
      * Gets the active connections.

@@ -163,11 +163,16 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
                     .setBackendId(backendId)
                     .endResponse();
 
+                defineLoggerIfNecessary();
+
                 if (!connectionKeepalive) {
                     sResponse.closeResponse();
-                    backend.close(remoteUser.toString());
+                    try {
+                        backend.close(remoteUser.toString());
+                    } catch (RuntimeException e) {
+                        log.debug(e.getMessage());
+                    }
                 }
-                defineLoggerIfNecessary();
                 log.debug(String.format("Completed backend response. %d bytes", pump.bytesPumped()));
             }
         });
