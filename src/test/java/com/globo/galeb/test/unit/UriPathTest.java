@@ -27,6 +27,7 @@ import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.frontend.Rule;
 import com.globo.galeb.entity.impl.frontend.UriPath;
 import com.globo.galeb.entity.impl.frontend.Virtualhost;
+import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.rulereturn.HttpCode;
 
 import org.junit.Before;
@@ -45,7 +46,7 @@ public class UriPathTest {
     @Before
     public void setUp() throws Exception {
 
-        virtualhost.start();
+        virtualhost.setLogger(new SafeLogger()).start();
 
         for (Integer x=0; x<numRules; x++) {
 
