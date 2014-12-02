@@ -199,7 +199,7 @@ public class BackendSession extends Entity {
                 @Override
                 public void handle(Throwable e) {
                     if (queueService!=null) {
-                        queueService.publishBackendFail(id);
+                        queueService.publishBackendFail(toJson());
                     }
                 }
             });

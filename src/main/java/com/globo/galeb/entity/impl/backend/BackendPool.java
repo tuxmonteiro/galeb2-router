@@ -46,6 +46,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The Constant ENABLE_ACCESSLOG_FIELDNAME. */
     public static final String ENABLE_ACCESSLOG_FIELDNAME    = "enableAccessLog";
 
+    /** The Constant HEALTHCHECK_FIELDNAME. */
+    public static final String HEALTHCHECK_FIELDNAME         = "healthCheck";
+
     /** The rule return type. */
     private final String               returnType           = BackendPool.class.getSimpleName();
 
@@ -204,6 +207,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
         if (!properties.containsField(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME)) {
             properties.putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME, LoadBalanceCriterion.LOADBALANCE_POLICY_DEFAULT);
         }
+        if (!properties.containsField(BackendPool.HEALTHCHECK_FIELDNAME)) {
+            properties.putString(BackendPool.HEALTHCHECK_FIELDNAME, "/");
+        }
         prepareJson();
 
         JsonArray backendsJson = new JsonArray();
@@ -340,6 +346,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     public Boolean hasAccessLog() {
         return enableAccessLog;
+    }
+
+    public String getHealthCheck() {
+        return getOrCreateProperty(HEALTHCHECK_FIELDNAME, "/").toString();
     }
 
 }

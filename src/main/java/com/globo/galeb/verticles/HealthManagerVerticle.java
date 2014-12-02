@@ -17,10 +17,7 @@ package com.globo.galeb.verticles;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 import com.globo.galeb.bus.ICallbackHealthcheck;
@@ -33,7 +30,7 @@ import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.IJsonable.StatusType;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.entity.impl.backend.BackendPool;
-import com.globo.galeb.entity.impl.backend.IBackend;
+import com.globo.galeb.entity.impl.backend.BackendWithoutSessionPool;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.rulereturn.HttpCode;
 import com.globo.galeb.scheduler.ISchedulerHandler;
@@ -56,10 +53,10 @@ import org.vertx.java.platform.Verticle;
 public class HealthManagerVerticle extends Verticle implements IEventObserver, ICallbackHealthcheck {
 
     /** The backends map. */
-    private final Map<String, Set<String>> backendsMap = new HashMap<>();
+    private final Set<Entity> backendsMap = new HashSet<>();
 
     /** The bad backends map. */
-    private final Map<String, Set<String>> badBackendsMap = new HashMap<>();
+    private final Set<Entity> badBackendsMap = new HashSet<>();
 
     /** The http header host. */
     private final String httpHeaderHost = HttpHeaders.HOST.toString();
@@ -76,9 +73,6 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     /** The logger. */
     private SafeLogger log;
 
-    /** The uri health check. */
-    private String uriHealthCheck;
-
     /**
      * Class CheckBadBackendTaskHandler.
      *
@@ -94,10 +88,9 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
         public void handle() {
             log.info("Checking bad backends...");
             if (badBackendsMap!=null) {
-                Iterator<String> it = badBackendsMap.keySet().iterator();
-                while (it.hasNext()) {
-                    final String backend = it.next();
-                    String[] hostWithPort = backend.split(":");
+                for (final Entity backend : badBackendsMap) {
+                    final BackendPool backendPool = farm.getBackendPoolById(backend .getParentId());
+                    String[] hostWithPort = backend.toString().split(":");
                     String host = hostWithPort[0];
                     Integer port = Integer.parseInt(hostWithPort[1]);
                     try {
@@ -108,15 +101,15 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
                                 @Override
                                 public void handle(Throwable event) {}
                             });
-                        HttpClientRequest cReq = client.get(uriHealthCheck, new Handler<HttpClientResponse>() {
+                        HttpClientRequest cReq = client.get(backendPool.getHealthCheck(), new Handler<HttpClientResponse>() {
                                 @Override
                                 public void handle(HttpClientResponse cResp) {
                                     if (cResp!=null && cResp.statusCode()==HttpCode.OK) {
-                                        queueService.publishBackendOk(backend);
+                                        queueService.publishBackendOk(backend.toJson());
                                     }
                                 }
                             });
-                        cReq.headers().set(httpHeaderHost, (String) badBackendsMap.get(backend).toArray()[0]);
+                        cReq.headers().set(httpHeaderHost, backend.toString());
                         cReq.exceptionHandler(new Handler<Throwable>() {
                             @Override
                             public void handle(Throwable event) {}
@@ -139,7 +132,6 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
     public void start() {
         log = new SafeLogger().setLogger(container.logger());
         conf = container.config();
-        uriHealthCheck = conf.getString("uriHealthCheck","/"); // Recommended = "/health"
         Long checkInterval = conf.getLong("checkInterval", 5000L); // Milliseconds Interval
 
         queueService = new VertxQueueService(vertx.eventBus(), log);
@@ -174,15 +166,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
             boolean running = messageBus.getEntity().getString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString())
                                                         .equals(StatusType.RUNNING_STATUS.toString());
 
-            String backendId = messageBus.getEntityId();
-            String virtualhostId = messageBus.getParentId();
-            final Map <String, Set<String>> tempMap = running ? backendsMap : badBackendsMap;
-
-            if (!tempMap.containsKey(backendId)) {
-                tempMap.put(backendId, new HashSet<String>());
-            }
-            Set<String> virtualhosts = tempMap.get(backendId);
-            virtualhosts.add(virtualhostId);
+            final Set<Entity> tempSet = running ? backendsMap : badBackendsMap;
+            tempSet.add(new BackendWithoutSessionPool(messageBus.getEntity()));
         }
     };
 
@@ -197,17 +182,8 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
             boolean running = messageBus.getEntity().getString(IJsonable.STATUS_FIELDNAME, StatusType.RUNNING_STATUS.toString())
                     .equals(StatusType.RUNNING_STATUS.toString());
 
-            String backendId = messageBus.getEntityId();
-            String virtualhostId = messageBus.getParentId();
-            final Map <String, Set<String>> tempMap = running ? backendsMap : badBackendsMap;
-
-            if (tempMap.containsKey(backendId)) {
-                Set<String> virtualhosts = tempMap.get(backendId);
-                virtualhosts.remove(virtualhostId);
-                if (virtualhosts.isEmpty()) {
-                    tempMap.remove(backendId);
-                }
-            }
+            final Set<Entity> tempSet = running ? backendsMap : badBackendsMap;
+            tempSet.remove(new BackendWithoutSessionPool(messageBus.getEntity()));
         }
     };
 
@@ -215,29 +191,19 @@ public class HealthManagerVerticle extends Verticle implements IEventObserver, I
      * @see com.globo.galeb.core.bus.ICallbackHealthcheck#moveBackend(java.lang.String, boolean)
      */
     @Override
-    public void moveBackend(String backendId, boolean status) throws UnsupportedEncodingException {
+    public void moveBackend(JsonObject backend, boolean status) throws UnsupportedEncodingException {
 
-        Set<String> backendpools = status ? badBackendsMap.get(backendId) : backendsMap.get(backendId);
+        String backendId = backend.getString(IJsonable.ID_FIELDNAME);
+        if (backend!=null) {
+            String uriDel = String.format("/backend/%s", URLEncoder.encode(backendId,"UTF-8"));
+            String uriAdd = "/backend";
 
-        if (backendpools!=null) {
-            Iterator<String> it = backendpools.iterator();
-            while (it.hasNext()) {
-                BackendPool backendPool = farm.getBackendPoolById(it.next());
-                IBackend backend = !status ? backendPool.getEntityById(backendId) : backendPool.getBadBackendById(backendId);
+            backend.putString(IJsonable.STATUS_FIELDNAME, status ? StatusType.FAILED_STATUS.toString() : StatusType.RUNNING_STATUS.toString());
+            queueService.queueToDel(backend, uriDel);
 
-                if (backend!=null) {
-                    String uriDel = String.format("/backend/%s", URLEncoder.encode(backendId,"UTF-8"));
-                    String uriAdd = "/backend";
-
-                    ((Entity) backend).setStatus(status ? StatusType.FAILED_STATUS : StatusType.RUNNING_STATUS);
-                    queueService.queueToDel(backend.toJson(), uriDel);
-
-                    ((Entity) backend).setStatus(!status ? StatusType.FAILED_STATUS : StatusType.RUNNING_STATUS);
-                    queueService.queueToAdd(backend.toJson(), uriAdd);
-                }
-            }
+            backend.putString(IJsonable.STATUS_FIELDNAME, !status ? StatusType.FAILED_STATUS.toString() : StatusType.RUNNING_STATUS.toString());
+            queueService.queueToAdd(backend, uriAdd);
         }
-
     }
 
 }

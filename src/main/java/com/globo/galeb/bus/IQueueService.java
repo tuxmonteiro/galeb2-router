@@ -111,14 +111,14 @@ public interface IQueueService {
      *
      * @param backend the backend
      */
-    public void publishBackendOk(String backend);
+    public void publishBackendOk(JsonObject backend);
 
     /**
      * Publish backendFail.
      *
      * @param backend the backend
      */
-    public void publishBackendFail(String backend);
+    public void publishBackendFail(JsonObject backend);
 
     /**
      * Publish backend connections.

@@ -183,7 +183,7 @@ public class RouterResponseHandler implements Handler<HttpClientResponse> {
 
                 defineLoggerIfNecessary();
                 log.error(String.format("host: %s , backend: %s , message: %s", headerHost, backendId, event.getMessage()));
-                queueService.publishBackendFail(backendId);
+                queueService.publishBackendFail(backend.toJson());
                 sResponse.setBackendId(backendId).showErrorAndClose(event);
 
                 ((EntitiesMap<BackendSession>) backend).removeEntity(remoteUser.toString());
