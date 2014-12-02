@@ -150,12 +150,20 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     @Override
     public JsonObject toJson() {
-        prepareJson();
+        super.toJson();
         idObj.putNumber(FARM_VERSION_FIELDNAME, version);
         idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, getEntitiesJson());
         idObj.putArray(FARM_BACKENDPOOLS_FIELDNAME, getBackendPoolJson());
-
-        return super.toJson();
+        String keyVirtualhosts = "";
+        String keyBackendPools = "";
+        for (Virtualhost virtualhost: getEntities().values()) {
+            keyVirtualhosts += "+"+virtualhost.getHash();
+        }
+        for (BackendPool backendPool: getBackendPools().getEntities().values()) {
+            keyBackendPools += "+"+backendPool.getHash();
+        }
+        prepareHash("farm"+keyVirtualhosts+keyBackendPools);
+        return idObj;
     }
 
     /* (non-Javadoc)

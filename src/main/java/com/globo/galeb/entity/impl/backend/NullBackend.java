@@ -44,14 +44,6 @@ public class NullBackend implements IBackend {
     }
 
     /* (non-Javadoc)
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
-    @Override
-    public int compareTo(IBackend o) {
-        return 0;
-    }
-
-    /* (non-Javadoc)
      * @see com.globo.galeb.core.IBackend#getHost()
      */
     @Override

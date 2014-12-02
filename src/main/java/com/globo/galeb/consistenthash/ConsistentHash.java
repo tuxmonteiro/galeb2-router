@@ -61,7 +61,7 @@ public class ConsistentHash<T> {
      */
     public void add(T node) {
         for (int i = 0; i < numberOfReplicas; i++) {
-            circle.put(hashAlgorithm.hash(node.toString() + i), node);
+            circle.put(hashAlgorithm.hash(node.toString() + i).asInt(), node);
         }
     }
 
@@ -72,7 +72,7 @@ public class ConsistentHash<T> {
      */
     public void remove(T node) {
         for (int i = 0; i < numberOfReplicas; i++) {
-            circle.remove(hashAlgorithm.hash(node.toString() + i));
+            circle.remove(hashAlgorithm.hash(node.toString() + i).asInt());
         }
     }
 
@@ -87,7 +87,7 @@ public class ConsistentHash<T> {
             return null;
         }
 
-        int hash= hashAlgorithm.hash(key);
+        int hash= hashAlgorithm.hash(key).asInt();
 
         if (!circle.containsKey(hash)) {
             SortedMap<Integer, T> tailMap = circle.tailMap(hash);

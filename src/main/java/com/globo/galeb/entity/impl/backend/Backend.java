@@ -558,17 +558,6 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     }
 
     /* (non-Javadoc)
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
-    @Override
-    public int compareTo(IBackend otherBackend) {
-        if (otherBackend==null) {
-            return 0;
-        }
-        return this.getActiveConnections()-otherBackend.getActiveConnections();
-    }
-
-    /* (non-Javadoc)
      * @see com.globo.galeb.entity.impl.backend.IBackend#setMetricPrefix(java.lang.String)
      */
     @Override

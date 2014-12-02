@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Class IndexedMap.
@@ -28,7 +29,7 @@ import java.util.Map;
  * @param <K> the key type
  * @param <V> the value type
  */
-public class IndexedMap<K, V> extends HashMap<K, V> {
+public class IndexedMap<K, V> extends TreeMap<K, V> {
 
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 7940164428900645591L;
@@ -41,25 +42,6 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
      */
     public IndexedMap() {
         super();
-    }
-
-    /**
-     * Instantiates a new indexed map.
-     *
-     * @param initialCapacity the initial capacity
-     * @param loadFactor the load factor
-     */
-    public IndexedMap(int initialCapacity, float loadFactor) {
-        super(initialCapacity, loadFactor);
-    }
-
-    /**
-     * Instantiates a new indexed map.
-     *
-     * @param initialCapacity the initial capacity
-     */
-    public IndexedMap(int initialCapacity) {
-        super(initialCapacity);
     }
 
     /**

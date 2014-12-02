@@ -46,6 +46,9 @@ public interface IJsonable {
     /** The Constant LINKS_FIELDNAME. */
     public static final String LINKS_FIELDNAME       = "_links";
 
+    /** The Constant HASH_FIELDNAME. */
+    public static final String HASH_FIELDNAME        = "_hash";
+
     /** The Constant LINKS_REL_FIELDNAME. */
     public static final String LINKS_REL_FIELDNAME   = "rel";
 

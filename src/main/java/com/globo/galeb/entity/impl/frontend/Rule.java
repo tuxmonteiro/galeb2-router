@@ -29,7 +29,7 @@ import com.globo.galeb.rulereturn.RuleReturnFactory;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 6, 2014.
  */
-public abstract class Rule extends Entity implements Comparable<Rule> {
+public abstract class Rule extends Entity {
 
     /** The Constant RULETYPE_FIELDNAME. */
     public static final String RULETYPE_FIELDNAME   = "ruleType";
@@ -177,11 +177,6 @@ public abstract class Rule extends Entity implements Comparable<Rule> {
     public void start() {
         super.start();
         ruleReturn = new RuleReturnFactory(farm).getRuleReturn(idObj);
-    }
-
-    @Override
-    public int compareTo(Rule otherRule) {
-        return this.getPriorityOrder()-otherRule.getPriorityOrder();
     }
 
     /**

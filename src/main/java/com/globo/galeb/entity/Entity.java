@@ -15,9 +15,16 @@
  */
 package com.globo.galeb.entity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.vertx.java.core.json.JsonObject;
+
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.NullQueueService;
+import com.globo.galeb.consistenthash.HashAlgorithm;
+import com.globo.galeb.consistenthash.HashAlgorithm.HashType;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.metrics.CounterConsoleOut;
@@ -30,7 +37,7 @@ import com.globo.galeb.server.Server;
  * @author: See AUTHORS file.
  * @version: 1.0.0, Oct 23, 2014.
  */
-public abstract class Entity implements IJsonable {
+public abstract class Entity implements IJsonable, Comparable<Entity> {
 
     /** The id. */
     protected String               id            = "";
@@ -73,6 +80,9 @@ public abstract class Entity implements IJsonable {
 
     /** The entity status */
     protected StatusType           status        = StatusType.CREATED;
+
+    /** The hash. */
+    protected String               hash          = "";
 
     /**
      * Instantiates a new entity.
@@ -203,28 +213,6 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
-     * Prepare json.
-     *
-     * @return this
-     */
-    protected Entity prepareJson() {
-        idObj.putString(ID_FIELDNAME, id);
-        if (!"".equals(parentId)) {
-            idObj.putString(Entity.PARENT_ID_FIELDNAME, parentId);
-        }
-        idObj.putString(STATUS_FIELDNAME, status.toString());
-        idObj.putObject(LINKS_FIELDNAME, new JsonObject()
-            .putString(LINKS_REL_FIELDNAME, "self")
-            .putString(LINKS_HREF_FIELDNAME,
-                    String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
-        );
-        idObj.putNumber(CREATED_AT_FIELDNAME, createdAt);
-        idObj.putNumber(MODIFIED_AT_FIELDNAME, modifiedAt);
-        idObj.putObject(PROPERTIES_FIELDNAME, properties);
-        return this;
-    }
-
-    /**
      * Sets the static conf.
      *
      * @param staticConf the static conf
@@ -276,6 +264,16 @@ public abstract class Entity implements IJsonable {
     }
 
     /**
+     * Gets the hash.
+     *
+     * @return the hash
+     */
+    public String getHash() {
+        toJson();
+        return hash;
+    }
+
+    /**
      * Update modified timestamp.
      */
     protected void updateModifiedTimestamp() {
@@ -315,13 +313,62 @@ public abstract class Entity implements IJsonable {
         return properties.getField(fieldName);
     }
 
+    /**
+     * Prepare json.
+     *
+     * @return this
+     */
+    protected Entity prepareJson() {
+        idObj.putString(ID_FIELDNAME, id);
+        if (!"".equals(parentId)) {
+            idObj.putString(Entity.PARENT_ID_FIELDNAME, parentId);
+        }
+        idObj.putString(STATUS_FIELDNAME, status.toString());
+        idObj.putObject(LINKS_FIELDNAME, new JsonObject()
+            .putString(LINKS_REL_FIELDNAME, "self")
+            .putString(LINKS_HREF_FIELDNAME,
+                    String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
+        );
+        idObj.putNumber(CREATED_AT_FIELDNAME, createdAt);
+        idObj.putNumber(MODIFIED_AT_FIELDNAME, modifiedAt);
+        idObj.putObject(PROPERTIES_FIELDNAME, properties);
+        return this;
+    }
+
     /* (non-Javadoc)
      * @see com.globo.galeb.core.IJsonable#toJson()
      */
     @Override
     public JsonObject toJson() {
         prepareJson();
+        sortProperties();
+        prepareHash(id+parentId+properties.encode());
         return idObj;
+    }
+
+    /**
+     * Prepare hash.
+     *
+     * @param key the key
+     */
+    protected void prepareHash(String key) {
+        String result = key.replaceAll("[ \n\t]", "");
+        this.hash = new HashAlgorithm(HashType.SIP24).hash(result).asString();
+        idObj.putString(IJsonable.HASH_FIELDNAME, hash);
+    }
+
+    /**
+     * Sort properties.
+     */
+    protected void sortProperties() {
+        List<String> propertiesFieldList = new ArrayList<>();
+        propertiesFieldList.addAll(properties.getFieldNames());
+        Collections.sort(propertiesFieldList);
+        JsonObject jsonTemp = new JsonObject();
+        for (String fieldName: propertiesFieldList) {
+            jsonTemp.putValue(fieldName, properties.getField(fieldName));
+        }
+        properties = jsonTemp.copy();
     }
 
     /* (non-Javadoc)
@@ -356,5 +403,14 @@ public abstract class Entity implements IJsonable {
      */
     public void start() {
         //
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Comparable#compareTo(java.lang.Object)
+     */
+    @Override
+    public int compareTo(Entity entity) {
+        this.id.compareTo(entity.id);
+        return 0;
     }
 }

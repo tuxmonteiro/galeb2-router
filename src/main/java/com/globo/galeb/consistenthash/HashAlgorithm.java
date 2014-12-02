@@ -74,6 +74,9 @@ public class HashAlgorithm {
     /** The hash type. */
     private final HashType hashType;
 
+    /** The hash code. */
+    private HashCode hashCode;
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
@@ -106,8 +109,7 @@ public class HashAlgorithm {
      * @param key the key
      * @return int hash
      */
-    public int hash(Object key) {
-        HashCode hashCode;
+    public HashAlgorithm hash(Object key) {
         HashFunction hashAlgorithm;
         switch (hashType) {
             case MD5:
@@ -133,7 +135,25 @@ public class HashAlgorithm {
         } else {
             hashCode = hashAlgorithm.newHasher().hash();
         }
+        return this;
+    }
+
+    /**
+     * HashCode as int.
+     *
+     * @return the int
+     */
+    public int asInt() {
         return hashCode.asInt();
+    }
+
+    /**
+     * HashCode as string.
+     *
+     * @return the string
+     */
+    public String asString() {
+        return hashCode.toString();
     }
 
 }

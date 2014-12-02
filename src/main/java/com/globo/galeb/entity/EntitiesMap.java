@@ -15,6 +15,9 @@
  */
 package com.globo.galeb.entity;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.vertx.java.core.json.JsonArray;
@@ -206,10 +209,13 @@ public abstract class EntitiesMap<T> extends Entity {
      *
      * @return the entities json
      */
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public JsonArray getEntitiesJson() {
         JsonArray jsonArray = new JsonArray();
-
-        for (T t: getEntities().values()) {
+        List entities = new ArrayList<>();
+        entities.addAll(getEntities().values());
+        Collections.sort(entities);
+        for (T t: (ArrayList<T>)entities) {
             jsonArray.add(((IJsonable) t).toJson());
         }
         return jsonArray;

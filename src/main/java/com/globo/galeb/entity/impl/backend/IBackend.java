@@ -26,7 +26,7 @@ import com.globo.galeb.request.RemoteUser;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 18, 2014.
  */
-public interface IBackend extends Comparable<IBackend>, IJsonable {
+public interface IBackend extends IJsonable {
 
     /** The Constant KEEPALIVE_FIELDNAME. */
     public static final String KEEPALIVE_FIELDNAME             = "keepalive";
