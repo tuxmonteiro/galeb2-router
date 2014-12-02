@@ -37,6 +37,9 @@ public abstract class MessageToMap<T extends Entity> {
     /** The entity. */
     protected JsonObject entity     = new JsonObject();
 
+    /** The entity pk. */
+    protected int entityPK          = -1;
+
     /** The entity id. */
     protected String entityId       = "";
 
@@ -73,6 +76,7 @@ public abstract class MessageToMap<T extends Entity> {
         if (messageBus!=null) {
             this.entity   = messageBus.getEntity();
             this.entityId = messageBus.getEntityId();
+            this.entityPK = messageBus.getEntityPK();
             this.parentId = messageBus.getParentId();
         }
 

@@ -109,6 +109,15 @@ public class MessageBus {
     }
 
     /**
+     * Gets the entity pk.
+     *
+     * @return the entity pk
+     */
+    public int getEntityPK() {
+        return getEntity().getInteger(IJsonable.PK_FIELDNAME, -1);
+    }
+
+    /**
      * Sets the entity.
      *
      * @param entityStr the entity str

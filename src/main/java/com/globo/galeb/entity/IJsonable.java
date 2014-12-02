@@ -25,6 +25,9 @@ import org.vertx.java.core.json.JsonObject;
  */
 public interface IJsonable {
 
+    /** The Constant PK_FIELDNAME. */
+    public static final String PK_FIELDNAME          = "pk";
+
     /** The Constant ID_FIELDNAME. */
     public static final String ID_FIELDNAME          = "id";
 

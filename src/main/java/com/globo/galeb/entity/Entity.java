@@ -39,6 +39,9 @@ import com.globo.galeb.server.Server;
  */
 public abstract class Entity implements IJsonable, Comparable<Entity> {
 
+    /** The primary key */
+    protected int                  pk            = -1;
+
     /** The id. */
     protected String               id            = "";
 
@@ -103,13 +106,32 @@ public abstract class Entity implements IJsonable, Comparable<Entity> {
     /**
      * Instantiates a new entity.
      *
+     * @param pk the int pk
+     */
+    protected Entity(int pk) {
+        this(new JsonObject().putNumber(PK_FIELDNAME, pk));
+    }
+
+    /**
+     * Instantiates a new entity.
+     *
      * @param json the json
      */
     protected Entity(JsonObject json) {
-        this.id = json.getString(IJsonable.ID_FIELDNAME, UNDEF);
-        this.parentId = json.getString(IJsonable.PARENT_ID_FIELDNAME, "");
-        this.properties.mergeIn(json.getObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject()));
+        this.pk = json.getInteger(PK_FIELDNAME, -1);
+        this.id = json.getString(ID_FIELDNAME, UNDEF);
+        this.parentId = json.getString(PARENT_ID_FIELDNAME, "");
+        this.properties.mergeIn(json.getObject(PROPERTIES_FIELDNAME, new JsonObject()));
         idObj.mergeIn(json);
+    }
+
+    /**
+     * Gets the pk.
+     *
+     * @return the pk
+     */
+    public int getPK() {
+        return pk;
     }
 
     /**
@@ -319,6 +341,7 @@ public abstract class Entity implements IJsonable, Comparable<Entity> {
      * @return this
      */
     protected Entity prepareJson() {
+        idObj.putNumber(PK_FIELDNAME, pk);
         idObj.putString(ID_FIELDNAME, id);
         if (!"".equals(parentId)) {
             idObj.putString(Entity.PARENT_ID_FIELDNAME, parentId);
@@ -327,7 +350,7 @@ public abstract class Entity implements IJsonable, Comparable<Entity> {
         idObj.putObject(LINKS_FIELDNAME, new JsonObject()
             .putString(LINKS_REL_FIELDNAME, "self")
             .putString(LINKS_HREF_FIELDNAME,
-                    String.format("http://%s/%s/%s", Server.getHttpServerName(), entityType, id))
+                    String.format("http://%s/%s/%d", Server.getHttpServerName(), entityType, pk))
         );
         idObj.putNumber(CREATED_AT_FIELDNAME, createdAt);
         idObj.putNumber(MODIFIED_AT_FIELDNAME, modifiedAt);

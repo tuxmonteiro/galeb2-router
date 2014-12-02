@@ -79,7 +79,8 @@ public class RouteManagerTest extends UtilTestVerticle {
         String vhostId = "test.localdomain";
         JsonObject vhostJson = new JsonObject()
                                     .putNumber("version", 1L)
-                                    .putString(IJsonable.ID_FIELDNAME, vhostId);
+                                    .putString(IJsonable.ID_FIELDNAME, vhostId)
+                                    .putNumber(IJsonable.PK_FIELDNAME, 1);
 
         JsonObject expectedJson = new JsonObject().putString("status_message", expectedStatusMessage);
 
@@ -88,6 +89,7 @@ public class RouteManagerTest extends UtilTestVerticle {
 
         JsonObject getExpectedJson = new JsonObject()
             .putString(IJsonable.ID_FIELDNAME, "test.localdomain")
+            .putNumber(IJsonable.PK_FIELDNAME, 1)
             .putObject(IJsonable.PROPERTIES_FIELDNAME, new JsonObject())
             .putArray(Virtualhost.RULES_FIELDNAME, new JsonArray());
 
