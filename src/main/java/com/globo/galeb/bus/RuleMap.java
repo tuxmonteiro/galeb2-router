@@ -68,7 +68,7 @@ public class RuleMap extends MessageToMap<Virtualhost> {
                     }
                     boolean hasMatch = properties.containsField(Rule.MATCH_FIELDNAME);
                     if (!hasMatch) {
-                        properties.putString(Rule.MATCH_FIELDNAME, "-UNDEFINED-");
+                        properties.putString(Rule.MATCH_FIELDNAME, "");
                         entity.getObject(IJsonable.PROPERTIES_FIELDNAME).mergeIn(properties);
                     }
 

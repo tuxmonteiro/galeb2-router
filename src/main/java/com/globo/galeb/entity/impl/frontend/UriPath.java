@@ -51,6 +51,9 @@ public class UriPath extends Rule {
      */
     @Override
     public boolean isMatchWith(RequestMatch requestMatch) {
+        if ("".equals(match.toString())) {
+            return false;
+        }
         String uriPath = requestMatch.getUriPath();
         boolean isMatch = uriPath.startsWith(match.toString());
         getLogger().debug(String.format("[%s] %s %smatch with %s", this, match.toString(), isMatch ? "": "NOT ", uriPath));
