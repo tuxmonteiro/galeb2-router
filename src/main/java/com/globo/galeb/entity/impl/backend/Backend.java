@@ -86,6 +86,9 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     /** The prefix. */
     private String prefix = UNDEF;
 
+    /** The maxconn. */
+    private int maxconn;
+
     /**
      * Class CleanUpSessionHandler.
      *
@@ -324,12 +327,27 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
     }
 
     /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setMaxConn(int)
+     */
+    @Override
+    public IBackend setMaxConn(int maxConn) {
+        this.maxconn = maxConn;
+        return this;
+    }
+
+    /* (non-Javadoc)
      * @see com.globo.galeb.core.IBackend#connect(com.globo.galeb.core.RemoteUser)
      */
     @Override
     public HttpClient connect(RemoteUser remoteUser) {
         if (remoteUser==null) {
             return null;
+        }
+
+        if (maxconn>0) {
+            if (getActiveConnections()>maxconn-1) {
+                return null;
+            }
         }
 
         String remoteUserId = remoteUser.toString();

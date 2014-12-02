@@ -82,6 +82,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The keep alive. */
     private boolean                    keepAlive           = true;
 
+    /** The max conn. */
+    private int                        maxConn             = 0;
+
     /**
      * Instantiates a new backend pool.
      */
@@ -98,6 +101,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public BackendPool(String id) {
         super(id);
         this.status = StatusType.RUNNING_STATUS;
+        this.maxConn = (int) getOrCreateProperty(IBackend.MAXCONN_FIELDNAME, 0);
     }
 
     /**
@@ -108,6 +112,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public BackendPool(JsonObject json) {
         super(json);
         this.status = StatusType.RUNNING_STATUS;
+        this.maxConn = (int) getOrCreateProperty(IBackend.MAXCONN_FIELDNAME, 0);
     }
 
     /* (non-Javadoc)
@@ -165,6 +170,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
                                      .setKeepAliveTimeOut(keepAliveTimeOut)
                                      .setMinSessionPoolSize(minSessionPoolSize))
                                      .setStatus(StatusType.RUNNING_STATUS))
+                                     .setMaxConn(maxConn)
                                      .startSessionPool();
 
         resetLoadBalance();

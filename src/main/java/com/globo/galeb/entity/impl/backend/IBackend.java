@@ -61,6 +61,9 @@ public interface IBackend extends IJsonable {
     /** The Constant ACTIVE_CONNECTIONS_FIELDNAME. */
     public static final String ACTIVE_CONNECTIONS_FIELDNAME    = "_activeConnections";
 
+    /** The Constant MAXCONN_FIELDNAME. */
+    public static final String MAXCONN_FIELDNAME               = "maxConn";
+
     /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
     public static final boolean TCP_NODELAY                    = true;
 
@@ -282,6 +285,14 @@ public interface IBackend extends IJsonable {
      * @return this
      */
     public IBackend setMetricPrefix(String prefix);
+
+    /**
+     * Sets the max conn.
+     *
+     * @param maxConn the max conn
+     * @return this
+     */
+    public IBackend setMaxConn(int maxConn);
 
 
 }
