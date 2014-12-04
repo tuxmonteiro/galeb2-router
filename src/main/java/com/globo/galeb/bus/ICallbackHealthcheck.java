@@ -17,6 +17,8 @@ package com.globo.galeb.bus;
 
 import java.io.UnsupportedEncodingException;
 
+import org.vertx.java.core.json.JsonObject;
+
 /**
  * Interface ICallbackHealthcheck.
  *
@@ -32,6 +34,6 @@ public interface ICallbackHealthcheck {
      * @param status the status
      * @throws UnsupportedEncodingException the unsupported encoding exception
      */
-    public void moveBackend(String backend, boolean status) throws UnsupportedEncodingException;
+    public void moveBackend(JsonObject backend, boolean status) throws UnsupportedEncodingException;
 
 }

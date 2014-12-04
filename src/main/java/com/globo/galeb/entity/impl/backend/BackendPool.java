@@ -46,6 +46,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The Constant ENABLE_ACCESSLOG_FIELDNAME. */
     public static final String ENABLE_ACCESSLOG_FIELDNAME    = "enableAccessLog";
 
+    /** The Constant HEALTHCHECK_FIELDNAME. */
+    public static final String HEALTHCHECK_FIELDNAME         = "healthCheck";
+
     /** The rule return type. */
     private final String               returnType           = BackendPool.class.getSimpleName();
 
@@ -79,6 +82,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     /** The keep alive. */
     private boolean                    keepAlive           = true;
 
+    /** The max conn. */
+    private int                        maxConn             = 0;
+
     /**
      * Instantiates a new backend pool.
      */
@@ -95,6 +101,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public BackendPool(String id) {
         super(id);
         this.status = StatusType.RUNNING_STATUS;
+        this.maxConn = (int) getOrCreateProperty(IBackend.MAXCONN_FIELDNAME, 0);
     }
 
     /**
@@ -105,6 +112,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
     public BackendPool(JsonObject json) {
         super(json);
         this.status = StatusType.RUNNING_STATUS;
+        this.maxConn = (int) getOrCreateProperty(IBackend.MAXCONN_FIELDNAME, 0);
     }
 
     /* (non-Javadoc)
@@ -162,6 +170,7 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
                                      .setKeepAliveTimeOut(keepAliveTimeOut)
                                      .setMinSessionPoolSize(minSessionPoolSize))
                                      .setStatus(StatusType.RUNNING_STATUS))
+                                     .setMaxConn(maxConn)
                                      .startSessionPool();
 
         resetLoadBalance();
@@ -203,6 +212,9 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
         properties.putNumber(IBackend.MIN_SESSION_POOL_SIZE_FIELDNAME, minSessionPoolSize);
         if (!properties.containsField(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME)) {
             properties.putString(LoadBalanceCriterion.LOADBALANCE_POLICY_FIELDNAME, LoadBalanceCriterion.LOADBALANCE_POLICY_DEFAULT);
+        }
+        if (!properties.containsField(BackendPool.HEALTHCHECK_FIELDNAME)) {
+            properties.putString(BackendPool.HEALTHCHECK_FIELDNAME, "/");
         }
         prepareJson();
 
@@ -340,6 +352,10 @@ public class BackendPool extends EntitiesMap<IBackend> implements IRuleReturn {
      */
     public Boolean hasAccessLog() {
         return enableAccessLog;
+    }
+
+    public String getHealthCheck() {
+        return getOrCreateProperty(HEALTHCHECK_FIELDNAME, "/").toString();
     }
 
 }

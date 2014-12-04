@@ -16,8 +16,11 @@
 package com.globo.galeb.handlers;
 
 import org.vertx.java.core.Handler;
+import org.vertx.java.core.json.JsonObject;
+
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.bus.NullQueueService;
+import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.logger.SafeLogger;
 import com.globo.galeb.scheduler.IScheduler;
 import com.globo.galeb.scheduler.impl.NullScheduler;
@@ -38,8 +41,8 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
     /** the scheduler instance */
     private IScheduler scheduler = new NullScheduler();
 
-    /** The backend id. */
-    private String backendId;
+    /** The backend (json format). */
+    private JsonObject backend;
 
     /** The queue service. */
     private IQueueService queueService = new NullQueueService();
@@ -53,12 +56,12 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
     @Override
     public void handle(Throwable event) {
         scheduler.cancel();
-        queueService.publishBackendFail(backendId);
+        queueService.publishBackendFail(backend);
         if (log==null) {
             log = new SafeLogger();
         }
         log.error(String.format("ClientRequestExceptionHandler: %s", event.getMessage()));
-        sResponse.setBackendId(backendId).showErrorAndClose(event);
+        sResponse.setBackendId(backend.getString(IJsonable.ID_FIELDNAME)).showErrorAndClose(event);
     }
 
     public ClientRequestExceptionHandler setsResponse(final ServerResponse sResponse) {
@@ -71,8 +74,8 @@ public class ClientRequestExceptionHandler implements Handler<Throwable> {
         return this;
     }
 
-    public ClientRequestExceptionHandler setBackendId(String backendId) {
-        this.backendId = backendId;
+    public ClientRequestExceptionHandler setBackendJson(JsonObject json) {
+        this.backend = json;
         return this;
     }
 

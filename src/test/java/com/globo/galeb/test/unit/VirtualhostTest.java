@@ -75,6 +75,7 @@ public class VirtualhostTest {
         when(rule.setFarm((Farm) anyObject())).thenReturn(rule);
         when(rule.setPlataform(anyObject())).thenReturn(rule);
         when(rule.setStaticConf((JsonObject) anyObject())).thenReturn(rule);
+        when(rule.getId()).thenReturn(ruleId);
 
         return virtualserver.addEntity(rule);
     }
@@ -107,6 +108,7 @@ public class VirtualhostTest {
         when(rule.setFarm((Farm) anyObject())).thenReturn(rule);
         when(rule.setPlataform(anyObject())).thenReturn(rule);
         when(rule.setStaticConf((JsonObject) anyObject())).thenReturn(rule);
+        when(rule.getId()).thenReturn(ruleId);
 
         return virtualserver.removeEntity(rule);
     }

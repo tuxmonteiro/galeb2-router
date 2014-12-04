@@ -26,7 +26,7 @@ import com.globo.galeb.request.RemoteUser;
  * @author See AUTHORS file.
  * @version 1.0.0, Nov 18, 2014.
  */
-public interface IBackend extends Comparable<IBackend>, IJsonable {
+public interface IBackend extends IJsonable {
 
     /** The Constant KEEPALIVE_FIELDNAME. */
     public static final String KEEPALIVE_FIELDNAME             = "keepalive";
@@ -60,6 +60,9 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
 
     /** The Constant ACTIVE_CONNECTIONS_FIELDNAME. */
     public static final String ACTIVE_CONNECTIONS_FIELDNAME    = "_activeConnections";
+
+    /** The Constant MAXCONN_FIELDNAME. */
+    public static final String MAXCONN_FIELDNAME               = "maxConn";
 
     /** The Constant TCP_NODELAY - Vert.x defaults (org.vertx.java.core.net.impl.SocketDefaults). */
     public static final boolean TCP_NODELAY                    = true;
@@ -282,6 +285,14 @@ public interface IBackend extends Comparable<IBackend>, IJsonable {
      * @return this
      */
     public IBackend setMetricPrefix(String prefix);
+
+    /**
+     * Sets the max conn.
+     *
+     * @param maxConn the max conn
+     * @return this
+     */
+    public IBackend setMaxConn(int maxConn);
 
 
 }

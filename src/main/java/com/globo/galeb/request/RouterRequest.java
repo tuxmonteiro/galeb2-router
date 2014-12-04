@@ -333,7 +333,7 @@ public class RouterRequest {
                                         .setQueueService(queueService)
                                         .setLog(log)
                                         .setsResponse(serverResponse)
-                                        .setBackendId(backend.toString())
+                                        .setBackendJson(backend.toJson())
                                         .setScheduler(schedulerTimeOut));
 
         httpServerRequest.endHandler(new VoidHandler() {

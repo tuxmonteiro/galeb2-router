@@ -17,6 +17,7 @@ package com.globo.galeb.criteria.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -93,7 +94,13 @@ public class RulesCriterion implements ICriterion<Rule> {
         Rule ruleDefault = null;
         if (ruleList.isEmpty()) {
             ruleList.addAll(map.values());
-            Collections.sort(ruleList);
+            Comparator<? super Rule> comparator = new Comparator<Rule>() {
+                @Override
+                public int compare(Rule r1, Rule r2) {
+                    return r1.getPriorityOrder()-r2.getPriorityOrder();
+                }
+            };
+            Collections.sort(ruleList, comparator);
         }
 
         for (Rule rule: ruleList) {

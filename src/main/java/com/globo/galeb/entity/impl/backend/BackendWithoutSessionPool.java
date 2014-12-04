@@ -77,6 +77,9 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     /** The prefix. */
     private String prefix = UNDEF;
 
+    /** The maxconn. */
+    private int maxconn = 0;
+
     /**
      * Class CleanUpSessionHandler.
      *
@@ -313,12 +316,27 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     }
 
     /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setMaxConn(int)
+     */
+    @Override
+    public IBackend setMaxConn(int maxConn) {
+        this.maxconn = maxConn;
+        return this;
+    }
+
+    /* (non-Javadoc)
      * @see com.globo.galeb.core.IBackend#connect(com.globo.galeb.core.RemoteUser)
      */
     @Override
     public HttpClient connect(RemoteUser remoteUser) {
         if (remoteUser==null) {
             return null;
+        }
+
+        if (maxconn>0) {
+            if (getActiveConnections()>maxconn-1) {
+                return null;
+            }
         }
 
         String remoteUserId = remoteUser.toString();
@@ -397,7 +415,6 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
     public JsonObject toJson() {
         prepareJson();
         idObj.putNumber(ACTIVE_CONNECTIONS_FIELDNAME, getActiveConnections());
-
         return super.toJson();
     }
 
@@ -504,17 +521,6 @@ public class BackendWithoutSessionPool extends EntitiesMap<BackendSession> imple
         for (String remoteUser: getEntities().keySet()) {
             close(remoteUser);
         }
-    }
-
-    /* (non-Javadoc)
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
-    @Override
-    public int compareTo(IBackend otherBackend) {
-        if (otherBackend==null) {
-            return 0;
-        }
-        return this.getActiveConnections()-otherBackend.getActiveConnections();
     }
 
     /* (non-Javadoc)

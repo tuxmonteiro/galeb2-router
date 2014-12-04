@@ -26,6 +26,7 @@ import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.platform.Verticle;
 
+import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.logger.SafeLogger;
 
 /**
@@ -151,10 +152,10 @@ public class VertxQueueService implements IQueueService {
         if (eb==null) {
             return;
         }
-        eb.registerHandler(IQueueService.QUEUE_HEALTHCHECK_OK, new Handler<Message<String>>() {
+        eb.registerHandler(IQueueService.QUEUE_HEALTHCHECK_OK, new Handler<Message<JsonObject>>() {
             @Override
-            public void handle(Message<String> message) {
-                String backend = message.body();
+            public void handle(Message<JsonObject> message) {
+                JsonObject backend = message.body();
                 try {
                     callbackHealthcheck.moveBackend(backend, true);
                 } catch (UnsupportedEncodingException e) {
@@ -163,10 +164,10 @@ public class VertxQueueService implements IQueueService {
                 log.debug(String.format("Backend %s OK", backend));
             };
         });
-        eb.registerHandler(IQueueService.QUEUE_HEALTHCHECK_FAIL, new Handler<Message<String>>() {
+        eb.registerHandler(IQueueService.QUEUE_HEALTHCHECK_FAIL, new Handler<Message<JsonObject>>() {
             @Override
-            public void handle(Message<String> message) {
-                String backend = message.body();
+            public void handle(Message<JsonObject> message) {
+                JsonObject backend = message.body();
                 try {
                     callbackHealthcheck.moveBackend(backend, false);
                 } catch (UnsupportedEncodingException e) {
@@ -179,26 +180,28 @@ public class VertxQueueService implements IQueueService {
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#publishBackendOk(java.lang.String)
+     * @see com.globo.galeb.bus.IQueueService#publishBackendOk(org.vertx.java.core.json.JsonObject)
      */
     @Override
-    public void publishBackendOk(String backend) {
+    public void publishBackendOk(JsonObject backend) {
         if (eb==null) {
             return;
         }
+        String backendId = backend.getString(IJsonable.ID_FIELDNAME);
         eb.publish(IQueueService.QUEUE_HEALTHCHECK_OK, backend);
-        log.info(String.format("Backend %s OK. Enabling it", backend));
+        log.info(String.format("Backend %s OK. Enabling it", backendId));
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#publishBackendFail(java.lang.String)
+     * @see com.globo.galeb.bus.IQueueService#publishBackendFail(org.vertx.java.core.json.JsonObject)
      */
     @Override
-    public void publishBackendFail(String backendId) {
+    public void publishBackendFail(JsonObject backend) {
         if (eb==null) {
             return;
         }
-        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backendId);
+        String backendId = backend.getString(IJsonable.ID_FIELDNAME);
+        eb.publish(IQueueService.QUEUE_HEALTHCHECK_FAIL, backend);
         log.info(String.format("Backend %s Fail. disabling it", backendId));
     }
 

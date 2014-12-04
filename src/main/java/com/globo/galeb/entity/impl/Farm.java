@@ -31,6 +31,7 @@ import com.globo.galeb.bus.MessageToMap;
 import com.globo.galeb.bus.MessageToMapBuilder;
 import com.globo.galeb.criteria.impl.HostHeaderCriterion;
 import com.globo.galeb.entity.EntitiesMap;
+import com.globo.galeb.entity.Entity;
 import com.globo.galeb.entity.IJsonable;
 import com.globo.galeb.entity.impl.backend.Backend;
 import com.globo.galeb.entity.impl.backend.BackendPool;
@@ -150,12 +151,29 @@ public class Farm extends EntitiesMap<Virtualhost> implements ICallbackQueueActi
      */
     @Override
     public JsonObject toJson() {
-        prepareJson();
+        super.toJson();
         idObj.putNumber(FARM_VERSION_FIELDNAME, version);
         idObj.putArray(FARM_VIRTUALHOSTS_FIELDNAME, getEntitiesJson());
         idObj.putArray(FARM_BACKENDPOOLS_FIELDNAME, getBackendPoolJson());
-
-        return super.toJson();
+        String keyVirtualhosts = "";
+        String keyBackendPools = "";
+        String keyRules = "";
+        String keyBackends = "";
+        for (Virtualhost virtualhost: getEntities().values()) {
+            keyVirtualhosts += "+"+virtualhost.getHash();
+            for (Rule rule: virtualhost.getEntities().values()) {
+                keyRules += "+"+rule.getHash();
+            }
+        }
+        for (BackendPool backendPool: getBackendPools().getEntities().values()) {
+            keyBackendPools += "+"+backendPool.getHash();
+            for (IBackend backend: backendPool.getEntities().values()) {
+                keyBackends += "+"+((Entity) backend).getHash();
+            }
+        }
+        String key = "farm"+keyVirtualhosts+keyBackendPools+keyRules+keyBackends;
+        prepareHash(key);
+        return idObj;
     }
 
     /* (non-Javadoc)

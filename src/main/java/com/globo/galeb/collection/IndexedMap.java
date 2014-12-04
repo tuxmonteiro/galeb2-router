@@ -19,6 +19,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Class IndexedMap.
@@ -28,7 +29,7 @@ import java.util.Map;
  * @param <K> the key type
  * @param <V> the value type
  */
-public class IndexedMap<K, V> extends HashMap<K, V> {
+public class IndexedMap<K, V> extends TreeMap<K, V> {
 
     /** The Constant serialVersionUID. */
     private static final long serialVersionUID = 7940164428900645591L;
@@ -36,30 +37,14 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
     /** The indexed keys. */
     private Map<Integer, K> indexedKeys = new HashMap<>();
 
+    /** The last index. */
+    private int lastIndex = 0;
+
     /**
      * Instantiates a new indexed map.
      */
     public IndexedMap() {
         super();
-    }
-
-    /**
-     * Instantiates a new indexed map.
-     *
-     * @param initialCapacity the initial capacity
-     * @param loadFactor the load factor
-     */
-    public IndexedMap(int initialCapacity, float loadFactor) {
-        super(initialCapacity, loadFactor);
-    }
-
-    /**
-     * Instantiates a new indexed map.
-     *
-     * @param initialCapacity the initial capacity
-     */
-    public IndexedMap(int initialCapacity) {
-        super(initialCapacity);
     }
 
     /**
@@ -77,10 +62,25 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
      */
     @Override
     public V put(K key, V value) {
-        Integer index = getNextIndex();
+        lastIndex = getNextIndex();
+        indexedKeys.put(lastIndex, key);
+        return super.put(key, value);
+    }
+
+    /**
+     * Put a key/value and to index with 'index'.
+     *
+     * @param key the key
+     * @param value the value
+     * @param index the index
+     * @return the v
+     */
+    public V put(K key, V value, int index) {
+        lastIndex = index;
         indexedKeys.put(index, key);
         return super.put(key, value);
     }
+
 
     /* (non-Javadoc)
      * @see java.util.HashMap#putAll(java.util.Map)
@@ -115,10 +115,10 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
      * @param map the map
      */
     private void putAllToIndex(Map<? extends K, ? extends V> map) {
-        Integer nextIndex = getNextIndex();
+        lastIndex = getNextIndex();
         for (K key: map.keySet()) {
-            indexedKeys.put(nextIndex, key);
-            nextIndex++;
+            indexedKeys.put(lastIndex, key);
+            lastIndex++;
         }
     }
 
@@ -138,7 +138,11 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
      * @return the value by index
      */
     public V getValueByIndex(Integer index) {
-        return super.get(indexedKeys.get(index));
+        try {
+            return super.get(indexedKeys.get(index));
+        } catch (RuntimeException ignore) {
+            return null;
+        }
     }
 
     /**
@@ -179,6 +183,15 @@ public class IndexedMap<K, V> extends HashMap<K, V> {
         }
 
         return index;
+    }
+
+    /**
+     * Gets the last index.
+     *
+     * @return the last index
+     */
+    public int getLastIndex() {
+        return lastIndex;
     }
 
 }

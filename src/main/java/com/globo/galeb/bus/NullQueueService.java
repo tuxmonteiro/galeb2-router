@@ -58,18 +58,18 @@ public class NullQueueService implements IQueueService {
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#publishBackendOk(java.lang.String)
+     * @see com.globo.galeb.bus.IQueueService#publishBackendOk(org.vertx.java.core.json.JsonObject)
      */
     @Override
-    public void publishBackendOk(String backend) {
+    public void publishBackendOk(JsonObject backend) {
         //
     }
 
     /* (non-Javadoc)
-     * @see com.globo.galeb.core.bus.IQueueService#publishBackendFail(java.lang.String)
+     * @see com.globo.galeb.bus.IQueueService#publishBackendFail(org.vertx.java.core.json.JsonObject)
      */
     @Override
-    public void publishBackendFail(String backend) {
+    public void publishBackendFail(JsonObject backend) {
         //
     }
 

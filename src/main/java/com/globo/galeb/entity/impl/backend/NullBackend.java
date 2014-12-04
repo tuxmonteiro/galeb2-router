@@ -44,14 +44,6 @@ public class NullBackend implements IBackend {
     }
 
     /* (non-Javadoc)
-     * @see java.lang.Comparable#compareTo(java.lang.Object)
-     */
-    @Override
-    public int compareTo(IBackend o) {
-        return 0;
-    }
-
-    /* (non-Javadoc)
      * @see com.globo.galeb.core.IBackend#getHost()
      */
     @Override
@@ -192,6 +184,14 @@ public class NullBackend implements IBackend {
      */
     @Override
     public IBackend setMinSessionPoolSize(int minPoolSize) {
+        return this;
+    }
+
+    /* (non-Javadoc)
+     * @see com.globo.galeb.entity.impl.backend.IBackend#setMaxConn(int)
+     */
+    @Override
+    public IBackend setMaxConn(int maxConn) {
         return this;
     }
 

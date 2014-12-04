@@ -17,10 +17,12 @@ package com.globo.galeb.criteria.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
 import com.globo.galeb.criteria.ICriterion;
+import com.globo.galeb.entity.impl.backend.IBackend;
 import com.globo.galeb.logger.SafeLogger;
 
 
@@ -81,7 +83,16 @@ public class LeastConnCriterion<T extends Comparable<T>> implements ICriterion<T
             return null;
         }
 
-        return Collections.min(map.values());
+        Comparator<? super T> comparator = new Comparator<T>() {
+            @Override
+            public int compare(T be1, T be2) {
+                if (be1 instanceof IBackend && be2 instanceof IBackend) {
+                    return ((IBackend) be1).getActiveConnections()-((IBackend) be2).getActiveConnections();
+                }
+                return 0;
+            }
+        };
+        return Collections.min(map.values(), comparator);
     }
 
 
