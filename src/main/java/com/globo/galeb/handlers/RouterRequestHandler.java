@@ -17,8 +17,10 @@ package com.globo.galeb.handlers;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.http.HttpHeaders;
 import org.vertx.java.core.http.HttpServerRequest;
 import org.vertx.java.core.json.JsonObject;
+
 import com.globo.galeb.bus.IQueueService;
 import com.globo.galeb.entity.impl.Farm;
 import com.globo.galeb.logger.SafeLogger;
@@ -54,6 +56,8 @@ public class RouterRequestHandler implements Handler<HttpServerRequest> {
     @Override
     public void handle(final HttpServerRequest sRequest) throws RuntimeException {
         Long requestTimeout = farm.getProperties().getLong(Farm.REQUEST_TIMEOUT_FIELDNAME, 5000L);
+
+        sRequest.headers().remove(HttpHeaders.IF_MODIFIED_SINCE.toString());
 
         JsonObject conf = new JsonObject();
         conf.putNumber(Farm.REQUEST_TIMEOUT_FIELDNAME, requestTimeout);
