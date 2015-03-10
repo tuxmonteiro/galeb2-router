@@ -327,7 +327,7 @@ public class Backend extends EntitiesMap<BackendSession> implements ICallbackCon
      * @see com.globo.galeb.core.IBackend#connect(com.globo.galeb.core.RemoteUser)
      */
     @Override
-    public HttpClient connect(RemoteUser remoteUser) {
+    public synchronized HttpClient connect(RemoteUser remoteUser) {
         if (remoteUser==null) {
             return null;
         }
