@@ -40,7 +40,7 @@ public class Pump {
     /** The drain handler. */
     private final Handler<Void> drainHandler = new Handler<Void>() {
         @Override
-        public void handle(Void v) {
+        public synchronized void handle(Void v) {
             try{
                 rs.resume();
             } catch (RuntimeException e) {
@@ -53,7 +53,7 @@ public class Pump {
     /** The data handler. */
     private final Handler<Buffer> dataHandler = new Handler<Buffer>() {
         @Override
-        public void handle(Buffer buffer) {
+        public synchronized void handle(Buffer buffer) {
             try {
                 ws.write(buffer);
                 handleWrite();
